@@ -60,92 +60,11 @@ glm::vec3 camera_dir;
 glm::vec3 camera_up;
 glm::vec3 camera_look;
 
-const std::string kVertexShader(GLSL(
-	layout(location = 0) in vec3 position;
-	layout (location = 1) in vec3 normal;
-	layout (location = 2) in vec2 tex_coord;
-
-	out vec4 vs_color;
-	out vec3 vs_normal;
-	out vec2 vs_tex_coord;
-
-	layout(std140) uniform globalMatrices {
-		mat4 projection_matrix;
-		mat4 view_matrix;
-	};
-
-	uniform mat4 model_matrix;
-
-	void main(void)
-	{
-	   vs_color = vec4(1.0, 1.0, 1.0, 1.0);
-	   vs_normal = normalize(normal);
-	   vs_tex_coord = tex_coord;
-
-	   gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position, 1.0);
-	}
-));
-
-const std::string kFragmentShader(GLSL(
-	in vec4 vs_color;
-	in vec3 vs_normal;
-	in vec2 vs_tex_coord;
-
-	layout (location = 0) out vec4 color;
-
-	uniform sampler2D tex;
-
-	void main(void)
-	{
-	   vec4 temp = vec4((vs_color * (0.1 + abs(vs_normal.z)) + vec4(0.8, 0.9, 0.7, 1.0) * pow(abs(vs_normal.z), 40.0)).rgb, 1.0);
-	   color = vs_color * texture(tex, vs_tex_coord) * temp;
-	}
-));
-
-const std::string kLineVertexShader(GLSL(
-	layout(location = 3) in vec3 position;
-	
-	out vec4 vs_color;
-
-	layout(std140) uniform globalMatrices {
-		mat4 projection_matrix;
-		mat4 view_matrix;
-	};
-
-	uniform mat4 model_matrix;
-
-	void main(void)
-	{
-	   gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position, 1.0);
-	}
-));
-
-const std::string kPassThroughVertexShader(GLSL(
-	layout(location = 0) in vec3 position;
-
-	//out vec4 vs_color;
-
-	layout(std140) uniform globalMatrices {
-		mat4 projection_matrix;
-		mat4 view_matrix;
-	};
-
-	uniform mat4 model_matrix;
-
-	void main(void)
-	{
-	   //vs_color = vec4(0.0, 0.0, 1.0, 1.0);
-	   gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position, 1.0);
-	}
-));
-
-const std::string kPassThroughFragment(GLSL(
-	out vec4 color;
-	void main()
-	{
-		color = vec4(0.0, 1.0, 1.0, 1.0);
-	}
-));
+const std::string kVertexShader("assets/shaders/base_vertex.vert");
+const std::string kFragmentShader("assets/shaders/gouroud.frag");
+const std::string kLineVertexShader("assets/shaders/line_shader.vert");
+const std::string kPassThroughVertexShader("assets/shaders/pass_through.vert");
+const std::string kPassThroughFragment("assets/shaders/pass_through.frag");
 
 ProgramData LoadProgram(const std::vector<GLuint> &kShaderList)
 {
@@ -225,11 +144,11 @@ void Init()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 
-	// md5_model.LoadModel("assets/hellknight/hellknight.md5mesh");
-	// md5_model.LoadAnim("assets/hellknight/idle2.md5anim");
+	// md5_model.LoadModel("assets/models/hellknight/hellknight.md5mesh");
+	// md5_model.LoadAnim("assets/models/hellknight/idle2.md5anim");
 
-	md5_model.LoadModel("assets/bob_lamp/boblampclean.md5mesh");
-	md5_model.LoadAnim("assets/bob_lamp/boblampclean.md5anim");
+	md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
+	md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
 	
 	GLfloat vert_plane[] = {
 		-1.0f,  1.0f, -1.0f, // Top Left

@@ -1,5 +1,8 @@
+#include <iostream>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <streambuf>
 
 #include <GL/glew.h>
 
@@ -7,11 +10,33 @@
 
 namespace sp {
 
-GLuint CreateShader(GLenum eShaderType, const std::string &strShaderFile)
+std::string ReadFileToString(const std::string &file_name)
 {
+	std::ifstream file(file_name);
+
+	if (!file.good()) {
+		std::cerr << "Error opening file " << file_name << std::endl;
+	}
+
+	std::string contents;
+	file.seekg(0, std::ios::end);
+	contents.reserve(file.tellg());
+	file.seekg(0, std::ios::beg);
+
+	// Extra parenthesis necessary for vexing parse
+	contents.assign((std::istreambuf_iterator<char>(file)),
+	                 std::istreambuf_iterator<char>());
+	
+	return contents;
+}
+
+GLuint CreateShader(GLenum eShaderType, const std::string &shader_file_name)
+{
+	std::string contents = ReadFileToString(shader_file_name);
+
 	GLuint shader = glCreateShader(eShaderType);
-	const char *strFileData = strShaderFile.c_str();
-	glShaderSource(shader, 1, &strFileData, NULL);
+	const char *contents_cstr = contents.c_str();
+	glShaderSource(shader, 1, &contents_cstr, NULL);
 
 	glCompileShader(shader);
 
@@ -19,22 +44,23 @@ GLuint CreateShader(GLenum eShaderType, const std::string &strShaderFile)
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE)
 	{
-		GLint infoLogLength;
-		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
+		GLint info_log_len;
+		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_log_len);
 
-		GLchar *strInfoLog = new GLchar[infoLogLength + 1];
-		glGetShaderInfoLog(shader, infoLogLength, NULL, strInfoLog);
+		GLchar *str_info_log = new GLchar[info_log_len + 1];
+		glGetShaderInfoLog(shader, info_log_len, NULL, str_info_log);
 
-		const char *strShaderType = NULL;
+		const char *shader_type_cstr = NULL;
 		switch(eShaderType)
 		{
-		case GL_VERTEX_SHADER: strShaderType = "vertex"; break;
-		case GL_GEOMETRY_SHADER: strShaderType = "geometry"; break;
-		case GL_FRAGMENT_SHADER: strShaderType = "fragment"; break;
+		case GL_VERTEX_SHADER: shader_type_cstr = "vertex"; break;
+		case GL_GEOMETRY_SHADER: shader_type_cstr = "geometry"; break;
+		case GL_FRAGMENT_SHADER: shader_type_cstr = "fragment"; break;
 		}
 
-		fprintf(stderr, "Compile failure in %s shader:\n%s\n", strShaderType, strInfoLog);
-		delete[] strInfoLog;
+		std::cerr << "Compile failure in "  << shader_type_cstr << " shader "
+		          << shader_file_name << ":\n" << str_info_log << std::endl;
+		delete[] str_info_log;
 	}
 
 	return shader;
