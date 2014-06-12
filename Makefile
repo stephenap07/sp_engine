@@ -1,5 +1,5 @@
 CC =g++
-LDFLAGS =-lboost_system -lboost_filesystem -lSDL2 -lSDL2_image -lSOIL -lGLEW -lGL
+LDFLAGS =-lboost_system -lboost_filesystem -lSDL2 -lSDL2_image -lGLEW -lGL
 EXE =ex
 CFLAGS =-std=c++11 -Wall -g
 SRC =$(wildcard *.cpp) $(wildcard src/*/*.cpp)
