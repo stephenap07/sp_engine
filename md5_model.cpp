@@ -81,7 +81,7 @@ bool MD5Model::LoadModel(const std::string &filename)
 			file >> md5_version;
 			assert (md5_version == 10);
 		} else if (param == "commandline") {
-			IgnoreLine(file);
+			file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		} else if (param == "numJoints") {
 			file >> num_joints;
 			joints.reserve(num_joints);
@@ -96,12 +96,9 @@ bool MD5Model::LoadModel(const std::string &filename)
 				     >> joint.pos.x >> joint.pos.y >> joint.pos.z >> junk >> junk
 				     >> joint.orient.x >> joint.orient.y >> joint.orient.z >> junk;
 
-				// joint.pos.z = -joint.pos.z;
-				// joint.orient.z = -joint.orient.z;
-
 				RemoveQuotes(joint.name);
 				ComputeQuatW(joint.orient);
-				IgnoreLine(file);
+				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
 				joints.push_back(joint);
 			}
@@ -131,31 +128,31 @@ bool MD5Model::LoadModel(const std::string &filename)
 
 					mesh.tex_id = sp::MakeTexture(texture_path.string());
 
-					IgnoreLine(file);
+					file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
 				} else if (param == "numverts") {
 					file >> num_verts;
-					IgnoreLine(file);
+					file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 					for (int i = 0; i < num_verts; i++) {
 						Vertex vert;
 						file >> junk >> junk >> junk
 						     >> vert.texture0.x  >> vert.texture0.y >> junk
 							 >> vert.start_weight >> vert.weight_count;
 
-						IgnoreLine(file);
+						file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
 						mesh.verts.push_back(vert);
 						mesh.tex2d_buffer.push_back(vert.texture0);
 					}
 				} else if (param == "numtris") {
 					file >> num_tris;
-					IgnoreLine(file);
+					file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 					for (int i = 0; i < num_tris; i++) {
 						Triangle tri;
 						// Turn counter-clockwise for BACK_FACE culling
 						file >> junk >> junk >> tri.indices[2] >> tri.indices[1] >> tri.indices[0];
 
-						IgnoreLine(file);
+						file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 						
 						mesh.tris.push_back(tri);
 						mesh.index_buffer.push_back((GLuint)tri.indices[0]);
@@ -164,18 +161,18 @@ bool MD5Model::LoadModel(const std::string &filename)
 					}
 				} else if (param == "numweights") {
 					file >> num_weights;
-					IgnoreLine(file);
+					file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
 					for (int i = 0; i < num_weights; i++) {
 						Weight weight;
 						file >> junk >> junk >> weight.joint_id >> weight.bias >> junk
 							 >> weight.pos.x >> weight.pos.y >> weight.pos.z >> junk;
-						IgnoreLine(file);
+						file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 						// weight.pos.z = -weight.pos.z;	
 						mesh.weights.push_back(weight);
 					}
 				} else {
-					IgnoreLine(file);
+					file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 				}
 				file >> param;
 			}
@@ -351,27 +348,27 @@ void MD5Model::PrepareVAO(Mesh &mesh)
 
 	// Normal Buffer Data
 	glBufferSubData(GL_ARRAY_BUFFER,
-			offset,
-			vec3_size * mesh.normal_buffer.size(),
-			&mesh.normal_buffer[0]);
+	                offset,
+	                vec3_size * mesh.normal_buffer.size(),
+	                &mesh.normal_buffer[0]);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (const GLvoid *)offset);
 	offset += vec3_size * mesh.normal_buffer.size();
 	glEnableVertexAttribArray(1);
 
 	// Texture Buffer Data
 	glBufferSubData(GL_ARRAY_BUFFER,
-			offset,
-			vec2_size * mesh.tex2d_buffer.size(),
-			&mesh.tex2d_buffer[0]);
+	                offset,
+	                vec2_size * mesh.tex2d_buffer.size(),
+	                &mesh.tex2d_buffer[0]);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (const GLvoid *)offset);
 	offset += vec2_size * mesh.tex2d_buffer.size();
 	glEnableVertexAttribArray(2);
 
 	// Normal Lines Buffer data
 	glBufferSubData(GL_ARRAY_BUFFER,
-			offset,
-			vec3_size * mesh.position_buffer.size() * 2,
-			&lines[0]);
+	                offset,
+	                vec3_size * mesh.position_buffer.size() * 2,
+	                &lines[0]);
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (const GLvoid *)offset);
 	glEnableVertexAttribArray(3);
 
@@ -380,9 +377,9 @@ void MD5Model::PrepareVAO(Mesh &mesh)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.index_buffer_id);
 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-			sizeof(GLuint) * mesh.index_buffer.size(),
-			&mesh.index_buffer[0],
-			GL_STATIC_DRAW);
+	             sizeof(GLuint) * mesh.index_buffer.size(),
+	             &mesh.index_buffer[0],
+	             GL_STATIC_DRAW);
 
 	glBindVertexArray(0);
 }
