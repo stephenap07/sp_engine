@@ -190,9 +190,13 @@ bool IQMModel::LoadModel(const char *filename)
 		fs::path mat_path(&str[m.material]);
 		fs::path texture_path = parent_path / mat_path;
 
-		textures[i] = MakeTexture(texture_path.string());
-		if (!textures[i]) {
-			ErrorLog("%s: Failed to load texture %s\n", filename, texture_path.string().c_str());
+		if (!fs::is_regular_file(texture_path)) {
+			ErrorLog("%s: There is no material for this file\n", filename, texture_path.string().c_str());
+		} else {
+			textures[i] = MakeTexture(texture_path.string());
+			if (!textures[i]) {
+				ErrorLog("%s: Failed to load texture %s\n", filename, texture_path.string().c_str());
+			}
 		}
     }
 
