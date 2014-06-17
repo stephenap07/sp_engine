@@ -19,22 +19,13 @@
 #include "iqm_model.h"
 #include "asset.h"
 #include "logger.h"
-#include <boost/filesystem.hpp>
+#include "shader.h"
 
 namespace fs = boost::filesystem;
 
+using namespace sp::shader;
+
 namespace sp {
-
-//------------------------------------------------------------------------------
-
-struct Vertex {
-    GLfloat position[3];
-    GLfloat normal[3];
-    GLfloat tangent[4];
-    GLfloat texcoord[2];
-    GLubyte blendindex[4];
-    GLubyte blendweight[4];
-};
 
 //------------------------------------------------------------------------------
 
@@ -225,25 +216,7 @@ bool IQMModel::LoadModel(const char *filename)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, header.num_triangles*sizeof(iqmtriangle), tris, GL_STATIC_DRAW);
 
-    // Position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
-    // Normal
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(3 * sizeof(GLfloat)));
-    // Tangent
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(6 * sizeof(GLfloat)));
-    // Texcoord
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(10 * sizeof(GLfloat)));
-    // Blend Index
-    glVertexAttribPointer(4, 4, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(12 * sizeof(GLfloat)));
-    // Blend Weight
-    glVertexAttribPointer(5, 4, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(12 * sizeof(GLfloat) + 4 * sizeof(GLubyte)));
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
-    glEnableVertexAttribArray(3);
-    glEnableVertexAttribArray(4);
-    glEnableVertexAttribArray(5);
+    SetVertAttribPointers();
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
