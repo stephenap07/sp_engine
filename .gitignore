@@ -1,4 +1,7 @@
 ex
 *.swo
 *.swp
+*.swn
 *.o
+.tags
+obj/*
