@@ -13,9 +13,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <boost/filesystem.hpp>
+
 #include "util.h"
 #include "iqm_model.h"
 #include "asset.h"
+#include <boost/filesystem.hpp>
+
+namespace fs = boost::filesystem;
 
 namespace sp {
 
@@ -54,6 +59,11 @@ IQMModel::~IQMModel()
 
 bool IQMModel::LoadModel(const char *filename)
 {
+	if (!fs::exists(filename)) {
+		ErrorLog("MD5Model::LoadModel: Failed to load file %s\n", filename);
+		return false;
+	}
+
 	iqmheader header;
 
 	std::FILE *file = std::fopen(filename, "rb");
@@ -152,11 +162,11 @@ bool IQMModel::LoadModel(const char *filename)
 	joints = (iqmjoint *)&buffer[header.ofs_joints];
 	tris   = (iqmtriangle *)&buffer[header.ofs_triangles];
 
-	/*
 	baseframe.reserve(header.num_joints);
 	inversebaseframe.reserve(header.num_joints);
 	textures.reserve(header.num_meshes);
 
+	/*
     for(int i = 0; i < (int)header.num_joints; i++)
     {
         iqmjoint &j = joints[i];
@@ -168,15 +178,23 @@ bool IQMModel::LoadModel(const char *filename)
             // inversebaseframe[i] *= inversebaseframe[j.parent];
         }
     }
+	*/
+
+	// Assuming the materials are in the same directory as the iqm file
+	fs::path file_path   = filename;
+	fs::path parent_path = file_path.parent_path();
 
     for(int i = 0; i < (int)header.num_meshes; i++)
     {
-        iqmmesh &m = meshes[i];
-        printf("%s: loaded mesh: %s\n", filename, &str[m.name]);
-        GLuint tex = MakeTexture("assets/models/mrfixit/" + std::string(&str[m.material]));
-        if (tex) printf("%s: loaded material: %s\n", filename, &str[m.material]);
+		iqmmesh &m = meshes[i];
+		fs::path mat_path(&str[m.material]);
+		fs::path texture_path = parent_path / mat_path;
+
+		textures[i] = MakeTexture(texture_path.string());
+		if (!textures[i]) {
+			ErrorLog("%s: Failed to load texture %s\n", filename, texture_path.string().c_str());
+		}
     }
-	*/
 
     Vertex verts[header.num_vertexes];
     memset(verts, 0, header.num_vertexes*sizeof(Vertex));
@@ -242,11 +260,14 @@ void IQMModel::Render()
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glActiveTexture(GL_TEXTURE0);
 
     for(int i = 0; i < num_meshes; i++)
     {
-        iqmmesh &m = meshes[i];
-        glDrawElements(GL_TRIANGLES, 3 * m.num_triangles, GL_UNSIGNED_INT, (GLvoid*)(m.first_triangle * sizeof(iqmtriangle)));
+		iqmmesh &m = meshes[i];
+		glBindTexture(GL_TEXTURE_2D, textures[i]);
+		glDrawElements(GL_TRIANGLES, 3 * m.num_triangles, GL_UNSIGNED_INT, (GLvoid*)(m.first_triangle * sizeof(iqmtriangle)));
+		glBindTexture(GL_TEXTURE_2D, 0);
     }
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
