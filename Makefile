@@ -20,7 +20,7 @@ $(EXE): $(OBJ)
 	$(CC) $(OBJ) $(LDFLAGS) -o $@
 
 obj/%.o: %.cpp | obj
-	$(CC) $< -c $(CFLAGS) -o $@
+	$(CC) $< -c $(CFLAGS) -o $@ 
 
 obj:
 	mkdir obj

@@ -314,7 +314,7 @@ void MD5Model::PrepareBuffers(Mesh &mesh)
 				mesh.normal_buffer.size()) +
 			(vec2_size * mesh.tex2d_buffer.size()) + 
 			(vec3_size * 2 * mesh.position_buffer.size()),
-			NULL, GL_DYNAMIC_DRAW);
+			NULL, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -339,9 +339,9 @@ void MD5Model::PrepareVAO(Mesh &mesh)
 
 	// Vertex Buffer Data
 	glBufferSubData(GL_ARRAY_BUFFER,
-			offset,
-			vec3_size * mesh.position_buffer.size(),
-			&mesh.position_buffer[0]);
+	                offset,
+	                vec3_size * mesh.position_buffer.size(),
+	                &mesh.position_buffer[0]);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	offset += vec3_size * mesh.position_buffer.size();
 	glEnableVertexAttribArray(0);
@@ -381,6 +381,8 @@ void MD5Model::PrepareVAO(Mesh &mesh)
 	             &mesh.index_buffer[0],
 	             GL_STATIC_DRAW);
 
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
 
@@ -394,10 +396,18 @@ void MD5Model::Render()
 void MD5Model::RenderMesh(const Mesh &mesh)
 {
     glBindVertexArray(mesh.vao);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.index_buffer_id);
+	glBindBuffer(GL_ARRAY_BUFFER, mesh.attr_buffer_id);
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, mesh.tex_id);
+
 	glDrawElements(GL_TRIANGLES, mesh.index_buffer.size(), GL_UNSIGNED_INT, NULL);
+
 	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 

@@ -10,7 +10,6 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
-#include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -23,6 +22,7 @@
 #include "shader.h"
 #include "md5_model.h"
 #include "md5_animation.h"
+#include "iqm_model.h"
 
 #define BUFFER_OFFSET(offset) ((void*)(offset))
 
@@ -52,6 +52,7 @@ GLuint plane_vao;
 static const GLuint kGlobalUniformBinding = 0;
 
 MD5Model md5_model;
+sp::IQMModel iqm_model;
 
 glm::mat4 view;
 
@@ -149,8 +150,11 @@ void Init()
 
 	md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
 	md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
-	
+
+	iqm_model.LoadModel("assets/models/coco/coco3.iqm");
+
 	GLfloat vert_plane[] = {
+
 		-1.0f,  1.0f, -1.0f, // Top Left
 		1.0f,  1.0f, -1.0f,  // Top Right
 		1.0f, -1.0f, 1.0f,  // Bottom Right
@@ -187,6 +191,7 @@ void FreeResources()
 
 	glDeleteVertexArrays(1, &plane_vao);
 	glDeleteBuffers(1, &plane_vbo);
+	glDeleteBuffers(1, &global_ubo);
 
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
@@ -232,8 +237,16 @@ void Display()
 	GLint uni_model_matrix = glGetUniformLocation(model_program.program, "model_matrix");
 	glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
 
-	// Render
 	md5_model.Render();
+
+	model = glm::translate(model, glm::vec3(30.0f, -1.5f, 0.0f));
+	model = glm::scale(model, glm::vec3(7.0f));
+	glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
+
+	glFrontFace(GL_CW);
+	// Render
+	iqm_model.Render();
+	glFrontFace(GL_CCW);
 
 	glUseProgram(line_program.program);
 	glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
