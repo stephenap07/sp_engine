@@ -150,14 +150,13 @@ void Init()
 
     md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
     md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
-
-    iqm_model.LoadModel("assets/models/coco/coco3.iqm");
+    iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
 
     GLfloat vert_plane[] = {
         -1.0f,  1.0f, -1.0f, // Top Left
         1.0f,  1.0f, -1.0f,  // Top Right
-        1.0f, -1.0f, 1.0f,  // Bottom Right
-        -1.0f, -1.0f, 1.0f  // Bottom Left
+        1.0f, -1.0f, 1.0f,   // Bottom Right
+        -1.0f, -1.0f, 1.0f   // Bottom Left
     };
 
     GLuint vert_indices[] = {
