@@ -175,11 +175,13 @@ bool IQMModel::LoadModel(const char *filename)
         fs::path texture_path = parent_path / mat_path;
 
         if (!fs::is_regular_file(texture_path)) {
-            log::ErrorLog("%s: There is no material for this file\n", filename, texture_path.string().c_str());
+            log::ErrorLog("%s: There is no material for mesh %s called %s\n", filename, m.name, texture_path.string().c_str());
         } else {
             textures[i] = MakeTexture(texture_path.string());
             if (!textures[i]) {
                 log::ErrorLog("%s: Failed to load texture %s\n", filename, texture_path.string().c_str());
+            } else {
+                log::InfoLog("Loading texture %s\n", texture_path.string().c_str());
             }
         }
     }
@@ -190,18 +192,24 @@ bool IQMModel::LoadModel(const char *filename)
     {
         Vertex &v = verts[i];
 
-        if(inposition)
+        if(inposition) {
             memcpy(v.position, &inposition[i*3], sizeof(v.position));
-        if(innormal)
+        }
+        if(innormal) {
             memcpy(v.normal, &innormal[i*3], sizeof(v.normal));
-        if(intangent)
+        }
+        if(intangent) {
             memcpy(v.tangent, &intangent[i*4], sizeof(v.tangent));
-        if(intexcoord)
+        }
+        if(intexcoord) {
             memcpy(v.texcoord, &intexcoord[i*2], sizeof(v.texcoord));
-        if(inblendindex)
+        }
+        if(inblendindex) {
             memcpy(v.blendindex, &inblendindex[i*4], sizeof(v.blendindex));
-        if(inblendweight)
+        }
+        if(inblendweight) {
             memcpy(v.blendweight, &inblendweight[i*4], sizeof(v.blendweight));
+        }
     }
 
     glGenVertexArrays(1, &vao);
@@ -224,6 +232,8 @@ bool IQMModel::LoadModel(const char *filename)
 
     return true;
 }
+
+//------------------------------------------------------------------------------
 
 void IQMModel::Render()
 {
