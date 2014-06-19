@@ -242,8 +242,9 @@ void Display()
     glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
 
     glFrontFace(GL_CW);
-    // Render
+
     iqm_model.Render();
+
     glFrontFace(GL_CCW);
 
     glUseProgram(line_program.program);

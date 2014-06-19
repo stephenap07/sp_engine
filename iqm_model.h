@@ -10,6 +10,7 @@ public:
 	~IQMModel();
 
 	bool LoadModel(const char *filename);
+    void AnimateIQM(float current_frame);
 	void Render();
 
 private:
@@ -17,17 +18,20 @@ private:
 	GLuint vbo;
 	GLuint vao;
 
-	iqmmesh                  *meshes;
-	iqmjoint                 *joints;
-	iqmtriangle              *tris;
+	iqmmesh                *meshes;
+	iqmjoint               *joints;
+	iqmtriangle            *tris;
 
-	std::vector<glm::mat3x4> baseframe;
-	std::vector<glm::mat3x4> inversebaseframe;
-	std::vector<GLuint>      textures;
+	std::vector<glm::mat4> baseframe;
+	std::vector<glm::mat4> inversebaseframe;
+	std::vector<GLuint>    textures;
 
-	unsigned char            *buffer;
-	int                      num_tris;
-	int                      num_meshes;
+    std::vector<glm::mat4> frames;
+
+	unsigned char          *buffer;
+	int                    num_tris;
+	int                    num_joints;
+	int                    num_meshes;
 };
 
 }
