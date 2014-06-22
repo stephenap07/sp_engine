@@ -23,6 +23,7 @@
 #include "md5_model.h"
 #include "md5_animation.h"
 #include "iqm_model.h"
+#include "camera.h"
 
 #define BUFFER_OFFSET(offset) ((void*)(offset))
 
@@ -55,11 +56,6 @@ MD5Model md5_model;
 sp::IQMModel iqm_model;
 
 glm::mat4 view;
-
-glm::vec3 camera_pos;
-glm::vec3 camera_dir;
-glm::vec3 camera_up;
-glm::vec3 camera_look;
 
 const std::string kVertexShader("assets/shaders/base_vertex.vert");
 const std::string kFragmentShader("assets/shaders/gouroud.frag");
@@ -101,17 +97,10 @@ void InitializeProgram()
 
 void Init()
 {
-    camera_pos = glm::vec3(1.0f, 1.0f, 1.0f);
-    camera_dir = glm::vec3(0.0f, 0.0f, -1.0f);
-    camera_up  = glm::vec3(0.0f, 1.0f, 0.0f);
-    camera_look = glm::vec3(camera_pos + camera_dir);
-
     glm::mat4 model;
-    view = glm::lookAt(
-            camera_pos,
-            camera_look,
-            camera_up
-            );
+    sp::InitCamera();
+    view = sp::CameraLookAt();
+
     glm::mat4 proj = glm::perspective(60.0f, (float)kScreenWidth / kScreenHeight, 0.01f, 512.0f);
 
     glGenBuffers(1, &global_ubo);
@@ -205,14 +194,7 @@ void Display()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    camera_look = camera_pos + camera_dir;
-    camera_dir = glm::normalize(camera_look - camera_pos);
-
-    view = glm::lookAt(
-            camera_pos,
-            camera_look,
-            camera_up
-            );
+    view = sp::CameraLookAt();
 
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER,
@@ -285,36 +267,6 @@ void Display()
     SDL_GL_SwapWindow(window);
 }
 
-void HandleMouse(int x, int y, float dt)
-{
-    glm::vec3 axis = glm::normalize(glm::cross(camera_dir, camera_up));
-    glm::quat pitch_quat = glm::angleAxis(-10.0f * y * dt, axis);
-    camera_dir = glm::rotate(pitch_quat, camera_dir);
-
-    glm::quat heading_quat = glm::angleAxis(-10.0f * x * dt, glm::vec3(0.0f, 1.0f, 0.0f));
-    camera_dir = glm::rotate(heading_quat, camera_dir);
-}
-
-void MoveCameraForward(float dt)
-{
-    camera_pos += 10.0f * dt * camera_dir;
-}
-
-void MoveCameraBackward(float dt)
-{
-    camera_pos -= 10.0f * dt * camera_dir;
-}
-
-void MoveCameraRight(float dt)
-{
-    camera_pos += 10.0f * dt * glm::cross(camera_dir, camera_up);
-}
-
-void MoveCameraLeft(float dt)
-{
-    camera_pos -= 10.0f * dt * glm::cross(camera_dir, camera_up);
-}
-
 void Reshape (int w, int h)
 {
     glViewport(0, 0, (GLsizei) w, (GLsizei) h);
@@ -361,16 +313,16 @@ int main()
         if (state[SDL_SCANCODE_W] && state[SDL_SCANCODE_LGUI]) quit = true;
         if (state[SDL_SCANCODE_ESCAPE]) quit = true;
         if (state[SDL_SCANCODE_W]) {
-            MoveCameraForward(delta);
+            sp::MoveCameraForward(delta);
         }
         if (state[SDL_SCANCODE_S]) {
-            MoveCameraBackward(delta);
+            sp::MoveCameraBackward(delta);
         }
         if (state[SDL_SCANCODE_D]) {
-            MoveCameraRight(delta);
+            sp::MoveCameraRight(delta);
         }
         if (state[SDL_SCANCODE_A]) {
-            MoveCameraLeft(delta);
+            sp::MoveCameraLeft(delta);
         } 
 
         while(SDL_PollEvent(&window_ev)) {
@@ -382,7 +334,7 @@ int main()
 
             switch(window_ev.type) {
                 case SDL_MOUSEMOTION:
-                    HandleMouse(window_ev.motion.xrel, window_ev.motion.yrel, delta);
+                    sp::HandleMouse(window_ev.motion.xrel, window_ev.motion.yrel, delta);
                     break;
                 case SDL_QUIT:
                     quit = true;
