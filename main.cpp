@@ -57,7 +57,7 @@ sp::IQMModel iqm_model;
 
 glm::mat4 view;
 
-const std::string kVertexShader("assets/shaders/base_vertex.vert");
+const std::string kVertexShader("assets/shaders/basic_animated.vert");
 const std::string kFragmentShader("assets/shaders/gouroud.frag");
 const std::string kLineVertexShader("assets/shaders/line_shader.vert");
 const std::string kPassThroughVertexShader("assets/shaders/pass_through.vert");
