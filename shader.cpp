@@ -7,6 +7,7 @@
 #include <GL/glew.h>
 
 #include "shader.h"
+#include "logger.h"
 
 namespace sp {
 namespace shader {
@@ -16,7 +17,7 @@ std::string ReadFileToString(const std::string &file_name)
     std::ifstream file(file_name);
 
     if (!file.good()) {
-        std::cerr << "Error opening file " << file_name << std::endl;
+        log::ErrorLog("Error opening file %s\n", file_name.c_str());
     }
 
     std::string contents;

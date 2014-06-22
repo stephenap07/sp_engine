@@ -215,7 +215,10 @@ void Display()
             );
 
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+    glBufferSubData(GL_UNIFORM_BUFFER,
+                    sizeof(glm::mat4),
+                    sizeof(glm::mat4),
+                    glm::value_ptr(view));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glUseProgram(model_program.program);
@@ -232,7 +235,8 @@ void Display()
 
     model *= transform;
 
-    GLint uni_model_matrix = glGetUniformLocation(model_program.program, "model_matrix");
+    GLint uni_model_matrix = glGetUniformLocation(model_program.program,
+                                                  "model_matrix");
     glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
 
     md5_model.Render();
@@ -241,8 +245,16 @@ void Display()
     model = glm::scale(model, glm::vec3(7.0f));
     glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
 
+    GLint uni_bone_matrices = glGetUniformLocation(model_program.program,
+                                                   "bone_matrices");
+    glUniformMatrix4fv(uni_bone_matrices,
+                       iqm_model.out_frames.size(),
+                       GL_FALSE,
+                       glm::value_ptr(iqm_model.out_frames[0])); 
+
     glFrontFace(GL_CW);
 
+    iqm_model.AnimateIQM(10.0f * SDL_GetTicks() / 1000.0f);
     iqm_model.Render();
 
     glFrontFace(GL_CCW);
