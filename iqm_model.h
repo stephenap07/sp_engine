@@ -7,33 +7,35 @@ namespace sp {
 
 class IQMModel {
 public:
-	~IQMModel();
+    ~IQMModel();
 
-	bool LoadModel(const char *filename);
+    bool LoadModel(const char *filename);
     void AnimateIQM(float current_frame);
-	void Render();
+    void Render();
+
+    std::vector<glm::mat4> out_frames;
 
 private:
-	GLuint ebo;
-	GLuint vbo;
-	GLuint vao;
+    GLuint ebo;
+    GLuint vbo;
+    GLuint vao;
 
-	iqmmesh                *meshes;
-	iqmjoint               *joints;
-	iqmtriangle            *tris;
+    iqmmesh                *meshes;
+    iqmjoint               *joints;
+    iqmtriangle            *tris;
 
-	std::vector<glm::mat4> baseframe;
-	std::vector<glm::mat4> inversebaseframe;
-	std::vector<GLuint>    textures;
+    std::vector<glm::mat4> baseframe;
+    std::vector<glm::mat4> inversebaseframe;
+    std::vector<GLuint>    textures;
 
     std::vector<glm::mat4> frames;
 
-	unsigned char          *buffer;
-	int                    num_tris;
-	int                    num_joints;
-	int                    num_meshes;
+    unsigned char          *buffer;
+    int                    num_tris;
+    int                    num_joints;
+    int                    num_meshes;
 };
 
-}
+} // namespace sp
 
 #endif

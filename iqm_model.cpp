@@ -205,6 +205,7 @@ bool IQMModel::LoadModel(const char *filename)
         ushort  *framedata = (ushort *)&buffer[header.ofs_frames];
 
         frames.reserve(header.num_frames * header.num_poses);
+        out_frames.reserve(header.num_joints);
 
         for(int i = 0; i < (int)header.num_frames; i++)
         {
@@ -251,9 +252,6 @@ bool IQMModel::LoadModel(const char *filename)
             iqmanim &a = anims[i];
             printf("%s: loaded anim: %s\n", filename, &str[a.name]);
         }
-        
-        // TODO: Hook up uniform for bone mats
-
     }
 
     Vertex verts[header.num_vertexes];
@@ -281,6 +279,8 @@ bool IQMModel::LoadModel(const char *filename)
             memcpy(v.blendweight, &inblendweight[i*4], sizeof(v.blendweight));
         }
     }
+
+    // Abstract out ogl buffer calls?
 
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -328,12 +328,12 @@ void IQMModel::AnimateIQM(float current_frame)
     // You would normally do animation blending and inter-frame blending here in a 3D engine.
     for(int i = 0; i < num_joints; i++)
     {
-        glm::mat4 mat = mat1[i]*(1 - frame_offset) + mat2[i]*frame_offset;
+        glm::mat4 mat = mat1[i] * (1 - frame_offset) + mat2[i]*frame_offset;
 
         if(joints[i].parent >= 0) {
-            // outframe[i] = outframe[joints[i].parent] * mat;
+            out_frames[i] = out_frames[joints[i].parent] * mat;
         } else {
-            // outframe[i] = mat;
+            out_frames[i] = mat;
         }
     }
 }
