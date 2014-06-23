@@ -24,6 +24,7 @@
 #include "md5_animation.h"
 #include "iqm_model.h"
 #include "camera.h"
+#include "asset.h"
 
 #define BUFFER_OFFSET(offset) ((void*)(offset))
 
@@ -43,12 +44,23 @@ struct ProgramData {
 ProgramData model_program;
 ProgramData line_program;
 ProgramData plane_program;
+ProgramData skybox_program;
 
 GLuint global_ubo;
+
 GLuint plane_vbo;
 GLuint plane_ebo;
-
 GLuint plane_vao;
+
+GLuint cube_vbo;
+GLuint cube_ebo;
+GLuint cube_vao;
+
+GLuint skybox_tex;
+
+GLuint skybox_rotate_loc;
+GLuint object_mat_mvp_loc;
+GLuint object_mat_mv_loc; 
 
 static const GLuint kGlobalUniformBinding = 0;
 
@@ -62,6 +74,8 @@ const std::string kFragmentShader("assets/shaders/gouroud.frag");
 const std::string kLineVertexShader("assets/shaders/line_shader.vert");
 const std::string kPassThroughVertexShader("assets/shaders/pass_through.vert");
 const std::string kPassThroughFragment("assets/shaders/pass_through.frag");
+const std::string kSkyboxVertexShader("assets/shaders/skybox.vert");
+const std::string kSkyboxFragmentShader("assets/shaders/skybox.frag");
 
 ProgramData LoadProgram(const std::vector<GLuint> &kShaderList)
 {
@@ -87,10 +101,15 @@ void InitializeProgram()
         sp::shader::CreateShader(GL_VERTEX_SHADER, kPassThroughVertexShader),
         sp::shader::CreateShader(GL_FRAGMENT_SHADER, kPassThroughFragment)
     };
+    std::vector<GLuint> skybox_shader_list = {
+        sp::shader::CreateShader(GL_VERTEX_SHADER, kSkyboxVertexShader),
+        sp::shader::CreateShader(GL_FRAGMENT_SHADER, kSkyboxFragmentShader)
+    };
 
     model_program = LoadProgram(shader_list);
     line_program = LoadProgram(line_shader_list);
     plane_program = LoadProgram(plane_shader_list);
+    skybox_program = LoadProgram(skybox_shader_list);
 
     std::for_each(shader_list.begin(), shader_list.end(), glDeleteShader);
 }
@@ -101,7 +120,7 @@ void Init()
     sp::InitCamera();
     view = sp::CameraLookAt();
 
-    glm::mat4 proj = glm::perspective(60.0f, (float)kScreenWidth / kScreenHeight, 0.01f, 512.0f);
+    glm::mat4 proj = glm::perspective(60.0f, (float)kScreenWidth / kScreenHeight, 0.01f, 1024.0f);
 
     glGenBuffers(1, &global_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
@@ -169,12 +188,52 @@ void Init()
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+    // Cube map
+    
+    glGenBuffers(1, &cube_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, cube_vbo);
+
+    static const GLfloat cube_vertices[] =
+    {
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f,  1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f,  1.0f
+    };
+
+    static const GLushort cube_indices[] =
+    {
+        0, 1, 2, 3, 6, 7, 4, 5,         // First strip
+        2, 6, 0, 4, 1, 5, 3, 7          // Second strip
+    };
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &cube_vao);
+    glBindVertexArray(cube_vao);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+    glEnableVertexAttribArray(0);
+
+    glGenBuffers(1, &cube_ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube_ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indices), cube_indices, GL_STATIC_DRAW);
+
+    skybox_rotate_loc = glGetUniformLocation(skybox_program.program, "tc_rotate");
+    skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
 }
 
 void FreeResources()
 {
     glDeleteProgram(model_program.program);
     glDeleteProgram(line_program.program);
+    glDeleteProgram(plane_program.program);
+    glDeleteProgram(skybox_program.program);
 
     glDeleteVertexArrays(1, &plane_vao);
     glDeleteBuffers(1, &plane_vbo);
@@ -203,6 +262,33 @@ void Display()
                     glm::value_ptr(view));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+    // Begin Cube Map Drawing
+    glDisable(GL_CULL_FACE);
+    glUseProgram(skybox_program.program);
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+    //glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
+    
+    glm::mat4 proj = glm::perspective(60.0f, (float)kScreenWidth / kScreenHeight, 0.01f, 1024.0f);
+    glm::mat4 tc_matrix;
+    tc_matrix = glm::scale(proj * view * tc_matrix, glm::vec3(300.0f));
+    glUniformMatrix4fv(skybox_rotate_loc, 1, GL_FALSE, glm::value_ptr(tc_matrix));
+
+    glBindVertexArray(cube_vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube_ebo);
+    glBindBuffer(GL_ARRAY_BUFFER, cube_vbo);
+
+    glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_SHORT, NULL);
+    glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_SHORT, BUFFER_OFFSET(8 * sizeof(GLushort)));
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    glEnable(GL_CULL_FACE);
+    // End Cube Drawing
+
     glUseProgram(model_program.program);
 
     glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
@@ -221,7 +307,9 @@ void Display()
                                                   "model_matrix");
     glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
 
+    glDisable(GL_CULL_FACE);
     md5_model.Render();
+    glEnable(GL_CULL_FACE);
 
     model = glm::translate(model, glm::vec3(30.0f, -1.5f, 0.0f));
     model = glm::scale(model, glm::vec3(7.0f));
@@ -246,6 +334,7 @@ void Display()
 
     // md5_model.RenderNormals();
 
+    glDisable(GL_CULL_FACE);
     glUseProgram(plane_program.program);
 
     glm::mat4 plane_model;
@@ -263,6 +352,7 @@ void Display()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glUseProgram(0);
+    glEnable(GL_CULL_FACE);
 
     SDL_GL_SwapWindow(window);
 }
@@ -274,7 +364,6 @@ void Reshape (int w, int h)
 
 int main()
 {
-    // Initialize SDL
     SDL_Init(SDL_INIT_VIDEO);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -284,13 +373,13 @@ int main()
 
     IMG_Init(IMG_INIT_JPG|IMG_INIT_PNG|IMG_INIT_TIF);
 
-    window = SDL_CreateWindow("MD5 model Viewer", 100, 100,
-            kScreenWidth, kScreenHeight,
-            SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow(
+        "MD5 model Viewer", 100, 100,
+        kScreenWidth, kScreenHeight,
+        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
     context = SDL_GL_CreateContext(window);
 
-    // Initialize GLEW
     glewExperimental = GL_TRUE;
     glewInit();
 
