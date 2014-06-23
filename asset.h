@@ -3,6 +3,8 @@
 
 #include <unordered_map>
 
+#define MAX_TEXTURE_MIPS    14
+
 namespace sp {
 
 struct TextureCache {
@@ -12,7 +14,7 @@ struct TextureCache {
 	TextureMap cache;
 };
 
-GLuint MakeTexture(const std::string &image_file);
+GLuint MakeTexture(const std::string &image_file, GLenum target);
 
 }
 

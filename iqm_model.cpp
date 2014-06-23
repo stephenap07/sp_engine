@@ -182,7 +182,7 @@ bool IQMModel::LoadModel(const char *filename)
         if (!fs::is_regular_file(texture_path)) {
             log::ErrorLog("%s: There is no material for mesh %s called %s\n", filename, m.name, texture_path.string().c_str());
         } else {
-            textures[i] = MakeTexture(texture_path.string());
+            textures[i] = MakeTexture(texture_path.string(), GL_TEXTURE_2D);
             if (!textures[i]) {
                 log::ErrorLog("%s: Failed to load texture %s\n", filename, texture_path.string().c_str());
             } else {

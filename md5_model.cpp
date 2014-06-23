@@ -121,7 +121,7 @@ bool MD5Model::LoadModel(const std::string &filename)
                         texture_path.replace_extension(".tga");
                     }
 
-                    mesh.tex_id = sp::MakeTexture(texture_path.string());
+                    mesh.tex_id = sp::MakeTexture(texture_path.string(), GL_TEXTURE_2D);
 
                     file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
