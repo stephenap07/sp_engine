@@ -1,3 +1,6 @@
+#ifndef _SP_UTIL_H_
+#define _SP_UTIL_H_
+
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -6,6 +9,8 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <assert.h>
+
+#define BUFFER_OFFSET(offset) ((void*)(offset))
 
 #define ASSERT(c) if(c) {}
 
@@ -52,4 +57,6 @@ template<class T> inline void lilswap(T *buf, int len) { if(!islittleendian()) e
 template<class T> inline T bigswap(T n) { return islittleendian() ? endianswap(n) : n; }
 template<class T> inline void bigswap(T *buf, int len) { if(islittleendian()) endianswap(buf, len); }
 
-}
+} // namespace sp
+
+#endif
