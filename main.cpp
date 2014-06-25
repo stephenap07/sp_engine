@@ -227,17 +227,15 @@ void Display()
                     glm::value_ptr(view));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    // Begin Cube Map Drawing
+    // Begin cube drawing
     glDisable(GL_CULL_FACE);
     glUseProgram(skybox_program.program);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-    //glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
     
     glm::mat4 proj = glm::perspective(60.0f, (float)kScreenWidth / kScreenHeight, 0.01f, 1024.0f);
-    glm::mat4 tc_matrix;
-    tc_matrix = glm::scale(proj * view * tc_matrix, glm::vec3(300.0f));
+    glm::mat4 tc_matrix = glm::scale(proj * view, glm::vec3(300.0f));
     glUniformMatrix4fv(skybox_rotate_loc, 1, GL_FALSE, glm::value_ptr(tc_matrix));
 
     glBindVertexArray(cube->vao);
@@ -252,22 +250,19 @@ void Display()
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
     glEnable(GL_CULL_FACE);
-    // End Cube Drawing
+    // End cube drawing
 
+    // Begin md5 model drawing
     glUseProgram(model_program.program);
-
     glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
     glm::mat4 transform = glm::mat4(
-            glm::vec4(1, 0, 0, 0),
-            glm::vec4(0, 0, -1, 0),
-            glm::vec4(0, 1, 0, 0),
-            glm::vec4(0, 0, 0, 1)
-            );
+        glm::vec4(1, 0, 0, 0),
+        glm::vec4(0, 0, -1, 0),
+        glm::vec4(0, 1, 0, 0),
+        glm::vec4(0, 0, 0, 1)
+    );
     model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0));
-    model = glm::translate(model, glm::vec3(0.0f, -50.0f, 0.0f));
-
-    model *= transform;
-
+    model = glm::translate(model, glm::vec3(0.0f, -50.0f, 0.0f)) * transform;
     GLint uni_model_matrix = glGetUniformLocation(model_program.program,
                                                   "model_matrix");
     glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
@@ -275,11 +270,12 @@ void Display()
     glDisable(GL_CULL_FACE);
     md5_model.Render();
     glEnable(GL_CULL_FACE);
+    // End md5 model drawing
 
+    // Begin iqm model drawing
     model = glm::translate(model, glm::vec3(30.0f, -1.5f, 0.0f));
     model = glm::scale(model, glm::vec3(7.0f));
     glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
-
     GLint uni_bone_matrices = glGetUniformLocation(model_program.program,
                                                    "bone_matrices");
     glUniformMatrix4fv(uni_bone_matrices,
@@ -288,12 +284,12 @@ void Display()
                        glm::value_ptr(iqm_model.out_frames[0])); 
 
     glFrontFace(GL_CW);
-
     iqm_model.AnimateIQM(10.0f * SDL_GetTicks() / 1000.0f);
     iqm_model.Render();
-
     glFrontFace(GL_CCW);
+    // End iqm model drawing
 
+    // Begin normals drawing
     glUseProgram(line_program.program);
     glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
 
@@ -301,7 +297,9 @@ void Display()
 
     glDisable(GL_CULL_FACE);
     glUseProgram(plane_program.program);
+    // End normals drawing
 
+    // Begin plane drawing
     glm::mat4 plane_model;
     plane_model = glm::translate(plane_model, glm::vec3(0, -1.0f, 0));
     plane_model = glm::scale(plane_model, glm::vec3(10.0f, 1.0f, 10.0f));
@@ -318,6 +316,7 @@ void Display()
     glBindVertexArray(0);
     glUseProgram(0);
     glEnable(GL_CULL_FACE);
+    // End plane drawing
 
     SDL_GL_SwapWindow(window);
 }
@@ -399,7 +398,6 @@ int main()
         md5_model.Update(delta);
         Display();
     }
-
 
     FreeResources();
 
