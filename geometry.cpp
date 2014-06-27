@@ -5,7 +5,7 @@
 
 namespace sp {
 
-void MakeCube(BufferData *buffer)
+void MakeCube(Renderable *buffer)
 {
     static GLuint vao;
     if (!vao) {
@@ -52,7 +52,7 @@ void MakeCube(BufferData *buffer)
 
 //=============================================================================
 
-void MakePlane(BufferData *buffer)
+void MakePlane(Renderable *buffer)
 {
     GLfloat vert_plane[] = {
         -1.0f,  1.0f, -1.0f, // Top Left

@@ -3,18 +3,18 @@
 
 namespace sp {
 
-struct BufferData {
+struct Renderable {
     GLuint vao, vbo, ebo;
 
-    ~BufferData() {
+    ~Renderable() {
         glDeleteBuffers(1, &vbo);
         glDeleteBuffers(1, &ebo);
         glDeleteVertexArrays(1, &vao);
     }
 };
 
-void MakeCube(BufferData *buffer);
-void MakePlane(BufferData *buffer);
+void MakeCube(Renderable *buffer);
+void MakePlane(Renderable *buffer);
 
 } // namespace sp
 
