@@ -13,7 +13,8 @@ struct BufferData {
     }
 };
 
-BufferData *MakeCube();
+void MakeCube(BufferData *buffer);
+void MakePlane(BufferData *buffer);
 
 } // namespace sp
 

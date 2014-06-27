@@ -46,11 +46,8 @@ ProgramData skybox_program;
 
 GLuint global_ubo;
 
-GLuint plane_vbo;
-GLuint plane_ebo;
-GLuint plane_vao;
-
-sp::BufferData *cube;
+sp::BufferData cube;
+sp::BufferData plane;
 
 GLuint skybox_tex;
 
@@ -156,36 +153,8 @@ void Init()
     md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
     iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
 
-    GLfloat vert_plane[] = {
-        -1.0f,  1.0f, -1.0f, // Top Left
-        1.0f,  1.0f, -1.0f,  // Top Right
-        1.0f, -1.0f, 1.0f,   // Bottom Right
-        -1.0f, -1.0f, 1.0f   // Bottom Left
-    };
-
-    GLuint vert_indices[] = {
-        3, 2, 1,
-        1, 0, 3
-    };
-
-    glGenBuffers(1, &plane_ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, plane_ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vert_indices), vert_indices,
-            GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    glGenVertexArrays(1, &plane_vao);
-    glBindVertexArray(plane_vao);
-    glGenBuffers(1, &plane_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, plane_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vert_plane), vert_plane, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    cube = sp::MakeCube();
+    sp::MakePlane(&plane);
+    sp::MakeCube(&cube);
 
     skybox_rotate_loc = glGetUniformLocation(skybox_program.program, "tc_rotate");
     skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
@@ -197,12 +166,6 @@ void FreeResources()
     glDeleteProgram(line_program.program);
     glDeleteProgram(plane_program.program);
     glDeleteProgram(skybox_program.program);
-
-    glDeleteVertexArrays(1, &plane_vao);
-    glDeleteBuffers(1, &plane_vbo);
-    glDeleteBuffers(1, &global_ubo);
-
-    delete cube;
 
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
@@ -238,9 +201,9 @@ void Display()
     glm::mat4 tc_matrix = glm::scale(proj * view, glm::vec3(300.0f));
     glUniformMatrix4fv(skybox_rotate_loc, 1, GL_FALSE, glm::value_ptr(tc_matrix));
 
-    glBindVertexArray(cube->vao);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube->ebo);
-    glBindBuffer(GL_ARRAY_BUFFER, cube->vbo);
+    glBindVertexArray(cube.vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube.ebo);
+    glBindBuffer(GL_ARRAY_BUFFER, cube.vbo);
 
     glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_SHORT, NULL);
     glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_SHORT, BUFFER_OFFSET(8 * sizeof(GLushort)));
@@ -307,9 +270,9 @@ void Display()
     GLint uni_plane_model_matrix = glGetUniformLocation(plane_program.program, "model_matrix");
     glUniformMatrix4fv(uni_plane_model_matrix, 1, GL_FALSE, glm::value_ptr(plane_model)); 
 
-    glBindVertexArray(plane_vao);
+    glBindVertexArray(plane.vao);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, plane_ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, plane.ebo);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
