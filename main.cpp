@@ -46,8 +46,8 @@ ProgramData skybox_program;
 
 GLuint global_ubo;
 
-sp::BufferData cube;
-sp::BufferData plane;
+sp::Renderable cube;
+sp::Renderable plane;
 
 GLuint skybox_tex;
 
@@ -120,9 +120,8 @@ void Init()
     glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STREAM_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glBindBufferRange(GL_UNIFORM_BUFFER,
-            kGlobalUniformBinding,
-            global_ubo, 0, 2 * sizeof(glm::mat4));
+    glBindBufferRange(GL_UNIFORM_BUFFER, kGlobalUniformBinding,
+                      global_ubo, 0, 2 * sizeof(glm::mat4));
 
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(proj)); 
