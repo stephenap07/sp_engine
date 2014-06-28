@@ -195,7 +195,7 @@ void Display()
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
     glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
-    
+
     glm::mat4 proj = glm::perspective(60.0f, (float)kScreenWidth / kScreenHeight, 0.01f, 1024.0f);
     glm::mat4 tc_matrix = glm::scale(proj * view, glm::vec3(300.0f));
     glUniformMatrix4fv(skybox_rotate_loc, 1, GL_FALSE, glm::value_ptr(tc_matrix));
