@@ -92,16 +92,16 @@ void MakeTexturedPlane(Renderable *buffer)
 {
     GLfloat vert_plane[] = {
         // Position
-        -1.0f, -1.0f, 0.0f, // Top Left
-         1.0f, -1.0f, 0.0f,  // Top Right
-         1.0f,  1.0f, 0.0f,   // Bottom Right
-        -1.0f,  1.0f, 0.0f,  // Bottom Left
+        -1.0f, -1.0f, 0.0f,
+         1.0f, -1.0f, 0.0f,
+         1.0f,  1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f,
 
         // Texture Coordinates
         0.0f, 0.0f,
         1.0f, 0.0f,
-        1.0f, 0.0f,
-        0.0f, 0.0f
+        1.0f, 1.0f,
+        0.0f, 1.0f
     };
 
     glGenVertexArrays(1, &buffer->vao);
