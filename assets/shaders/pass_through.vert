@@ -16,4 +16,3 @@ void main(void)
    //vs_color = vec4(0.0, 0.0, 1.0, 1.0);
    gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position, 1.0);
 }
-

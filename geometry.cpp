@@ -86,4 +86,40 @@ void MakePlane(Renderable *buffer)
     glBindVertexArray(0);
 }
 
+//=============================================================================
+
+void MakeTexturedPlane(Renderable *buffer)
+{
+    GLfloat vert_plane[] = {
+        // Position
+        -1.0f, -1.0f, 0.0f, // Top Left
+         1.0f, -1.0f, 0.0f,  // Top Right
+         1.0f,  1.0f, 0.0f,   // Bottom Right
+        -1.0f,  1.0f, 0.0f,  // Bottom Left
+
+        // Texture Coordinates
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 0.0f,
+        0.0f, 0.0f
+    };
+
+    glGenVertexArrays(1, &buffer->vao);
+    glBindVertexArray(buffer->vao);
+
+    glGenBuffers(1, &buffer->vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vert_plane), vert_plane, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(12 * sizeof(float)));
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
+
 } // namespace sp

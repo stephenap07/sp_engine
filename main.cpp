@@ -27,12 +27,15 @@
 #include "asset.h"
 #include "geometry.h"
 #include "util.h"
+#include "pixel.h"
+#include "logger.h"
 
 const int kScreenWidth = 800;
 const int kScreenHeight = 600;
 
 SDL_Window *window = nullptr;
 SDL_GLContext context = nullptr;
+sp::Camera gScreenCamera;
 
 struct ProgramData {
     GLuint program;
@@ -50,6 +53,7 @@ sp::Renderable cube;
 sp::Renderable plane;
 
 GLuint skybox_tex;
+GLuint plane_tex;
 
 GLuint skybox_rotate_loc;
 GLuint object_mat_mvp_loc;
@@ -61,14 +65,6 @@ MD5Model md5_model;
 sp::IQMModel iqm_model;
 
 glm::mat4 view;
-
-const std::string kVertexShader("assets/shaders/basic_animated.vert");
-const std::string kFragmentShader("assets/shaders/gouroud.frag");
-const std::string kLineVertexShader("assets/shaders/line_shader.vert");
-const std::string kPassThroughVertexShader("assets/shaders/pass_through.vert");
-const std::string kPassThroughFragment("assets/shaders/pass_through.frag");
-const std::string kSkyboxVertexShader("assets/shaders/skybox.vert");
-const std::string kSkyboxFragmentShader("assets/shaders/skybox.frag");
 
 ProgramData LoadProgram(const std::vector<GLuint> &kShaderList)
 {
@@ -83,20 +79,20 @@ ProgramData LoadProgram(const std::vector<GLuint> &kShaderList)
 void InitializeProgram()
 {
     std::vector<GLuint> shader_list = {
-        sp::shader::CreateShader(GL_VERTEX_SHADER, kVertexShader),
-        sp::shader::CreateShader(GL_FRAGMENT_SHADER, kFragmentShader)
+        sp::shader::CreateShader(GL_VERTEX_SHADER, "assets/shaders/basic_animated.vert"),
+        sp::shader::CreateShader(GL_FRAGMENT_SHADER, "assets/shaders/gouroud.frag")
     };
     std::vector<GLuint> line_shader_list = {
-        sp::shader::CreateShader(GL_VERTEX_SHADER, kLineVertexShader),
-        sp::shader::CreateShader(GL_FRAGMENT_SHADER, kPassThroughFragment)
+        sp::shader::CreateShader(GL_VERTEX_SHADER, "assets/shaders/line_shader.vert"),
+        sp::shader::CreateShader(GL_FRAGMENT_SHADER, "assets/shaders/pass_through.frag")
     };
     std::vector<GLuint> plane_shader_list = {
-        sp::shader::CreateShader(GL_VERTEX_SHADER, kPassThroughVertexShader),
-        sp::shader::CreateShader(GL_FRAGMENT_SHADER, kPassThroughFragment)
+        sp::shader::CreateShader(GL_VERTEX_SHADER, "assets/shaders/basic_texture.vs"),
+        sp::shader::CreateShader(GL_FRAGMENT_SHADER,  "assets/shaders/gouroud.frag")
     };
     std::vector<GLuint> skybox_shader_list = {
-        sp::shader::CreateShader(GL_VERTEX_SHADER, kSkyboxVertexShader),
-        sp::shader::CreateShader(GL_FRAGMENT_SHADER, kSkyboxFragmentShader)
+        sp::shader::CreateShader(GL_VERTEX_SHADER, "assets/shaders/skybox.vert"),
+        sp::shader::CreateShader(GL_FRAGMENT_SHADER, "assets/shaders/skybox.frag")
     };
 
     model_program = LoadProgram(shader_list);
@@ -110,8 +106,7 @@ void InitializeProgram()
 void Init()
 {
     glm::mat4 model;
-    sp::InitCamera();
-    view = sp::CameraLookAt();
+    view = gScreenCamera.CameraLookAt();
 
     glm::mat4 proj = glm::perspective(60.0f, (float)kScreenWidth / kScreenHeight, 0.01f, 1024.0f);
 
@@ -152,11 +147,21 @@ void Init()
     md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
     iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
 
-    sp::MakePlane(&plane);
+    sp::MakeTexturedPlane(&plane);
     sp::MakeCube(&cube);
 
     skybox_rotate_loc = glGetUniformLocation(skybox_program.program, "tc_rotate");
     skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
+
+    plane_tex = sp::MakeTexture("assets/textures/checker.tga", GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, plane_tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
 }
 
 void FreeResources()
@@ -180,7 +185,7 @@ void Display()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    view = sp::CameraLookAt();
+    view = gScreenCamera.CameraLookAt();
 
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER,
@@ -257,24 +262,29 @@ void Display()
 
     // md5_model.RenderNormals();
 
-    glDisable(GL_CULL_FACE);
-    glUseProgram(plane_program.program);
     // End normals drawing
 
     // Begin plane drawing
+    glDisable(GL_CULL_FACE);
+    glUseProgram(plane_program.program);
+
     glm::mat4 plane_model;
     plane_model = glm::translate(plane_model, glm::vec3(0, -1.0f, 0));
     plane_model = glm::scale(plane_model, glm::vec3(10.0f, 1.0f, 10.0f));
-    plane_model = glm::rotate(plane_model, -45.0f, glm::vec3(1, 0, 0));
+    plane_model = glm::rotate(plane_model, -90.0f, glm::vec3(1, 0, 0));
     GLint uni_plane_model_matrix = glGetUniformLocation(plane_program.program, "model_matrix");
     glUniformMatrix4fv(uni_plane_model_matrix, 1, GL_FALSE, glm::value_ptr(plane_model)); 
 
     glBindVertexArray(plane.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, plane.vbo);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, plane.ebo);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, plane_tex);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glUseProgram(0);
     glEnable(GL_CULL_FACE);
@@ -327,18 +337,8 @@ int main()
         state = SDL_GetKeyboardState(nullptr);
         if (state[SDL_SCANCODE_W] && state[SDL_SCANCODE_LGUI]) quit = true;
         if (state[SDL_SCANCODE_ESCAPE]) quit = true;
-        if (state[SDL_SCANCODE_W]) {
-            sp::MoveCameraForward(delta);
-        }
-        if (state[SDL_SCANCODE_S]) {
-            sp::MoveCameraBackward(delta);
-        }
-        if (state[SDL_SCANCODE_D]) {
-            sp::MoveCameraRight(delta);
-        }
-        if (state[SDL_SCANCODE_A]) {
-            sp::MoveCameraLeft(delta);
-        } 
+
+        gScreenCamera.FreeRoamCamera(delta);
 
         while(SDL_PollEvent(&window_ev)) {
             switch(window_ev.window.event) {
@@ -349,7 +349,7 @@ int main()
 
             switch(window_ev.type) {
                 case SDL_MOUSEMOTION:
-                    sp::HandleMouse(window_ev.motion.xrel, window_ev.motion.yrel, delta);
+                    gScreenCamera.HandleMouse(window_ev.motion.xrel, window_ev.motion.yrel, delta);
                     break;
                 case SDL_QUIT:
                     quit = true;

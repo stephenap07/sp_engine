@@ -34,25 +34,21 @@ TextureCache::~TextureCache()
 	cache.clear();
 }
 
-//------------------------------------------------------------------------------
-
-GLuint MakeTexture(const std::string &image_file, GLenum target)
+GLuint MakeTextureFromSurface(const std::string &name, SDL_Surface *surface, GLenum target)
 {
 	TextureCache::TextureMap::const_iterator search =
-	    texture_cache.cache.find(image_file);
+	    texture_cache.cache.find(name);
 
 	if (search != texture_cache.cache.end()) {
 		return search->second;
 	}
 
+	assert(surface != nullptr);
+
 	GLuint id;
 
 	glGenTextures(1, &id);
 	glBindTexture(target, id);
-
-	SDL_Surface *surface = IMG_Load(image_file.c_str());
-
-	assert(surface != nullptr);
 
 	GLenum format;
     GLint internal_format = GL_RGB8;
@@ -258,8 +254,18 @@ GLuint MakeTexture(const std::string &image_file, GLenum target)
     }
 
 	glBindTexture(target, 0);
+	texture_cache.cache.insert({name, id});
+
+    return id;
+}
+
+//------------------------------------------------------------------------------
+
+GLuint MakeTexture(const std::string &image_file, GLenum target)
+{
+	SDL_Surface *surface = IMG_Load(image_file.c_str());
+    GLuint id = MakeTextureFromSurface(image_file, surface, target);
 	SDL_FreeSurface(surface);
-	texture_cache.cache.insert({image_file, id});
 
 	return id;
 }

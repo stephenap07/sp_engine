@@ -4,18 +4,19 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "camera.h"
+#include <SDL2/SDL.h>
 
-static glm::vec3 camera_pos;
-static glm::vec3 camera_dir;
-static glm::vec3 camera_up;
-static glm::vec3 camera_look;
+#include "camera.h"
 
 namespace sp {
 
+Camera::Camera() {
+    InitCamera();
+}
+
 //------------------------------------------------------------------------------
 
-void InitCamera()
+void Camera::InitCamera()
 {
     camera_pos  = glm::vec3(1.0f, 1.0f, 1.0f);
     camera_dir  = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -25,35 +26,35 @@ void InitCamera()
 
 //------------------------------------------------------------------------------
 
-void MoveCameraForward(float dt)
+void Camera::MoveCameraForward(float dt)
 {
     camera_pos += 10.0f * dt * camera_dir;
 }
 
 //------------------------------------------------------------------------------
 
-void MoveCameraBackward(float dt)
+void Camera::MoveCameraBackward(float dt)
 {
     camera_pos -= 10.0f * dt * camera_dir;
 }
 
 //------------------------------------------------------------------------------
 
-void MoveCameraRight(float dt)
+void Camera::MoveCameraRight(float dt)
 {
     camera_pos += 10.0f * dt * glm::cross(camera_dir, camera_up);
 }
 
 //------------------------------------------------------------------------------
 
-void MoveCameraLeft(float dt)
+void Camera::MoveCameraLeft(float dt)
 {
     camera_pos -= 10.0f * dt * glm::cross(camera_dir, camera_up);
 }
 
 //------------------------------------------------------------------------------
 
-void HandleMouse(int x, int y, float dt)
+void Camera::HandleMouse(int x, int y, float dt)
 {
     glm::vec3 axis = glm::normalize(glm::cross(camera_dir, camera_up));
     glm::quat pitch_quat = glm::angleAxis(-10.0f * y * dt, axis);
@@ -63,7 +64,9 @@ void HandleMouse(int x, int y, float dt)
     camera_dir = glm::rotate(heading_quat, camera_dir);
 }
 
-void UpdateCamera()
+//------------------------------------------------------------------------------
+
+void Camera::UpdateCamera()
 {
     camera_look = camera_pos + camera_dir;
     camera_dir = glm::normalize(camera_look - camera_pos);
@@ -71,7 +74,27 @@ void UpdateCamera()
 
 //------------------------------------------------------------------------------
 
-glm::mat4 CameraLookAt()
+void Camera::FreeRoamCamera(float delta)
+{
+    const unsigned char *state = SDL_GetKeyboardState(nullptr);
+
+    if (state[SDL_SCANCODE_W]) {
+        MoveCameraForward(delta);
+    }
+    if (state[SDL_SCANCODE_S]) {
+        MoveCameraBackward(delta);
+    }
+    if (state[SDL_SCANCODE_D]) {
+        MoveCameraRight(delta);
+    }
+    if (state[SDL_SCANCODE_A]) {
+        MoveCameraLeft(delta);
+    } 
+}
+
+//------------------------------------------------------------------------------
+
+glm::mat4 Camera::CameraLookAt()
 {
     UpdateCamera();
     return glm::lookAt(camera_pos, camera_look, camera_up);
