@@ -14,8 +14,8 @@ struct Renderable {
 };
 
 void MakeCube(Renderable *buffer);
-void MakePlane(Renderable *buffer);
-void MakeTexturedPlane(Renderable *buffer);
+void MakeQuad(Renderable *buffer);
+void MakeTexturedQuad(Renderable *buffer);
 
 } // namespace sp
 

@@ -147,7 +147,7 @@ void Init()
     md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
     iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
 
-    sp::MakeTexturedPlane(&plane);
+    sp::MakeTexturedQuad(&plane);
     sp::MakeCube(&cube);
 
     skybox_rotate_loc = glGetUniformLocation(skybox_program.program, "tc_rotate");

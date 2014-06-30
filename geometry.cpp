@@ -52,9 +52,9 @@ void MakeCube(Renderable *buffer)
 
 //=============================================================================
 
-void MakePlane(Renderable *buffer)
+void MakeQuad(Renderable *buffer)
 {
-    GLfloat vert_plane[] = {
+    GLfloat vert_quad[] = {
         -1.0f,  1.0f, -1.0f, // Top Left
         1.0f,  1.0f, -1.0f,  // Top Right
         1.0f, -1.0f, 1.0f,   // Bottom Right
@@ -77,7 +77,7 @@ void MakePlane(Renderable *buffer)
     glGenBuffers(1, &buffer->vbo);
     glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vert_plane), vert_plane, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vert_quad), vert_quad, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(0);
@@ -88,9 +88,9 @@ void MakePlane(Renderable *buffer)
 
 //=============================================================================
 
-void MakeTexturedPlane(Renderable *buffer)
+void MakeTexturedQuad(Renderable *buffer)
 {
-    GLfloat vert_plane[] = {
+    GLfloat vert_quad[] = {
         // Position
         -1.0f, -1.0f, 0.0f,
          1.0f, -1.0f, 0.0f,
@@ -109,7 +109,7 @@ void MakeTexturedPlane(Renderable *buffer)
 
     glGenBuffers(1, &buffer->vbo);
     glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vert_plane), vert_plane, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vert_quad), vert_quad, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(12 * sizeof(float)));
