@@ -169,7 +169,6 @@ void Init()
 
     skybox_rotate_loc = glGetUniformLocation(skybox_program.program, "tc_rotate");
     skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
-
     plane_tex = sp::MakeTexture("assets/textures/checker.tga", GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D, plane_tex);
@@ -178,6 +177,8 @@ void Init()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    iqm_model.AnimateIQM(200.0f);
 }
 
 void FreeResources()
@@ -261,13 +262,14 @@ void Display()
     glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
     GLint uni_bone_matrices = glGetUniformLocation(model_program.program,
                                                    "bone_matrices");
+                                                    
+    iqm_model.AnimateIQM(10.0f * SDL_GetTicks() / 1000.0f);
     glUniformMatrix4fv(uni_bone_matrices,
-                       iqm_model.out_frames.size(),
+                       iqm_model.out_frames.capacity(),
                        GL_FALSE,
                        glm::value_ptr(iqm_model.out_frames[0])); 
 
     glFrontFace(GL_CW);
-    iqm_model.AnimateIQM(10.0f * SDL_GetTicks() / 1000.0f);
     iqm_model.Render();
     glFrontFace(GL_CCW);
     // End iqm model drawing
