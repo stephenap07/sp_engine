@@ -27,6 +27,32 @@ using namespace sp::shader;
 
 namespace sp {
 
+/**
+ * Multiplies things backwards. Why do we need this? My guess is as good as yours.
+ */
+static glm::mat4 mul(const glm::mat4 & m1, const glm::mat4 & m2){
+    return m2*m1; //lol why does this work
+}
+
+/**
+ * Makes a bone transformation matrix
+ */
+glm::mat4 MakeBoneMat(glm::quat rot, glm::vec3 trans, glm::vec3 scale){
+    glm::mat3 thingy = glm::inverse(glm::mat3_cast(glm::normalize(rot)));
+    thingy[0] *= scale;
+    thingy[1] *= scale;
+    thingy[2] *= scale;
+
+    glm::mat4 out = glm::mat4(thingy);
+    out[0].w = trans.x;
+    out[1].w = trans.y;
+    out[2].w = trans.z;
+    out[3].w = 1.0;
+
+    return out;
+}
+
+
 //------------------------------------------------------------------------------
 
 IQMModel::~IQMModel()
@@ -156,16 +182,22 @@ bool IQMModel::LoadModel(const char *filename)
         iqmjoint &j = joints[i];
         baseframe[i] = glm::mat4();
 
-        glm::mat4 rot = glm::mat4_cast(glm::normalize(glm::quat(j.rotate[3], j.rotate[0], j.rotate[1], j.rotate[2])));
-        glm::mat4 trans = glm::translate(glm::mat4(), glm::vec3(j.translate[0], j.translate[1], j.translate[2]));
-        glm::mat4 scale = glm::scale(glm::mat4(), glm::vec3(j.scale[0], j.scale[1], j.scale[2]));
-        baseframe[i] = scale * rot * trans;
+        glm::quat rot_q;
+        rot_q.x = j.rotate[0];
+        rot_q.y = j.rotate[1];
+        rot_q.z = j.rotate[2];
+        rot_q.w = j.rotate[3];
 
+        glm::vec3 trans = glm::vec3(j.translate[0], j.translate[1], j.translate[2]);
+        glm::vec3 scale = glm::vec3(j.scale[0], j.scale[1], j.scale[2]);
+
+        baseframe[i] = MakeBoneMat(rot_q, trans, scale);
         inversebaseframe[i] = glm::inverse(baseframe[i]);
+
         if(j.parent >= 0) 
         {
-            baseframe[i] = baseframe[j.parent] * baseframe[i];
-            inversebaseframe[i] *= inversebaseframe[j.parent];
+            baseframe[i] = mul(baseframe[j.parent], baseframe[i]);
+            inversebaseframe[i] = mul(inversebaseframe[i], inversebaseframe[j.parent]);
         }
     }
 
@@ -235,15 +267,12 @@ bool IQMModel::LoadModel(const char *filename)
                 //   parentPose * (parentInverseBasePose * parentBasePose) * childPose * childInverseBasePose =>
                 //   parentPose * childPose * childInverseBasePose
 
-                glm::mat4 rot       = glm::mat4_cast(glm::normalize(rotate));
-                glm::mat4 trans     = glm::translate(glm::mat4(), translate);
-                glm::mat4 scale_mat = glm::scale(glm::mat4(), scale);
-                glm::mat4 m         = scale_mat * rot * trans;
+                glm::mat4 m = MakeBoneMat(rotate, translate, scale);
 
                 if (p.parent >= 0) {
-                    frames[i*header.num_poses + j] = baseframe[p.parent] * m * inversebaseframe[j];
+                    frames[i*header.num_poses + j] = mul(mul(baseframe[p.parent], m), inversebaseframe[j]);
                 }
-                else frames[i*header.num_poses + j] = m * inversebaseframe[j];
+                else frames[i*header.num_poses + j] = inversebaseframe[j] * m;
             }
         }
 
@@ -305,33 +334,31 @@ bool IQMModel::LoadModel(const char *filename)
 
 //------------------------------------------------------------------------------
 
-void IQMModel::AnimateIQM(float current_frame)
+void IQMModel::AnimateIQM(float current_time)
 {
     int num_frames = frames.capacity();
     if (!num_frames) {
         return;
     }
 
+    float current_frame = current_time * 10.0f;
+    current_frame = fmod(current_frame, num_frames);
+
     int frame1 = (int)floor(current_frame);
     int frame2 = frame1 + 1;
 
     float frame_offset = current_frame - frame1;
-
-    frame1 %= num_frames;
     frame2 %= num_frames;
 
     glm::mat4 *mat1 = &frames[frame1 * num_joints];
     glm::mat4 *mat2 = &frames[frame2 * num_joints];
 
-    // Interpolate matrixes between the two closest frames and concatenate with parent matrix if necessary.
-    // Concatenate the result with the inverse of the base pose.
-    // You would normally do animation blending and inter-frame blending here in a 3D engine.
     for(int i = 0; i < num_joints; i++)
     {
-        glm::mat4 mat = mat1[i] * (1 - frame_offset) + mat2[i]*frame_offset;
+        glm::mat4 mat = (1 - frame_offset)*mat1[i] + frame_offset*mat2[i];
 
         if(joints[i].parent >= 0) {
-            out_frames[i] = out_frames[joints[i].parent] * mat;
+            out_frames[i] = mat * out_frames[joints[i].parent];
         } else {
             out_frames[i] = mat;
         }
