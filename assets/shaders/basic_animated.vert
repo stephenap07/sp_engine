@@ -25,15 +25,15 @@ void main(void)
    vs_normal = normalize(normal);
    vs_tex_coord = tex_coord;
 
-   mat4 m = bone_matrices[int(blend_index.x)] * blend_weight.x;
-   m     += bone_matrices[int(blend_index.y)] * blend_weight.y;
-   m     += bone_matrices[int(blend_index.z)] * blend_weight.z;
-   m     += bone_matrices[int(blend_index.w)] * blend_weight.w;
+   mat4 m = mat4(1.0);
 
    if (blend_index.x != 0) {
-       gl_Position = projection_matrix * view_matrix * model_matrix * m * vec4(position, 1.0);
-   } else {
-       gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position, 1.0);
+       m  = bone_matrices[int(blend_index.x)] * blend_weight.x;
+       m += bone_matrices[int(blend_index.y)] * blend_weight.y;
+       m += bone_matrices[int(blend_index.z)] * blend_weight.z;
+       m += bone_matrices[int(blend_index.w)] * blend_weight.w;
    }
+
+   gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position, 1.0) * m;
 }
 

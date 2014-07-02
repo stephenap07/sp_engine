@@ -307,7 +307,7 @@ bool IQMModel::LoadModel(const char *filename)
 
 void IQMModel::AnimateIQM(float current_frame)
 {
-    int num_frames = frames.size();
+    int num_frames = frames.capacity();
     if (!num_frames) {
         return;
     }
