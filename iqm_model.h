@@ -10,7 +10,7 @@ public:
     ~IQMModel();
 
     bool LoadModel(const char *filename);
-    void AnimateIQM(float current_frame);
+    void AnimateIQM(float current_time);
     void Render();
 
     std::vector<glm::mat4> out_frames;

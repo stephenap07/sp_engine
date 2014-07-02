@@ -270,6 +270,7 @@ void Display()
                        glm::value_ptr(iqm_model.out_frames[0])); 
 
     glFrontFace(GL_CW);
+    iqm_model.AnimateIQM(SDL_GetTicks() / 1000.0f);
     iqm_model.Render();
     glFrontFace(GL_CCW);
     // End iqm model drawing
