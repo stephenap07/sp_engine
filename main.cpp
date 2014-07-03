@@ -83,6 +83,8 @@ sp::IQMModel iqm_model;
 
 glm::mat4 view;
 
+float animate = 0.0f;
+
 ProgramData LoadProgram(const std::vector<GLuint> &kShaderList)
 {
     ProgramData data;
@@ -177,8 +179,6 @@ void Init()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
-
-    iqm_model.AnimateIQM(200.0f);
 }
 
 void FreeResources()
@@ -263,14 +263,14 @@ void Display()
     GLint uni_bone_matrices = glGetUniformLocation(model_program.program,
                                                    "bone_matrices");
                                                     
-    iqm_model.AnimateIQM(10.0f * SDL_GetTicks() / 1000.0f);
+    iqm_model.AnimateIQM(animate);
     glUniformMatrix4fv(uni_bone_matrices,
-                       iqm_model.out_frames.capacity(),
+                       iqm_model.out_frames.size(),
                        GL_FALSE,
                        glm::value_ptr(iqm_model.out_frames[0])); 
 
     glFrontFace(GL_CW);
-    iqm_model.AnimateIQM(SDL_GetTicks() / 1000.0f);
+    iqm_model.AnimateIQM(animate);
     iqm_model.Render();
     glFrontFace(GL_CCW);
     // End iqm model drawing
@@ -352,6 +352,7 @@ int main()
     {
         delta = (SDL_GetTicks() - elapsed) / 1000.0f;
         elapsed = SDL_GetTicks();
+        animate += 10.0f * delta;
 
         state = SDL_GetKeyboardState(nullptr);
         if (state[SDL_SCANCODE_W] && state[SDL_SCANCODE_LGUI]) quit = true;
