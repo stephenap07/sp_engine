@@ -27,17 +27,10 @@ using namespace sp::shader;
 
 namespace sp {
 
-/**
- * Multiplies things backwards. Why do we need this? My guess is as good as yours.
- */
-static glm::mat4 mul(const glm::mat4 & m1, const glm::mat4 & m2){
-    return m2*m1; //lol why does this work
-}
+//------------------------------------------------------------------------------
 
-/**
- * Makes a bone transformation matrix
- */
-glm::mat4 MakeBoneMat(glm::quat rot, glm::vec3 trans, glm::vec3 scale){
+static glm::mat4 MakeBoneMat(glm::quat rot, glm::vec3 trans, glm::vec3 scale)
+{
     glm::mat3 thingy = glm::inverse(glm::mat3_cast(glm::normalize(rot)));
     thingy[0] *= scale;
     thingy[1] *= scale;
@@ -132,27 +125,27 @@ bool IQMModel::LoadModel(const char *filename)
                     return false;
                 }
                 inposition = (float *)&buffer[vert.offset];
-                lilswap(inposition, 3*header.num_vertexes);
+                lilswap(inposition, 3 * header.num_vertexes);
                 break;
             case IQM_NORMAL:
                 if (vert.format != IQM_FLOAT || vert.size != 3) {
                     return false;
                 } innormal = (float *)&buffer[vert.offset];
-                lilswap(innormal, 3*header.num_vertexes);
+                lilswap(innormal, 3 * header.num_vertexes);
                 break;
             case IQM_TANGENT:
                 if (vert.format != IQM_FLOAT || vert.size != 4) {
                     return false;
                 }
                 intangent = (float *)&buffer[vert.offset];
-                lilswap(intangent, 4*header.num_vertexes);
+                lilswap(intangent, 4 * header.num_vertexes);
                 break;
             case IQM_TEXCOORD:
                 if (vert.format != IQM_FLOAT || vert.size != 2) {
                     return false;
                 }
                 intexcoord = (float *)&buffer[vert.offset];
-                lilswap(intexcoord, 2*header.num_vertexes);
+                lilswap(intexcoord, 2 * header.num_vertexes);
                 break;
             case IQM_BLENDINDEXES:
                 if (vert.format != IQM_UBYTE || vert.size != 4) {
@@ -173,14 +166,13 @@ bool IQMModel::LoadModel(const char *filename)
     joints = (iqmjoint *)&buffer[header.ofs_joints];
     tris   = (iqmtriangle *)&buffer[header.ofs_triangles];
 
-    baseframe.reserve(header.num_joints);
-    inversebaseframe.reserve(header.num_joints);
-    textures.reserve(header.num_meshes);
+    baseframe.resize(header.num_joints);
+    inversebaseframe.resize(header.num_joints);
+    textures.resize(header.num_meshes);
 
     for(int i = 0; i < (int)header.num_joints; i++)
     {
         iqmjoint &j = joints[i];
-        baseframe[i] = glm::mat4();
 
         glm::quat rot_q;
         rot_q.x = j.rotate[0];
@@ -196,8 +188,8 @@ bool IQMModel::LoadModel(const char *filename)
 
         if(j.parent >= 0) 
         {
-            baseframe[i] = mul(baseframe[j.parent], baseframe[i]);
-            inversebaseframe[i] = mul(inversebaseframe[i], inversebaseframe[j.parent]);
+            baseframe[i] = baseframe[i] * baseframe[j.parent];
+            inversebaseframe[i] = inversebaseframe[j.parent] * inversebaseframe[i];
         }
     }
 
@@ -236,8 +228,8 @@ bool IQMModel::LoadModel(const char *filename)
         iqmpose *poses     = (iqmpose *)&buffer[header.ofs_poses];
         ushort  *framedata = (ushort *)&buffer[header.ofs_frames];
 
-        frames.reserve(header.num_frames * header.num_poses);
-        out_frames.reserve(header.num_joints);
+        frames.resize(header.num_frames * header.num_poses);
+        out_frames.resize(header.num_joints);
 
         for(int i = 0; i < (int)header.num_frames; i++)
         {
@@ -260,26 +252,20 @@ bool IQMModel::LoadModel(const char *filename)
                 scale.y = p.channeloffset[8]; if(p.mask&0x100) scale.y += *framedata++ * p.channelscale[8];
                 scale.z = p.channeloffset[9]; if(p.mask&0x200) scale.z += *framedata++ * p.channelscale[9];
 
-                // Concatenate each pose with the inverse base pose to avoid doing this at animation time.
-                // If the joint has a parent, then it needs to be pre-concatenated with its parent's base pose.
-                // Thus it all negates at animation time like so: 
-                //   (parentPose * parentInverseBasePose) * (parentBasePose * childPose * childInverseBasePose) =>
-                //   parentPose * (parentInverseBasePose * parentBasePose) * childPose * childInverseBasePose =>
-                //   parentPose * childPose * childInverseBasePose
-
                 glm::mat4 m = MakeBoneMat(rotate, translate, scale);
 
                 if (p.parent >= 0) {
-                    frames[i*header.num_poses + j] = mul(mul(baseframe[p.parent], m), inversebaseframe[j]);
+                    frames[i * header.num_poses + j] = inversebaseframe[j] * m * baseframe[p.parent];
+                } else {
+                    frames[i * header.num_poses + j] = inversebaseframe[j] * m;
                 }
-                else frames[i*header.num_poses + j] = inversebaseframe[j] * m;
             }
         }
 
         for(int i = 0; i < (int)header.num_anims; i++)
         {
             iqmanim &a = anims[i];
-            printf("%s: loaded anim: %s\n", filename, &str[a.name]);
+            log::InfoLog("%s: loaded anim: %s\n", filename, &str[a.name]);
         }
     }
 
@@ -336,29 +322,28 @@ bool IQMModel::LoadModel(const char *filename)
 
 void IQMModel::AnimateIQM(float current_time)
 {
-    int num_frames = frames.capacity();
+    int num_frames = frames.size();
     if (!num_frames) {
         return;
     }
 
-    float current_frame = current_time * 10.0f;
-    current_frame = fmod(current_frame, num_frames);
-
-    int frame1 = (int)floor(current_frame);
+    int frame1 = (int)floor(current_time);
     int frame2 = frame1 + 1;
 
-    float frame_offset = current_frame - frame1;
+    float frame_offset = current_time - frame1;
+
+    frame1 %= num_frames;
     frame2 %= num_frames;
 
-    glm::mat4 *mat1 = &frames[frame1 * num_joints];
-    glm::mat4 *mat2 = &frames[frame2 * num_joints];
+    glm::mat4 *mat0 = &frames[frame1 * num_joints];
+    glm::mat4 *mat1 = &frames[frame2 * num_joints];
 
     for(int i = 0; i < num_joints; i++)
     {
-        glm::mat4 mat = (1 - frame_offset)*mat1[i] + frame_offset*mat2[i];
+        glm::mat4 mat = (1.0f - frame_offset)*mat0[i] + frame_offset*mat1[i];
 
         if(joints[i].parent >= 0) {
-            out_frames[i] = mat * out_frames[joints[i].parent];
+            out_frames[i] = out_frames[joints[i].parent] * mat;
         } else {
             out_frames[i] = mat;
         }
@@ -386,4 +371,5 @@ void IQMModel::Render()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
+
 } // namespace sp
