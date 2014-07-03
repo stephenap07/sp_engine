@@ -125,7 +125,7 @@ void InitializeProgram()
 void Init()
 {
     glm::mat4 model;
-    view = gScreenCamera.CameraLookAt();
+    view = gScreenCamera.LookAt();
 
     glm::mat4 proj = glm::perspective(60.0f, (float)kScreenWidth / kScreenHeight, 0.01f, 1024.0f);
 
@@ -202,7 +202,7 @@ void Display()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    view = gScreenCamera.CameraLookAt();
+    view = gScreenCamera.LookAt();
 
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER,
@@ -358,7 +358,7 @@ int main()
         if (state[SDL_SCANCODE_W] && state[SDL_SCANCODE_LGUI]) quit = true;
         if (state[SDL_SCANCODE_ESCAPE]) quit = true;
 
-        gScreenCamera.FreeRoamCamera(delta);
+        gScreenCamera.FreeRoam(delta);
 
         while(SDL_PollEvent(&window_ev)) {
             switch(window_ev.window.event) {

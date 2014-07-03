@@ -7,15 +7,15 @@ class Camera {
 public:
 
     Camera();
-    void InitCamera();
-    void MoveCameraForward(float dt);
-    void MoveCameraBackward(float dt);
-    void MoveCameraRight(float dt);
-    void MoveCameraLeft(float dt);
+    void Init();
+    void MoveForward(float dt);
+    void MoveBackward(float dt);
+    void MoveRight(float dt);
+    void MoveLeft(float dt);
     void HandleMouse(int x, int y, float dt);
-    void UpdateCamera();
-    void FreeRoamCamera(float delta);
-    glm::mat4 CameraLookAt();
+    void Update();
+    void FreeRoam(float delta);
+    glm::mat4 LookAt();
 
 private:
     glm::vec3 camera_pos;

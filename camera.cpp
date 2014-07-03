@@ -11,12 +11,12 @@
 namespace sp {
 
 Camera::Camera() {
-    InitCamera();
+    Init();
 }
 
 //------------------------------------------------------------------------------
 
-void Camera::InitCamera()
+void Camera::Init()
 {
     camera_pos  = glm::vec3(1.0f, 1.0f, 1.0f);
     camera_dir  = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -26,28 +26,28 @@ void Camera::InitCamera()
 
 //------------------------------------------------------------------------------
 
-void Camera::MoveCameraForward(float dt)
+void Camera::MoveForward(float dt)
 {
     camera_pos += 10.0f * dt * camera_dir;
 }
 
 //------------------------------------------------------------------------------
 
-void Camera::MoveCameraBackward(float dt)
+void Camera::MoveBackward(float dt)
 {
     camera_pos -= 10.0f * dt * camera_dir;
 }
 
 //------------------------------------------------------------------------------
 
-void Camera::MoveCameraRight(float dt)
+void Camera::MoveRight(float dt)
 {
     camera_pos += 10.0f * dt * glm::cross(camera_dir, camera_up);
 }
 
 //------------------------------------------------------------------------------
 
-void Camera::MoveCameraLeft(float dt)
+void Camera::MoveLeft(float dt)
 {
     camera_pos -= 10.0f * dt * glm::cross(camera_dir, camera_up);
 }
@@ -66,7 +66,7 @@ void Camera::HandleMouse(int x, int y, float dt)
 
 //------------------------------------------------------------------------------
 
-void Camera::UpdateCamera()
+void Camera::Update()
 {
     camera_look = camera_pos + camera_dir;
     camera_dir = glm::normalize(camera_look - camera_pos);
@@ -74,29 +74,29 @@ void Camera::UpdateCamera()
 
 //------------------------------------------------------------------------------
 
-void Camera::FreeRoamCamera(float delta)
+void Camera::FreeRoam(float delta)
 {
     const unsigned char *state = SDL_GetKeyboardState(nullptr);
 
     if (state[SDL_SCANCODE_W]) {
-        MoveCameraForward(delta);
+        MoveForward(delta);
     }
     if (state[SDL_SCANCODE_S]) {
-        MoveCameraBackward(delta);
+        MoveBackward(delta);
     }
     if (state[SDL_SCANCODE_D]) {
-        MoveCameraRight(delta);
+        MoveRight(delta);
     }
     if (state[SDL_SCANCODE_A]) {
-        MoveCameraLeft(delta);
+        MoveLeft(delta);
     } 
 }
 
 //------------------------------------------------------------------------------
 
-glm::mat4 Camera::CameraLookAt()
+glm::mat4 Camera::LookAt()
 {
-    UpdateCamera();
+    Update();
     return glm::lookAt(camera_pos, camera_look, camera_up);
 }
 

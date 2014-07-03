@@ -60,8 +60,8 @@ GLuint CreateShader(GLenum eShaderType, const std::string &shader_file_name)
             case GL_FRAGMENT_SHADER: shader_type_cstr = "fragment"; break;
         }
 
-        std::cerr << "Compile failure in "  << shader_type_cstr << " shader "
-            << shader_file_name << ":\n" << str_info_log << std::endl;
+        log::ErrorLog("Compile failure in %s shader %s:\n %s\n",
+                      shader_type_cstr, shader_file_name.c_str(), str_info_log);
         delete[] str_info_log;
     }
 
