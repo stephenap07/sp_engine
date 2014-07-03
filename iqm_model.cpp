@@ -22,7 +22,6 @@
 #include "shader.h"
 
 namespace fs = boost::filesystem;
-
 using namespace sp::shader;
 
 namespace sp {
@@ -31,12 +30,12 @@ namespace sp {
 
 static glm::mat4 MakeBoneMat(glm::quat rot, glm::vec3 trans, glm::vec3 scale)
 {
-    glm::mat3 thingy = glm::inverse(glm::mat3_cast(glm::normalize(rot)));
-    thingy[0] *= scale;
-    thingy[1] *= scale;
-    thingy[2] *= scale;
+    glm::mat3 rotation_mat = glm::inverse(glm::mat3_cast(glm::normalize(rot)));
+    rotation_mat[0] *= scale;
+    rotation_mat[1] *= scale;
+    rotation_mat[2] *= scale;
 
-    glm::mat4 out = glm::mat4(thingy);
+    glm::mat4 out = glm::mat4(rotation_mat);
     out[0].w = trans.x;
     out[1].w = trans.y;
     out[2].w = trans.z;
@@ -267,6 +266,7 @@ bool IQMModel::LoadModel(const char *filename)
             iqmanim &a = anims[i];
             log::InfoLog("%s: loaded anim: %s\n", filename, &str[a.name]);
         }
+
     }
 
     Vertex verts[header.num_vertexes];
