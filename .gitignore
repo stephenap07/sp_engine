@@ -7,3 +7,5 @@ ex
 .tags
 obj/*
 \#*
+libspengine.a
+libspengine.so
