@@ -1,9 +1,13 @@
 CC =g++
-LDFLAGS =-lboost_system -lboost_filesystem -lSDL2 -lSDL2_image -lGLEW
-EXE =ex
-CFLAGS =-std=c++11 -Wall -g
-SRC =$(wildcard *.cpp) $(wildcard src/*/*.cpp)
-OBJ =$(addprefix obj/,$(notdir $(SRC:.cpp=.o)))  
+
+SRC = $(wildcard *.cpp) $(wildcard src/*/*.cpp)
+OBJ = $(addprefix obj/,$(notdir $(SRC:.cpp=.o)))  
+
+LDFLAGS = -lboost_system -lboost_filesystem -lSDL2 -lSDL2_image -lGLEW -shared
+CFLAGS  = -std=c++11 -Wall-fPIC -g
+
+DYNAMIC = lib/libspengine.so
+STATIC  = lib/libspengine.a
 
 UNAME := $(shell uname)
 
@@ -14,10 +18,13 @@ ifeq ($(UNAME), Darwin)
 	LDFLAGS += -framework OpenGL
 endif
 
-all: $(EXE)
+all: $(DYNAMIC) $(STATIC)
 
-$(EXE): $(OBJ)
+$(DYNAMIC): $(OBJ) | lib
 	$(CC) $(OBJ) $(LDFLAGS) -o $@
+
+$(STATIC): $(OBJ) | lib
+	ar rcs $@ $(OBJ)
 
 obj/%.o: %.cpp | obj
 	$(CC) $< -c $(CFLAGS) -o $@ 
@@ -25,8 +32,8 @@ obj/%.o: %.cpp | obj
 obj:
 	mkdir obj
 
-clean:
-	rm $(OBJ) $(EXE)
+lib:
+	mkdir lib
 
-run:
-	./$(EXE)
+clean:
+	rm $(OBJ) $(DYNAMIC)
