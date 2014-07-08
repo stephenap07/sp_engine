@@ -4,7 +4,7 @@ SRC = $(wildcard *.cpp) $(wildcard src/*/*.cpp)
 OBJ = $(addprefix obj/,$(notdir $(SRC:.cpp=.o)))  
 
 LDFLAGS = -lboost_system -lboost_filesystem -lSDL2 -lSDL2_image -lGLEW -shared
-CFLAGS  = -std=c++11 -Wall-fPIC -g
+CFLAGS  = -std=c++11 -Wall -fPIC -g
 
 DYNAMIC = lib/libspengine.so
 STATIC  = lib/libspengine.a

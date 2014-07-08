@@ -694,9 +694,9 @@ int main(int argc, char **argv)
 
     SDL_Event window_ev;
 
-    //if(!meshdata && !loadiqm("mrfixit.iqm")) return EXIT_FAILURE;
+    if(!meshdata && !loadiqm("mrfixit.iqm")) return EXIT_FAILURE;
 
-    //initgl();
+    initgl();
 
     unsigned long elapsed = SDL_GetTicks();
     float delta = 0.0f;
@@ -727,31 +727,7 @@ int main(int argc, char **argv)
         }
 
         animate += 10 * delta;
-        // displayfunc();
-
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_NORMAL_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glColor3f(1.0f, 1.0f, 1.0f);
-
-        glBegin(GL_TRIANGLES);
-        glVertex3f(0.0f, 1.0f, 0.0f);
-        glVertex3f(-1.0f, -1.0f, 0.0f);
-        glVertex3f(1.0f, -1.0f, 0.0f);
-        glEnd();
-
-        glTranslatef(3.0f, 0.0f, 0.0f);
-
-        glBegin(GL_QUADS);
-        glVertex3f(-1.0f, 1.0f, 0.0f);
-        glVertex3f(1.0f, 1.0f, 0.0f);
-        glVertex3f(1.0f, -1.0f, 0.0f);
-        glVertex3f(-1.0f, -1.0f, 0.0f);
-        glEnd();
-
-        SDL_GL_SwapWindow(window);
+        displayfunc();
     }
 
     return EXIT_SUCCESS;
