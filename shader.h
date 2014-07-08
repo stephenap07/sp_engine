@@ -11,8 +11,10 @@ struct Vertex {
     GLubyte blendweight[4];
 };
 
+typedef std::pair<GLenum, std::string> ShaderPair;
+
 std::string ReadFileToString(const std::string &file_name);
-GLuint CreateShader(GLenum eShaderType, const std::string &strShaderFile);
+GLuint CreateShader(ShaderPair shader_pair);
 GLuint CreateProgram(const std::vector<GLuint> &kShaderList);
 
 void SetVertAttribPointers();

@@ -73,20 +73,20 @@ float animate = 0.0f;
 void InitializeProgram()
 {
     std::vector<GLuint> shader_list = {
-        sp::shader::CreateShader(GL_VERTEX_SHADER, "assets/shaders/basic_animated.vert"),
-        sp::shader::CreateShader(GL_FRAGMENT_SHADER, "assets/shaders/gouroud.frag")
+        sp::shader::CreateShader({GL_VERTEX_SHADER, "assets/shaders/basic_animated.vert"}),
+        sp::shader::CreateShader({GL_FRAGMENT_SHADER, "assets/shaders/gouroud.frag"})
     };
     std::vector<GLuint> line_shader_list = {
-        sp::shader::CreateShader(GL_VERTEX_SHADER, "assets/shaders/line_shader.vert"),
-        sp::shader::CreateShader(GL_FRAGMENT_SHADER, "assets/shaders/pass_through.frag")
+        sp::shader::CreateShader({GL_VERTEX_SHADER, "assets/shaders/line_shader.vert"}),
+        sp::shader::CreateShader({GL_FRAGMENT_SHADER, "assets/shaders/pass_through.frag"})
     };
     std::vector<GLuint> plane_shader_list = {
-        sp::shader::CreateShader(GL_VERTEX_SHADER, "assets/shaders/basic_texture.vs"),
-        sp::shader::CreateShader(GL_FRAGMENT_SHADER,  "assets/shaders/gouroud.frag")
+        sp::shader::CreateShader({GL_VERTEX_SHADER, "assets/shaders/basic_texture.vs"}),
+        sp::shader::CreateShader({GL_FRAGMENT_SHADER,  "assets/shaders/gouroud.frag"})
     };
     std::vector<GLuint> skybox_shader_list = {
-        sp::shader::CreateShader(GL_VERTEX_SHADER, "assets/shaders/skybox.vert"),
-        sp::shader::CreateShader(GL_FRAGMENT_SHADER, "assets/shaders/skybox.frag")
+        sp::shader::CreateShader({GL_VERTEX_SHADER, "assets/shaders/skybox.vert"}),
+        sp::shader::CreateShader({GL_FRAGMENT_SHADER, "assets/shaders/skybox.frag"})
     };
 
     model_program = renderer.LoadProgram(shader_list);
@@ -123,6 +123,7 @@ void Init()
 
     // md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
     // md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
+
     iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
 
     sp::MakeTexturedQuad(&plane);
