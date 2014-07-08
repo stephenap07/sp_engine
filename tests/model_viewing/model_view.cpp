@@ -25,10 +25,7 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
-#include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
@@ -36,7 +33,6 @@
 #include <string>
 #include <algorithm>
 
-#include "shader.h"
 #include "md5_model.h"
 #include "md5_animation.h"
 #include "iqm_model.h"
@@ -44,25 +40,18 @@
 #include "asset.h"
 #include "geometry.h"
 #include "util.h"
-#include "pixel.h"
 #include "logger.h"
+#include "renderer.h"
+#include "shader.h"
 
-const int kScreenWidth = 800;
-const int kScreenHeight = 600;
+sp::Renderer renderer;
 
-SDL_Window *window = nullptr;
-SDL_GLContext context = nullptr;
 sp::Camera gScreenCamera;
 
-struct ProgramData {
-    GLuint program;
-    GLuint uni_block_index;
-};
-
-ProgramData model_program;
-ProgramData line_program;
-ProgramData plane_program;
-ProgramData skybox_program;
+sp::ProgramData model_program;
+sp::ProgramData line_program;
+sp::ProgramData plane_program;
+sp::ProgramData skybox_program;
 
 GLuint global_ubo;
 
@@ -76,24 +65,10 @@ GLuint skybox_rotate_loc;
 GLuint object_mat_mvp_loc;
 GLuint object_mat_mv_loc; 
 
-static const GLuint kGlobalUniformBinding = 0;
-
 MD5Model md5_model;
 sp::IQMModel iqm_model;
 
-glm::mat4 view;
-
 float animate = 0.0f;
-
-ProgramData LoadProgram(const std::vector<GLuint> &kShaderList)
-{
-    ProgramData data;
-    data.program = sp::shader::CreateProgram(kShaderList);
-    data.uni_block_index = glGetUniformBlockIndex(data.program, "globalMatrices");
-    glUniformBlockBinding(data.program, data.uni_block_index, kGlobalUniformBinding);
-
-    return data;
-}
 
 void InitializeProgram()
 {
@@ -114,10 +89,10 @@ void InitializeProgram()
         sp::shader::CreateShader(GL_FRAGMENT_SHADER, "assets/shaders/skybox.frag")
     };
 
-    model_program = LoadProgram(shader_list);
-    line_program = LoadProgram(line_shader_list);
-    plane_program = LoadProgram(plane_shader_list);
-    skybox_program = LoadProgram(skybox_shader_list);
+    model_program = renderer.LoadProgram(shader_list);
+    line_program = renderer.LoadProgram(line_shader_list);
+    plane_program = renderer.LoadProgram(plane_shader_list);
+    skybox_program = renderer.LoadProgram(skybox_shader_list);
 
     std::for_each(shader_list.begin(), shader_list.end(), glDeleteShader);
 }
@@ -125,22 +100,6 @@ void InitializeProgram()
 void Init()
 {
     glm::mat4 model;
-    view = gScreenCamera.LookAt();
-
-    glm::mat4 proj = glm::perspective(60.0f, (float)kScreenWidth / kScreenHeight, 0.01f, 1024.0f);
-
-    glGenBuffers(1, &global_ubo);
-    glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
-    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STREAM_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    glBindBufferRange(GL_UNIFORM_BUFFER, kGlobalUniformBinding,
-                      global_ubo, 0, 2 * sizeof(glm::mat4));
-
-    glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(proj)); 
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     InitializeProgram();
     glUseProgram(model_program.program);
@@ -162,8 +121,8 @@ void Init()
     // md5_model.LoadModel("assets/models/hellknight/hellknight.md5mesh");
     // md5_model.LoadAnim("assets/models/hellknight/idle2.md5anim");
 
-    md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
-    md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
+    // md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
+    // md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
     iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
 
     sp::MakeTexturedQuad(&plane);
@@ -188,28 +147,18 @@ void FreeResources()
     glDeleteProgram(plane_program.program);
     glDeleteProgram(skybox_program.program);
 
-    SDL_GL_DeleteContext(context);
-    SDL_DestroyWindow(window);
-    IMG_Quit();
-    SDL_Quit();
 }
 
 void Display()
 {
+    renderer.SetView(gScreenCamera.LookAt());
+    renderer.BeginFrame();
+
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    view = gScreenCamera.LookAt();
-
-    glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER,
-                    sizeof(glm::mat4),
-                    sizeof(glm::mat4),
-                    glm::value_ptr(view));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // Begin cube drawing
     glDisable(GL_CULL_FACE);
@@ -218,8 +167,7 @@ void Display()
 
     glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
 
-    glm::mat4 proj = glm::perspective(60.0f, (float)kScreenWidth / kScreenHeight, 0.01f, 1024.0f);
-    glm::mat4 tc_matrix = glm::scale(proj * view, glm::vec3(300.0f));
+    glm::mat4 tc_matrix = glm::scale(glm::mat4(), glm::vec3(300.0f));
     glUniformMatrix4fv(skybox_rotate_loc, 1, GL_FALSE, glm::value_ptr(tc_matrix));
 
     glBindVertexArray(cube.vao);
@@ -252,7 +200,7 @@ void Display()
     glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
 
     glDisable(GL_CULL_FACE);
-    md5_model.Render();
+    //md5_model.Render();
     glEnable(GL_CULL_FACE);
     // End md5 model drawing
 
@@ -309,7 +257,7 @@ void Display()
     glEnable(GL_CULL_FACE);
     // End plane drawing
 
-    SDL_GL_SwapWindow(window);
+    renderer.EndFrame();
 }
 
 void Reshape (int w, int h)
@@ -319,30 +267,12 @@ void Reshape (int w, int h)
 
 int main()
 {
-    SDL_Init(SDL_INIT_VIDEO);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-
-    IMG_Init(IMG_INIT_JPG|IMG_INIT_PNG|IMG_INIT_TIF);
-
-    window = SDL_CreateWindow(
-        "MD5 model Viewer", 100, 100,
-        kScreenWidth, kScreenHeight,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-
-    context = SDL_GL_CreateContext(window);
-
-    glewExperimental = GL_TRUE;
-    glewInit();
+    renderer.Init();
+    Init();
+    SDL_SetRelativeMouseMode(SDL_TRUE);
 
     SDL_Event window_ev;
     const Uint8 *state = nullptr;
-
-    Init();
-    SDL_SetRelativeMouseMode(SDL_TRUE);
 
     unsigned long elapsed = SDL_GetTicks();
     float delta = 0.0f;
@@ -377,7 +307,7 @@ int main()
             }
         }
 
-        md5_model.Update(delta);
+        //md5_model.Update(delta);
         Display();
     }
 
