@@ -32,8 +32,11 @@ std::string ReadFileToString(const std::string &file_name)
     return contents;
 }
 
-GLuint CreateShader(GLenum eShaderType, const std::string &shader_file_name)
+GLuint CreateShader(ShaderPair shader_pair)
 {
+    GLenum eShaderType  = shader_pair.first;
+    const std::string shader_file_name = shader_pair.second;
+
     std::string contents = ReadFileToString(shader_file_name);
 
     GLuint shader = glCreateShader(eShaderType);
