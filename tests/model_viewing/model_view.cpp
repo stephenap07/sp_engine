@@ -89,9 +89,9 @@ void InitializeProgram()
         sp::shader::CreateShader({GL_FRAGMENT_SHADER, "assets/shaders/skybox.frag"})
     };
 
-    model_program = renderer.LoadProgram(shader_list);
-    line_program = renderer.LoadProgram(line_shader_list);
-    plane_program = renderer.LoadProgram(plane_shader_list);
+    model_program  = renderer.LoadProgram(shader_list);
+    line_program   = renderer.LoadProgram(line_shader_list);
+    plane_program  = renderer.LoadProgram(plane_shader_list);
     skybox_program = renderer.LoadProgram(skybox_shader_list);
 
     std::for_each(shader_list.begin(), shader_list.end(), glDeleteShader);
@@ -139,15 +139,6 @@ void Init()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-void FreeResources()
-{
-    glDeleteProgram(model_program.program);
-    glDeleteProgram(line_program.program);
-    glDeleteProgram(plane_program.program);
-    glDeleteProgram(skybox_program.program);
-
 }
 
 void Display()
@@ -311,8 +302,6 @@ int main()
         //md5_model.Update(delta);
         Display();
     }
-
-    FreeResources();
 
     return EXIT_SUCCESS;
 }
