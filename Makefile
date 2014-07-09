@@ -1,7 +1,7 @@
 CC =g++
-
-SRC = $(wildcard *.cpp) $(wildcard src/*/*.cpp)
-OBJ = $(addprefix obj/,$(notdir $(SRC:.cpp=.o)))  
+SRC  = $(wildcard *.cpp) $(wildcard src/*/*.cpp)
+OBJ  = $(addprefix obj/,$(notdir $(SRC:.cpp=.o)))  
+DEPS = $(SRC:%.cpp=obj/%.d)
 
 LDFLAGS = -lboost_system -lboost_filesystem -lSDL2 -lSDL2_image -lGLEW -shared
 CFLAGS  = -std=c++11 -Wall -fPIC -g
@@ -27,7 +27,7 @@ $(STATIC): $(OBJ) | lib
 	ar rcs $@ $(OBJ)
 
 obj/%.o: %.cpp | obj
-	$(CC) $< -c $(CFLAGS) -o $@ 
+	$(CC) -MMD -MP -c $< $(CFLAGS) -o $@ 
 
 obj:
 	mkdir obj
@@ -35,5 +35,9 @@ obj:
 lib:
 	mkdir lib
 
+.PHONY: clean
+
 clean:
-	rm $(OBJ) $(DYNAMIC)
+	rm $(OBJ) $(STATIC) $(DYNAMIC) $(DEPS)
+
+-include $(DEPS)
