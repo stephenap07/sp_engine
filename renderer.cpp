@@ -76,6 +76,10 @@ void Renderer::EndFrame()
 
 void Renderer::FreeResources()
 {
+    for(auto it = program_store.begin(); it != program_store.end(); it++) {
+        glDeleteProgram(it->program);
+    }
+
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
     IMG_Quit();
@@ -94,10 +98,12 @@ void Renderer::SetView(const glm::mat4 &view)
 
 ProgramData Renderer::LoadProgram(const std::vector<GLuint> &kShaderList)
 {
+    // TODO: Make programs use a cache probably should use it as common data type
     ProgramData data;
     data.program = sp::shader::CreateProgram(kShaderList);
     data.uni_block_index = glGetUniformBlockIndex(data.program, "globalMatrices");
     glUniformBlockBinding(data.program, data.uni_block_index, global_uniform_binding);
+    program_store.push_back(data);
 
     return data;
 }

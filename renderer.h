@@ -1,6 +1,8 @@
 #ifndef _SP_RENDERER_H_
 #define _SP_RENDERER_H_
 
+#include <vector>
+
 #include "gl_program.h"
 
 namespace sp {
@@ -28,6 +30,8 @@ private:
 
     int screen_width;
     int screen_height;
+
+    std::vector<ProgramData> program_store;
 };
 
 } // namespace sp
