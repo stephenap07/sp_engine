@@ -63,7 +63,6 @@ template<> inline llong endianswap<llong>(llong n) { return endianswap64(n); }
 template<> inline double endianswap<double>(double n) { union { double t; uint i; } conv; conv.t = n; conv.i = endianswap64(conv.i); return conv.t; }
 template<class T> inline void endianswap(T *buf, int len) { for(T *end = &buf[len]; buf < end; buf++) *buf = endianswap(*buf); }
 template<class T> inline T endiansame(T n) { return n; }
-template<class T> inline void endiansame(T *buf, int len) {}
 template<class T> inline T lilswap(T n) { return islittleendian() ? n : endianswap(n); }
 template<class T> inline void lilswap(T *buf, int len) { if(!islittleendian()) endianswap(buf, len); }
 template<class T> inline T bigswap(T n) { return islittleendian() ? endianswap(n) : n; }

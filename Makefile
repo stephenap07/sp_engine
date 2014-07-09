@@ -3,20 +3,13 @@ SRC  = $(wildcard *.cpp) $(wildcard src/*/*.cpp)
 OBJ  = $(addprefix obj/,$(notdir $(SRC:.cpp=.o)))  
 DEPS = $(SRC:%.cpp=obj/%.d)
 
-LDFLAGS = -lboost_system -lboost_filesystem -lSDL2 -lSDL2_image -lGLEW -shared
+LDFLAGS = -shared
 CFLAGS  = -std=c++11 -Wall -fPIC -g
 
 DYNAMIC = lib/libspengine.so
 STATIC  = lib/libspengine.a
 
 UNAME := $(shell uname)
-
-ifeq ($(UNAME), Linux)
-	LDFLAGS += -lGL
-endif
-ifeq ($(UNAME), Darwin)
-	LDFLAGS += -framework OpenGL
-endif
 
 all: $(DYNAMIC) $(STATIC)
 
