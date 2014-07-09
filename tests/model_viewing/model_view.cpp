@@ -53,10 +53,10 @@ sp::ProgramData line_program;
 sp::ProgramData plane_program;
 sp::ProgramData skybox_program;
 
-GLuint global_ubo;
-
 sp::Renderable cube;
 sp::Renderable plane;
+MD5Model md5_model;
+sp::IQMModel iqm_model;
 
 GLuint skybox_tex;
 GLuint plane_tex;
@@ -64,9 +64,6 @@ GLuint plane_tex;
 GLuint skybox_rotate_loc;
 GLuint object_mat_mvp_loc;
 GLuint object_mat_mv_loc; 
-
-MD5Model md5_model;
-sp::IQMModel iqm_model;
 
 float animate = 0.0f;
 

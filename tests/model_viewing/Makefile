@@ -1,10 +1,10 @@
-CC = g++
+CC = clang++
 
 EXE = ex
 INC = ../../
 
 LDFLAGS = ../../lib/libspengine.so -lboost_system -lboost_filesystem -lGLEW -lSDL2 -lSDL2_image
-CFLAGS  = -std=c++11 -Wall -g -I$(INC)
+CFLAGS  = -std=c++11 -Wall -Wextra -g -I$(INC)
 
 SRC = $(wildcard *.cpp)
 OBJ = $(addprefix obj/,$(notdir $(SRC:.cpp=.o)))  
