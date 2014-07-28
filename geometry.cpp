@@ -1,11 +1,12 @@
 #include <GL/glew.h>
 
 #include "util.h"
+#include "buffer.h"
 #include "geometry.h"
 
 namespace sp {
 
-void MakeCube(Renderable *buffer)
+void MakeCube(VertexBuffer *buffer)
 {
     static GLuint vao;
     if (!vao) {
@@ -52,7 +53,7 @@ void MakeCube(Renderable *buffer)
 
 //=============================================================================
 
-void MakeQuad(Renderable *buffer)
+void MakeQuad(VertexBuffer *buffer)
 {
     GLfloat vert_quad[] = {
         -1.0f,  1.0f, -1.0f, // Top Left
@@ -88,20 +89,18 @@ void MakeQuad(Renderable *buffer)
 
 //=============================================================================
 
-void MakeTexturedQuad(Renderable *buffer)
+void MakeTexturedQuad(VertexBuffer *buffer, GLuint gl_hint)
 {
-    GLfloat vert_quad[] = {
-        // Position
-        -1.0f, -1.0f, 0.0f,
-         1.0f, -1.0f, 0.0f,
-         1.0f,  1.0f, 0.0f,
-        -1.0f,  1.0f, 0.0f,
+    struct Point {
+        GLfloat x, y, z, s, t;
+    };
 
-        // Texture Coordinates
-        0.0f, 0.0f,
-        1.0f, 0.0f,
-        1.0f, 1.0f,
-        0.0f, 1.0f
+    Point vert_quad[] = {
+        // Position          // Texture Coordinates
+        {-1.0f, -1.0f, 0.0f, 0.0f, 1.0f},
+        { 1.0f, -1.0f, 0.0f, 1.0f, 1.0f},
+        { 1.0f,  1.0f, 0.0f, 1.0f, 0.0f},
+        {-1.0f,  1.0f, 0.0f, 0.0f, 0.0f}
     };
 
     glGenVertexArrays(1, &buffer->vao);
@@ -109,10 +108,10 @@ void MakeTexturedQuad(Renderable *buffer)
 
     glGenBuffers(1, &buffer->vbo);
     glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vert_quad), vert_quad, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 4*sizeof(Point), vert_quad, gl_hint);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(12 * sizeof(float)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), nullptr);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid*)(3 * sizeof(GLfloat)));
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(2);

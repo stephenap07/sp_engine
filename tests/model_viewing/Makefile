@@ -1,10 +1,10 @@
 CC = clang++
 
 EXE = ex
-INC = ../../
+INC = -I../../ -I/usr/include/freetype2
 
-LDFLAGS = ../../lib/libspengine.so -lboost_system -lboost_filesystem -lGLEW -lSDL2 -lSDL2_image
-CFLAGS  = -std=c++11 -Wall -Wextra -g -I$(INC)
+LDFLAGS = ../../lib/libspengine.so -lboost_system -lboost_filesystem -lGLEW -lSDL2 -lSDL2_image -L/usr/local/lib -lfreetype
+CFLAGS  = -std=c++11 -O0 -Wall -Wextra -g $(INC)
 
 SRC = $(wildcard *.cpp)
 OBJ = $(addprefix obj/,$(notdir $(SRC:.cpp=.o)))  

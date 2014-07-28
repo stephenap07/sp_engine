@@ -3,19 +3,11 @@
 
 namespace sp {
 
-struct Renderable {
-    GLuint vao, vbo, ebo;
+class VertexBuffer;
 
-    ~Renderable() {
-        glDeleteBuffers(1, &vbo);
-        glDeleteBuffers(1, &ebo);
-        glDeleteVertexArrays(1, &vao);
-    }
-};
-
-void MakeCube(Renderable *buffer);
-void MakeQuad(Renderable *buffer);
-void MakeTexturedQuad(Renderable *buffer);
+void MakeCube(VertexBuffer *buffer);
+void MakeQuad(VertexBuffer *buffer);
+void MakeTexturedQuad(VertexBuffer *buffer, GLuint gl_hint=GL_STATIC_DRAW);
 
 } // namespace sp
 

@@ -7,6 +7,7 @@
 #include <cassert>
 
 #include "asset.h"
+#include "logger.h"
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
     #define RMASK 0xff000000
@@ -53,6 +54,10 @@ GLuint MakeTextureFromSurface(const std::string &name, SDL_Surface *surface, GLe
 	GLenum format;
     GLint internal_format = GL_RGB8;
 	switch (surface->format->BytesPerPixel) {
+        case 1:
+            format = (surface->format->Rmask == 0x000000ff)
+			          ? GL_RGB : GL_BGR;
+            break;
 		case 4:
 			format = (surface->format->Rmask == 0x000000ff)
 			          ? GL_RGBA : GL_BGRA;
@@ -63,6 +68,7 @@ GLuint MakeTextureFromSurface(const std::string &name, SDL_Surface *surface, GLe
 			          ? GL_RGB : GL_BGR;
 			break;
 		default:
+            sp::log::ErrorLog("Invalid format for surface: %d\n", surface->format->BytesPerPixel);
 			assert(false);
 	}
 

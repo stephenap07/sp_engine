@@ -3,14 +3,17 @@
 #include <vector>
 #include <fstream>
 #include <streambuf>
+#include <algorithm>
 
 #include <GL/glew.h>
 
 #include "shader.h"
 #include "logger.h"
+#include "error.h"
 
 namespace sp {
-namespace shader {
+
+//------------------------------------------------------------------------------
 
 std::string ReadFileToString(const std::string &file_name)
 {
@@ -32,14 +35,13 @@ std::string ReadFileToString(const std::string &file_name)
     return contents;
 }
 
-GLuint CreateShader(ShaderPair shader_pair)
-{
-    GLenum eShaderType  = shader_pair.first;
-    const std::string shader_file_name = shader_pair.second;
+//------------------------------------------------------------------------------
 
+GLuint CreateShader(const std::string &shader_file_name, GLenum target)
+{
     std::string contents = ReadFileToString(shader_file_name);
 
-    GLuint shader = glCreateShader(eShaderType);
+    GLuint shader = glCreateShader(target);
     const char *contents_cstr = contents.c_str();
     glShaderSource(shader, 1, &contents_cstr, NULL);
 
@@ -56,14 +58,14 @@ GLuint CreateShader(ShaderPair shader_pair)
         glGetShaderInfoLog(shader, info_log_len, NULL, str_info_log);
 
         const char *shader_type_cstr = NULL;
-        switch(eShaderType)
+        switch(target)
         {
             case GL_VERTEX_SHADER: shader_type_cstr = "vertex"; break;
             case GL_GEOMETRY_SHADER: shader_type_cstr = "geometry"; break;
             case GL_FRAGMENT_SHADER: shader_type_cstr = "fragment"; break;
         }
 
-        log::ErrorLog("Compile failure in %s shader %s:\n %s\n",
+        fprintf(stderr, "Compile failure in %s shader %s:\n %s\n",
                       shader_type_cstr, shader_file_name.c_str(), str_info_log);
         delete[] str_info_log;
     }
@@ -71,12 +73,14 @@ GLuint CreateShader(ShaderPair shader_pair)
     return shader;
 }
 
-GLuint CreateProgram(const std::vector<GLuint> &kShaderList)
+//------------------------------------------------------------------------------
+
+static GLuint LocalCreateProgram(const std::vector<GLuint> &kShaderList)
 {
     GLuint program = glCreateProgram();
 
-    for(size_t iLoop = 0; iLoop < kShaderList.size(); iLoop++)
-        glAttachShader(program, kShaderList[iLoop]);
+    std::for_each(kShaderList.begin(), kShaderList.end(),
+                  [program](GLuint i){ glAttachShader(program, i); });
 
     glLinkProgram(program);
 
@@ -93,11 +97,10 @@ GLuint CreateProgram(const std::vector<GLuint> &kShaderList)
         delete[] strInfoLog;
     }
 
-    for(size_t iLoop = 0; iLoop < kShaderList.size(); iLoop++)
-        glDetachShader(program, kShaderList[iLoop]);
-
     return program;
 }
+
+//------------------------------------------------------------------------------
 
 void SetVertAttribPointers()
 {
@@ -105,10 +108,10 @@ void SetVertAttribPointers()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
     // Normal
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(3 * sizeof(GLfloat)));
-    // Tangent
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(6 * sizeof(GLfloat)));
     // Texcoord
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(10 * sizeof(GLfloat)));
+    // Tangent
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(6 * sizeof(GLfloat)));
     // Blend Index
     glVertexAttribPointer(4, 4, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(12 * sizeof(GLfloat)));
     // Blend Weight
@@ -122,5 +125,66 @@ void SetVertAttribPointers()
     glEnableVertexAttribArray(5);
 }
 
-} // namespace shader
+Shader::Shader(const std::vector<std::pair<const std::string &, GLenum>> &shader_pair)
+{
+    CreateProgram(shader_pair);
+}
+
+void Shader::CreateProgram(const std::vector<std::pair<const std::string &, GLenum>> &shader_pair)
+{
+    std::vector<GLuint> shaders;
+    for (auto p : shader_pair) {
+        shaders.push_back(CreateShader(p.first, p.second));
+    }
+
+    id = LocalCreateProgram(shaders);
+    
+    if (id == 0) {
+        std::cerr << "Invalid program\n";
+    }
+
+    /*
+    std::for_each(shaders.begin(), shaders.end(),
+            [id](GLuint shader_id) { glDetachShader(id, shader_id); });
+            */
+}
+
+void Shader::Bind()
+{
+    glUseProgram(id);
+}
+
+void Shader::SetUniform(GLUniformType type, const char *name, GLvoid *data)
+{
+    SetUniform(type, name, 1, data);
+}
+
+void Shader::SetUniform(GLUniformType type, const char *name, GLsizei count, GLvoid *data)
+{
+    Bind();
+
+    GLint uniform = glGetUniformLocation(id, name);
+    if (uniform == -1) {
+        std::cerr << "Invalid uniform for " << name << std::endl;
+    } else {
+        switch (type) {
+            case k4fv:
+                glUniform4fv(uniform, count, (GLfloat*)data); break; case k2fv:
+                glUniform2fv(uniform, count, (GLfloat*)data);
+                break;
+            case kMatrix4fv:
+                glUniformMatrix4fv(uniform, count, GL_FALSE, (GLfloat*)data);
+                break;
+            default:
+                std::cerr << "Invalid uniform type\n";
+                break;
+        }
+    }
+}
+
+Shader::~Shader()
+{
+    //glDeleteProgram(id);
+}
+
 } // namespace sp

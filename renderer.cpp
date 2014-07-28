@@ -13,11 +13,16 @@
 
 #include <vector>
 #include <string>
+#include <algorithm>
 
 #include "renderer.h"
 #include "shader.h"
+#include "error.h"
+#include "logger.h"
 
 namespace sp {
+
+//------------------------------------------------------------------------------
 
 void Renderer::Init()
 {
@@ -34,14 +39,21 @@ void Renderer::Init()
     screen_height = 600;
 
     window = SDL_CreateWindow(
-        "MD5 model Viewer", 100, 100,
+        "SP Engine Test", 100, 100,
         screen_width, screen_height,
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
     context = SDL_GL_CreateContext(window);
 
     glewExperimental = GL_TRUE;
-    glewInit();
+    GLenum glew_error = glewInit();
+    if (glew_error != GLEW_OK) {
+        log::ErrorLog("glewInit failed, aborting\n");
+    }
+    GLenum error_enum = glGetError();
+    if (error_enum != GL_INVALID_ENUM) {
+        HandleGLError(error_enum);
+    }
 
     projection = glm::perspective(60.0f, (float)screen_width / screen_height, 0.01f, 1024.0f);
 
@@ -59,8 +71,15 @@ void Renderer::Init()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
+//------------------------------------------------------------------------------
+
 void Renderer::BeginFrame()
 {
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER,
                     sizeof(glm::mat4),
@@ -69,16 +88,22 @@ void Renderer::BeginFrame()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
+//------------------------------------------------------------------------------
+
 void Renderer::EndFrame()
 {
     SDL_GL_SwapWindow(window);
 }
 
+//------------------------------------------------------------------------------
+
 void Renderer::FreeResources()
 {
+/*
     for(auto it = program_store.begin(); it != program_store.end(); it++) {
         glDeleteProgram(it->program);
     }
+    */
 
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
@@ -86,26 +111,26 @@ void Renderer::FreeResources()
     SDL_Quit();
 }
 
+//------------------------------------------------------------------------------
+
 Renderer::~Renderer()
 {
     FreeResources();
 }
+
+//------------------------------------------------------------------------------
 
 void Renderer::SetView(const glm::mat4 &view)
 {
    this->view = view; 
 }
 
-ProgramData Renderer::LoadProgram(const std::vector<GLuint> &kShaderList)
-{
-    // TODO: Make programs use a cache probably should use it as common data type
-    ProgramData data;
-    data.program = sp::shader::CreateProgram(kShaderList);
-    data.uni_block_index = glGetUniformBlockIndex(data.program, "globalMatrices");
-    glUniformBlockBinding(data.program, data.uni_block_index, global_uniform_binding);
-    program_store.push_back(data);
+//------------------------------------------------------------------------------
 
-    return data;
+void Renderer::LoadGlobalUniforms(GLuint shader_index)
+{
+    GLint uni_block_index = glGetUniformBlockIndex(shader_index, "globalMatrices");
+    glUniformBlockBinding(shader_index, uni_block_index, global_uniform_binding);
 }
 
 } // namespace sp

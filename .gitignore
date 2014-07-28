@@ -9,3 +9,4 @@ obj/*
 \#*
 libspengine.a
 libspengine.so
+sp

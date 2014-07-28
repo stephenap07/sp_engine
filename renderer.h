@@ -1,6 +1,7 @@
 #ifndef _SP_RENDERER_H_
 #define _SP_RENDERER_H_
 
+#include <GL/glew.h>
 #include <vector>
 
 #include "gl_program.h"
@@ -16,7 +17,10 @@ public:
     void EndFrame();
     void FreeResources();
     void SetView(const glm::mat4 &view);
-    ProgramData LoadProgram(const std::vector<GLuint> &kShaderList);
+    void LoadGlobalUniforms(GLuint shader_index);
+
+    int GetWidth() { return screen_width; }
+    int GetHeight() { return screen_height; }
 
 private:
     SDL_Window *window;

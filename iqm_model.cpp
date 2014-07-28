@@ -22,7 +22,6 @@
 #include "shader.h"
 
 namespace fs = boost::filesystem;
-using namespace sp::shader;
 
 namespace sp {
 
@@ -31,15 +30,13 @@ namespace sp {
 static glm::mat4 MakeBoneMat(glm::quat rot, glm::vec3 trans, glm::vec3 scale)
 {
     glm::mat3 rotation_mat = glm::inverse(glm::mat3_cast(glm::normalize(rot)));
-    rotation_mat[0] *= scale;
-    rotation_mat[1] *= scale;
-    rotation_mat[2] *= scale;
+    rotation_mat *= scale;
 
     glm::mat4 out = glm::mat4(rotation_mat);
     out[0].w = trans.x;
     out[1].w = trans.y;
     out[2].w = trans.z;
-    out[3].w = 1.0;
+    out[3].w = 1.0f;
 
     return out;
 }
@@ -62,7 +59,7 @@ IQMModel::~IQMModel()
 bool IQMModel::LoadModel(const char *filename)
 {
     if (!fs::exists(filename)) {
-        log::ErrorLog("MD5Model::LoadModel: Failed to load file %s\n", filename);
+        log::ErrorLog("IQMModel::LoadModel: Failed to load file %s\n", filename);
         return false;
     }
 
@@ -173,11 +170,7 @@ bool IQMModel::LoadModel(const char *filename)
     {
         iqmjoint &j = joints[i];
 
-        glm::quat rot_q;
-        rot_q.x = j.rotate[0];
-        rot_q.y = j.rotate[1];
-        rot_q.z = j.rotate[2];
-        rot_q.w = j.rotate[3];
+        glm::quat rot_q = glm::quat(j.rotate[3], j.rotate[0], j.rotate[1], j.rotate[2]);
 
         glm::vec3 trans = glm::vec3(j.translate[0], j.translate[1], j.translate[2]);
         glm::vec3 scale = glm::vec3(j.scale[0], j.scale[1], j.scale[2]);
@@ -208,8 +201,6 @@ bool IQMModel::LoadModel(const char *filename)
             textures[i] = MakeTexture(texture_path.string(), GL_TEXTURE_2D);
             if (!textures[i]) {
                 log::ErrorLog("%s: Failed to load texture %s\n", filename, texture_path.string().c_str());
-            } else {
-                log::InfoLog("Loading texture %s\n", texture_path.string().c_str());
             }
         }
     }
@@ -227,6 +218,7 @@ bool IQMModel::LoadModel(const char *filename)
         iqmpose *poses     = (iqmpose *)&buffer[header.ofs_poses];
         ushort  *framedata = (ushort *)&buffer[header.ofs_frames];
 
+        num_frames = header.num_frames;
         frames.resize(header.num_frames * header.num_poses);
         out_frames.resize(header.num_joints);
 
@@ -256,7 +248,7 @@ bool IQMModel::LoadModel(const char *filename)
                 if (p.parent >= 0) {
                     frames[i * header.num_poses + j] = inversebaseframe[j] * m * baseframe[p.parent];
                 } else {
-                    frames[i * header.num_poses + j] = inversebaseframe[j] * m;
+                    frames[i * header.num_poses + j] = m * inversebaseframe[j];
                 }
             }
         }
@@ -322,7 +314,6 @@ bool IQMModel::LoadModel(const char *filename)
 
 void IQMModel::AnimateIQM(float current_time)
 {
-    int num_frames = frames.size();
     if (!num_frames) {
         return;
     }
@@ -340,7 +331,7 @@ void IQMModel::AnimateIQM(float current_time)
 
     for(int i = 0; i < num_joints; i++)
     {
-        glm::mat4 mat = (1.0f - frame_offset)*mat0[i] + frame_offset*mat1[i];
+        glm::mat4 mat = (1 - frame_offset)*mat0[i] + frame_offset*mat1[i];
 
         if(joints[i].parent >= 0) {
             out_frames[i] = out_frames[joints[i].parent] * mat;

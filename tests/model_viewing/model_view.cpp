@@ -15,9 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Link statically with GLEW
-#define GLEW_STATIC
-
 #include <GL/glew.h>
 
 #include <SDL2/SDL.h>
@@ -31,7 +28,10 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <algorithm>
+#include <memory>
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 #include "md5_model.h"
 #include "md5_animation.h"
@@ -52,14 +52,20 @@ sp::ProgramData model_program;
 sp::ProgramData line_program;
 sp::ProgramData plane_program;
 sp::ProgramData skybox_program;
+sp::ProgramData text_program;
 
 sp::Renderable cube;
 sp::Renderable plane;
+sp::Renderable text;
+
 MD5Model md5_model;
 sp::IQMModel iqm_model;
 
 GLuint skybox_tex;
 GLuint plane_tex;
+GLuint text_tex;
+
+int text_w, text_h;
 
 GLuint skybox_rotate_loc;
 GLuint object_mat_mvp_loc;
@@ -67,38 +73,219 @@ GLuint object_mat_mv_loc;
 
 float animate = 0.0f;
 
+TTF_Font *font = nullptr;
+
+#define MAXWIDTH 1024
+
+GLuint uniform_color;
+
+FT_Library ft;
+FT_Face face;
+
+struct TexturePoint
+{
+    GLfloat x, y, z, s, t;
+};
+
+struct GlyphInfo
+{
+    float advance_x;
+    float advance_y;
+
+    float bitmap_width;
+    float bitmap_height;
+
+    float bitmap_left;
+    float bitmap_top;
+
+    float texture_x;
+    float texture_y;
+};
+
+struct GlyphAtlas
+{
+    GLuint tex_id;
+
+    int width;
+    int height;
+
+    GlyphInfo glyphs[128];
+
+    GlyphAtlas(FT_Face face, int height)
+    {
+        FT_Set_Pixel_Sizes(face, 0, height); 
+        FT_GlyphSlot g = face->glyph;
+
+        int row_w = 0;
+        int row_h = 0;
+        width = height = 0;
+        
+        memset(glyphs, 0, sizeof(glyphs));
+
+        for (int i = 32; i < 128; i++) {
+            if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
+                fprintf(stderr, "Loading character %c failed\n", i);
+                continue;
+            }
+
+            if (row_w + g->bitmap.width + 1 >= MAXWIDTH) {
+                width = std::max(width, row_w); 
+                height += row_h;
+                row_w = row_h = 0;
+            }
+
+            row_w += g->bitmap.width + 1;
+            row_h = std::max(row_h, g->bitmap.rows);
+        }
+
+        width = std::max(width, row_w);
+        height += row_h;
+
+        glActiveTexture(GL_TEXTURE0);
+        glGenTextures(1, &tex_id);
+        glBindTexture(tex_id, GL_TEXTURE_2D);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, GL_TRUE);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        int offset_x = 0;
+        int offset_y = 0;
+        row_h = 0;
+
+        for (int i = 32; i < 128; i++) {
+            if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
+                sp::log::ErrorLog("Loading character %c failed\n", i);
+                continue;
+            }
+
+            if (offset_x + g->bitmap.width + 1 >= MAXWIDTH) {
+                offset_y += row_h;
+                row_h = 0;
+                offset_x = 0;
+            }
+
+            glTexSubImage2D(GL_TEXTURE_2D, 0, offset_x, offset_y,
+                            g->bitmap.width, g->bitmap.rows, GL_ALPHA,
+                            GL_UNSIGNED_BYTE, g->bitmap.buffer);
+            glyphs[i] = {
+                .advance_x = (float)(g->advance.x >> 6),
+                .advance_y = (float)(g->advance.y >> 6),
+                .bitmap_width = (float)g->bitmap.width,
+                .bitmap_height = (float)g->bitmap.rows,
+                .bitmap_left = (float)g->bitmap_left,
+                .bitmap_top = (float)g->bitmap_top,
+                .texture_x = offset_x / (float)width,
+                .texture_y = offset_y / (float)height
+            };
+
+            row_h = std::max(row_h, g->bitmap.rows);
+            offset_x += g->bitmap.width + 1;
+        }
+
+        glBindBuffer(GL_TEXTURE_2D, 0);
+        sp::log::InfoLog("Generated a %d x %d (%d kb) texture atlas\n", width, height, width * height / 1024);
+    }
+
+    ~GlyphAtlas()
+    {
+        glDeleteTextures(1, &tex_id);
+    }
+};
+
+std::unique_ptr<GlyphAtlas> g_atlas_48;
+std::unique_ptr<GlyphAtlas> g_atlas_24;
+std::unique_ptr<GlyphAtlas> g_atlas_16;
+
+std::ostream& operator<<(std::ostream& os, const sp::Camera& cam)
+{
+    auto print_vec3 = [&os](glm::vec3 a) {os << a[0] << ", " << a[1] << ", " << a[2];};
+    os << "camera pos: "; print_vec3(cam.pos); os << std::endl;
+    os << "camera dir: "; print_vec3(cam.dir); os << std::endl;
+    os << "camera up: "; print_vec3(cam.up); os << std::endl;
+    os << "camera look: "; print_vec3(cam.look);
+    return os;
+}
+
 void InitializeProgram()
 {
-    std::vector<GLuint> shader_list = {
+    model_program  = renderer.LoadProgram({
         sp::shader::CreateShader({GL_VERTEX_SHADER, "assets/shaders/basic_animated.vert"}),
         sp::shader::CreateShader({GL_FRAGMENT_SHADER, "assets/shaders/gouroud.frag"})
-    };
-    std::vector<GLuint> line_shader_list = {
+    });
+    line_program   = renderer.LoadProgram({
         sp::shader::CreateShader({GL_VERTEX_SHADER, "assets/shaders/line_shader.vert"}),
         sp::shader::CreateShader({GL_FRAGMENT_SHADER, "assets/shaders/pass_through.frag"})
-    };
-    std::vector<GLuint> plane_shader_list = {
+    });
+    plane_program  = renderer.LoadProgram({
         sp::shader::CreateShader({GL_VERTEX_SHADER, "assets/shaders/basic_texture.vs"}),
         sp::shader::CreateShader({GL_FRAGMENT_SHADER,  "assets/shaders/gouroud.frag"})
-    };
-    std::vector<GLuint> skybox_shader_list = {
+    });
+    skybox_program = renderer.LoadProgram({
         sp::shader::CreateShader({GL_VERTEX_SHADER, "assets/shaders/skybox.vert"}),
         sp::shader::CreateShader({GL_FRAGMENT_SHADER, "assets/shaders/skybox.frag"})
-    };
+    });
+    text_program = renderer.LoadProgram({
+        sp::shader::CreateShader({GL_VERTEX_SHADER, "assets/shaders/2d.vert"}),
+        sp::shader::CreateShader({GL_FRAGMENT_SHADER, "assets/shaders/2d.frag"}),
+    });
+}
 
-    model_program  = renderer.LoadProgram(shader_list);
-    line_program   = renderer.LoadProgram(line_shader_list);
-    plane_program  = renderer.LoadProgram(plane_shader_list);
-    skybox_program = renderer.LoadProgram(skybox_shader_list);
+inline int ClosestPowerOfTwo(int num)
+{
+    int result = 2;
+    while (result < num) {
+        result *= 2;
+    }
+    return result;
+}
 
-    std::for_each(shader_list.begin(), shader_list.end(), glDeleteShader);
+bool InitializeFontMap()
+{
+    sp::MakeTexturedQuad(&text);
+    
+    if (FT_Init_FreeType(&ft)) {
+        sp::log::ErrorLog("Could not init freetype library\n");
+        return false;
+    }
+    if (FT_New_Face(ft, "assets/fonts/FreeMono.ttf", 0, &face)) {
+        sp::log::ErrorLog("Could not open font %s\n", "FreeSans.ttf");
+    }
+
+    g_atlas_48.reset(new GlyphAtlas(face, 48));
+    g_atlas_24.reset(new GlyphAtlas(face, 24));
+    g_atlas_16.reset(new GlyphAtlas(face, 16));
+
+    glUseProgram(text_program.program);
+    uniform_color = glGetUniformLocation(text_program.program, "uni_color");
+
+    GLfloat green[4] = {0, 1, 0, 1};
+    glUniform4fv(uniform_color, 1, green);
+    
+    return true;
 }
 
 void Init()
 {
+    gScreenCamera.Init(
+        glm::mat3(
+            glm::vec3(0.5f, 0.5f, 2.5f),
+            glm::vec3(0.0f, -0.25f, -1.0f),
+            glm::vec3(0.0f, 1.0f, 0.0f))
+    );
+
     glm::mat4 model;
 
     InitializeProgram();
+
+    InitializeFontMap(); 
+
     glUseProgram(model_program.program);
 
     GLint uni_model_matrix = glGetUniformLocation(model_program.program, "model_matrix");
@@ -138,18 +325,65 @@ void Init()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Display()
+inline void DrawIQM()
 {
-    renderer.SetView(gScreenCamera.LookAt());
-    renderer.BeginFrame();
+    glUseProgram(model_program.program);
+    GLint uni_model_matrix = glGetUniformLocation(model_program.program, "model_matrix");
+    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+    glm::mat4 transform = glm::mat4(
+        glm::vec4(1, 0, 0, 0),
+        glm::vec4(0, 0, -1, 0),
+        glm::vec4(0, 1, 0, 0),
+        glm::vec4(0, 0, 0, 1)
+    );
+    model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0));
+    model = glm::translate(model, glm::vec3(0.0f, -50.0f, 0.0f)) * transform;
+    model = glm::translate(model, glm::vec3(30.0f, -1.5f, 0.0f));
+    model = glm::scale(model, glm::vec3(7.0f));
 
+    glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
+    GLint uni_bone_matrices = glGetUniformLocation(model_program.program,
+                                                   "bone_matrices");
+                                                    
+    glUniformMatrix4fv(uni_bone_matrices,
+                       iqm_model.out_frames.size(),
+                       GL_FALSE,
+                       glm::value_ptr(iqm_model.out_frames[0])); 
+
+    glFrontFace(GL_CW);
+    iqm_model.AnimateIQM(animate);
+    iqm_model.Render();
+    glFrontFace(GL_CCW);
+
+    glUseProgram(0);
+}
+
+inline void DrawMD5()
+{
+    glUseProgram(model_program.program);
+
+    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+    glm::mat4 transform = glm::mat4(
+        glm::vec4(1, 0, 0, 0),
+        glm::vec4(0, 0, -1, 0),
+        glm::vec4(0, 1, 0, 0),
+        glm::vec4(0, 0, 0, 1)
+    );
+    model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0));
+    model = glm::translate(model, glm::vec3(0.0f, -50.0f, 0.0f)) * transform;
+    GLint uni_model_matrix = glGetUniformLocation(model_program.program,
+                                                  "model_matrix");
+    glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
+
+    glDisable(GL_CULL_FACE);
+    md5_model.Render();
     glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram(0);
+}
 
-    // Begin cube drawing
+inline void DrawSkyBox()
+{
     glDisable(GL_CULL_FACE);
     glUseProgram(skybox_program.program);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -171,56 +405,10 @@ void Display()
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
     glEnable(GL_CULL_FACE);
-    // End cube drawing
+}
 
-    // Begin md5 model drawing
-    glUseProgram(model_program.program);
-    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
-    glm::mat4 transform = glm::mat4(
-        glm::vec4(1, 0, 0, 0),
-        glm::vec4(0, 0, -1, 0),
-        glm::vec4(0, 1, 0, 0),
-        glm::vec4(0, 0, 0, 1)
-    );
-    model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0));
-    model = glm::translate(model, glm::vec3(0.0f, -50.0f, 0.0f)) * transform;
-    GLint uni_model_matrix = glGetUniformLocation(model_program.program,
-                                                  "model_matrix");
-    glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
-
-    glDisable(GL_CULL_FACE);
-    //md5_model.Render();
-    glEnable(GL_CULL_FACE);
-    // End md5 model drawing
-
-    // Begin iqm model drawing
-    model = glm::translate(model, glm::vec3(30.0f, -1.5f, 0.0f));
-    model = glm::scale(model, glm::vec3(7.0f));
-    glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
-    GLint uni_bone_matrices = glGetUniformLocation(model_program.program,
-                                                   "bone_matrices");
-                                                    
-    iqm_model.AnimateIQM(animate);
-    glUniformMatrix4fv(uni_bone_matrices,
-                       iqm_model.out_frames.size(),
-                       GL_FALSE,
-                       glm::value_ptr(iqm_model.out_frames[0])); 
-
-    glFrontFace(GL_CW);
-    iqm_model.AnimateIQM(animate);
-    iqm_model.Render();
-    glFrontFace(GL_CCW);
-    // End iqm model drawing
-
-    // Begin normals drawing
-    glUseProgram(line_program.program);
-    glUniformMatrix4fv(uni_model_matrix, 1, GL_FALSE, glm::value_ptr(model)); 
-
-    // md5_model.RenderNormals();
-
-    // End normals drawing
-
-    // Begin plane drawing
+inline void DrawFloor()
+{
     glDisable(GL_CULL_FACE);
     glUseProgram(plane_program.program);
 
@@ -243,8 +431,74 @@ void Display()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glUseProgram(0);
+
     glEnable(GL_CULL_FACE);
-    // End plane drawing
+}
+
+void DrawText(const std::string &text_label, const std::unique_ptr<GlyphAtlas> &atlas, float x, float y, float sx, float sy)
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glUseProgram(text_program.program);
+
+    glBindTexture(GL_TEXTURE_2D, atlas->tex_id);
+
+    glBindVertexArray(text.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, text.vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, text.ebo);
+
+    TexturePoint coords[4 * text_label.size()];
+    int c = 0;
+
+    for (auto ch : text_label) {
+        GlyphInfo glyph = atlas->glyphs[(int)ch];
+
+        float x2 = x + glyph.bitmap_left * sx;
+        float y2 = -y - glyph.bitmap_top * sy;
+        float w = glyph.bitmap_width * sx;
+        float h = glyph.bitmap_height * sy;
+
+        x += glyph.advance_x * sx;
+        y += glyph.advance_y * sy;
+
+        if (!w || !h) {
+            continue;
+        }
+
+        coords[c++] = {x2, -y2, 0.0f, glyph.texture_x, glyph.texture_y};
+        coords[c++] = {x2 + w, -y2, 0.0f, glyph.texture_x + glyph.bitmap_width / atlas->width, glyph.texture_y};
+        coords[c++] = {x2 + w, -y2 - h, 0.0f, glyph.texture_x + glyph.bitmap_width / atlas->width, glyph.texture_y + glyph.bitmap_height / atlas->height};
+        coords[c++] = {x2, -y2 - h, 0.0f, glyph.texture_x, glyph.texture_y + glyph.bitmap_height / atlas->height};
+    }
+    
+    glBufferData(GL_ARRAY_BUFFER, sizeof(coords), coords, GL_DYNAMIC_DRAW);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, c);
+
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glUseProgram(0);
+}
+
+void Display()
+{
+    float sx = 2.0f / renderer.GetWidth();
+    float sy = 2.0f / renderer.GetHeight();
+
+    renderer.BeginFrame();
+    renderer.SetView(gScreenCamera.LookAt());
+
+    DrawSkyBox();
+    DrawFloor();
+
+    DrawIQM();
+    DrawMD5();
+
+    DrawText("The Quick Brown Fox Jumps Over The Lazy Dog", g_atlas_24, -1 + 8 * sx, 1 - 50 * sy, sx, sy);
+    // DrawText("The Quick Brown Fox Jumps Over The Lazy Dog", g_atlas_16, -1 + 9 * sx, 1 - 50 * sy, sx, sy);
+    //DrawText("The Small Texture Scaled Fox Jumps Over The Lazy Dog", g_atlas_48, -1.0f + 8.0f * sx, 1.0f - 175.0f * sy, sx * 0.5f, sy);
 
     renderer.EndFrame();
 }
@@ -258,7 +512,6 @@ int main()
 {
     renderer.Init();
     Init();
-    SDL_SetRelativeMouseMode(SDL_TRUE);
 
     SDL_Event window_ev;
     const Uint8 *state = nullptr;
@@ -266,6 +519,7 @@ int main()
     unsigned long elapsed = SDL_GetTicks();
     float delta = 0.0f;
 
+    bool hide_mouse = false;
     bool quit = false;
     while (!quit)
     {
@@ -289,6 +543,13 @@ int main()
             switch(window_ev.type) {
                 case SDL_MOUSEMOTION:
                     gScreenCamera.HandleMouse(window_ev.motion.xrel, window_ev.motion.yrel, delta);
+                    break;
+                case SDL_KEYUP:
+                    if (window_ev.key.keysym.sym == SDLK_k) {
+                        // std::cout << gScreenCamera << std::endl;
+                        hide_mouse = !hide_mouse;
+                        SDL_SetRelativeMouseMode(hide_mouse ? SDL_TRUE : SDL_FALSE); // hide mouse
+                    }
                     break;
                 case SDL_QUIT:
                     quit = true;
