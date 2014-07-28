@@ -8,6 +8,7 @@ public:
 
     Camera();
     void Init();
+    void Init(const glm::mat3x3 &camera_mat);
     void MoveForward(float dt);
     void MoveBackward(float dt);
     void MoveRight(float dt);
@@ -17,11 +18,10 @@ public:
     void FreeRoam(float delta);
     glm::mat4 LookAt();
 
-private:
-    glm::vec3 camera_pos;
-    glm::vec3 camera_dir;
-    glm::vec3 camera_up;
-    glm::vec3 camera_look;
+    glm::vec3 pos;
+    glm::vec3 dir;
+    glm::vec3 up;
+    glm::vec3 look;
 };
 
 } // namespace sp

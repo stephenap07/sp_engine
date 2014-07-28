@@ -34,6 +34,7 @@ private:
     int                    num_tris;
     int                    num_joints;
     int                    num_meshes;
+    int                    num_frames;
 };
 
 } // namespace sp

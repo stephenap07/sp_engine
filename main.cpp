@@ -1,0 +1,393 @@
+/*
+ * Copyright (C) 2014 Stephen Pridham
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include <GL/glew.h>
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
+
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <memory>
+
+#include "md5_model.h"
+#include "md5_animation.h"
+#include "iqm_model.h"
+#include "camera.h"
+#include "asset.h"
+#include "geometry.h"
+#include "util.h"
+#include "logger.h"
+#include "renderer.h"
+#include "shader.h"
+#include "buffer.h"
+#include "font.h"
+#include "error.h"
+
+sp::Renderer renderer;
+
+sp::Camera gScreenCamera;
+
+sp::Shader model_program;
+sp::Shader line_program;
+sp::Shader plane_program;
+sp::Shader skybox_program;
+sp::Shader text_program;
+
+sp::VertexBuffer cube;
+sp::VertexBuffer plane;
+sp::VertexBuffer text;
+
+MD5Model md5_model;
+sp::IQMModel iqm_model;
+
+GLuint skybox_tex;
+GLuint plane_tex;
+GLuint text_tex;
+
+int text_w, text_h;
+
+GLuint skybox_rotate_loc;
+
+float animate = 0.0f;
+
+TTF_Font *font = nullptr;
+
+FT_Library ft;
+FT_Face face;
+
+using sp::GlyphAtlas;
+
+GlyphAtlas g_atlas_48;
+GlyphAtlas g_atlas_24;
+GlyphAtlas g_atlas_16;
+
+std::ostream& operator<<(std::ostream& os, const sp::Camera& cam)
+{
+    auto print_vec3 = [&os](glm::vec3 a) {os << a[0] << ", " << a[1] << ", " << a[2];};
+    os << "camera pos: "; print_vec3(cam.pos); os << std::endl;
+    os << "camera dir: "; print_vec3(cam.dir); os << std::endl;
+    os << "camera up: "; print_vec3(cam.up); os << std::endl;
+    os << "camera look: "; print_vec3(cam.look);
+    return os;
+}
+
+void InitializeProgram()
+{
+    model_program.CreateProgram({
+        {std::string("assets/shaders/basic_animated.vert"), GL_VERTEX_SHADER},
+        {std::string("assets/shaders/gouroud.frag"), GL_FRAGMENT_SHADER}
+    });
+
+    line_program.CreateProgram({
+        {std::string("assets/shaders/line_shader.vert"), GL_VERTEX_SHADER},
+        {std::string("assets/shaders/pass_through.frag"), GL_FRAGMENT_SHADER}
+    });
+
+    plane_program.CreateProgram({
+        {std::string("assets/shaders/basic_texture.vs"), GL_VERTEX_SHADER},
+        {std::string("assets/shaders/gouroud.frag"), GL_FRAGMENT_SHADER}
+    });
+
+    skybox_program.CreateProgram({
+        {std::string("assets/shaders/skybox.vert"), GL_VERTEX_SHADER},
+        {std::string("assets/shaders/skybox.frag"), GL_FRAGMENT_SHADER}
+    });
+
+    text_program.CreateProgram({
+        {std::string("assets/shaders/text.vs.glsl"), GL_VERTEX_SHADER},
+        {std::string("assets/shaders/text.fs.glsl"), GL_FRAGMENT_SHADER}
+    });
+
+    renderer.LoadGlobalUniforms(model_program.GetID());
+    renderer.LoadGlobalUniforms(line_program.GetID());
+    renderer.LoadGlobalUniforms(plane_program.GetID());
+    renderer.LoadGlobalUniforms(skybox_program.GetID());
+    renderer.LoadGlobalUniforms(text_program.GetID());
+
+    sp::HandleGLError(glGetError());
+}
+
+bool InitializeFontMap()
+{
+    text = sp::MakeTexturedQuad(GL_DYNAMIC_DRAW);
+    
+    if (FT_Init_FreeType(&ft)) {
+        std::cerr << "Could not init freetype library\n";
+    }
+    if (FT_New_Face(ft, "assets/fonts/SPFont.ttf", 0, &face)) {
+        std::cerr << "Could not open font\n";
+    }
+
+    glm::mat4 model;
+    text_program.SetUniform(sp::kMatrix4fv, "uni_model", glm::value_ptr(model));
+    glm::vec4 cyan(0.0f, 1.0f, 1.0f, 1.0f);
+    text_program.SetUniform(sp::k4fv, "uni_color", glm::value_ptr(cyan));
+
+    g_atlas_48.LoadFace(face, 48);
+    g_atlas_24.LoadFace(face, 24);
+    g_atlas_16.LoadFace(face, 16);
+
+    g_atlas_48.shader = text_program;
+    g_atlas_24.shader = text_program;
+    g_atlas_16.shader = text_program;
+
+    g_atlas_48.buffer = text;
+    g_atlas_24.buffer = text;
+    g_atlas_16.buffer = text;
+
+    return true;
+}
+
+void Init()
+{
+    gScreenCamera.Init(
+        glm::mat3(
+            glm::vec3(0.5f, 0.5f, 2.5f),
+            glm::vec3(0.0f, -0.25f, -1.0f),
+            glm::vec3(0.0f, 1.0f, 0.0f))
+    );
+
+    InitializeProgram();
+    InitializeFontMap(); 
+
+    model_program.Bind();
+    glm::mat4 model;
+    model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
+    line_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
+    glUseProgram(0);
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+
+    // md5_model.LoadModel("assets/models/hellknight/hellknight.md5mesh");
+    // md5_model.LoadAnim("assets/models/hellknight/idle2.md5anim");
+
+    // md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
+    // md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
+
+    iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
+
+    sp::MakeTexturedQuad(&plane);
+    sp::MakeCube(&cube);
+
+    skybox_rotate_loc = glGetUniformLocation(skybox_program.GetID(), "tc_rotate");
+    skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
+    plane_tex = sp::MakeTexture("assets/textures/checker.tga", GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, plane_tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+inline void DrawIQM()
+{
+    model_program.Bind();
+
+    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+    glm::mat4 transform = glm::mat4(
+        glm::vec4(1, 0, 0, 0),
+        glm::vec4(0, 0, -1, 0),
+        glm::vec4(0, 1, 0, 0),
+        glm::vec4(0, 0, 0, 1)
+    );
+    model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0));
+    model = glm::translate(model, glm::vec3(0.0f, -50.0f, 0.0f)) * transform;
+    model = glm::translate(model, glm::vec3(30.0f, -1.5f, 0.0f));
+    model = glm::scale(model, glm::vec3(7.0f));
+
+    model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
+
+    iqm_model.AnimateIQM(animate);
+    model_program.SetUniform(sp::kMatrix4fv, "bone_matrices",
+                             iqm_model.out_frames.size(),
+                             glm::value_ptr(iqm_model.out_frames[0]));
+    
+    glFrontFace(GL_CW);
+    iqm_model.Render();
+    glFrontFace(GL_CCW);
+
+    glUseProgram(0);
+}
+
+inline void DrawMD5()
+{
+    model_program.Bind();
+
+    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+    glm::mat4 transform = glm::mat4(
+        glm::vec4(1, 0, 0, 0),
+        glm::vec4(0, 0, -1, 0),
+        glm::vec4(0, 1, 0, 0),
+        glm::vec4(0, 0, 0, 1)
+    );
+    model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0));
+    model = glm::translate(model, glm::vec3(0.0f, -50.0f, 0.0f)) * transform;
+    model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
+
+    glDisable(GL_CULL_FACE);
+    md5_model.Render();
+    glEnable(GL_CULL_FACE);
+
+    glUseProgram(0);
+}
+
+inline void DrawSkyBox()
+{
+    skybox_program.Bind();
+
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
+
+    glm::mat4 tc_matrix = glm::scale(glm::mat4(), glm::vec3(300.0f));
+    glUniformMatrix4fv(skybox_rotate_loc, 1, GL_FALSE, glm::value_ptr(tc_matrix));
+
+    glBindVertexArray(cube.vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube.ebo);
+    glBindBuffer(GL_ARRAY_BUFFER, cube.vbo);
+
+    glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_SHORT, NULL);
+    glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_SHORT, BUFFER_OFFSET(8 * sizeof(GLushort)));
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    glEnable(GL_CULL_FACE);
+
+    glUseProgram(0);
+}
+
+inline void DrawFloor()
+{
+    plane_program.Bind();
+    glDisable(GL_CULL_FACE);
+
+    glm::mat4 plane_model;
+    plane_model = glm::translate(plane_model, glm::vec3(0, -1.0f, 0));
+    plane_model = glm::scale(plane_model, glm::vec3(10.0f, 1.0f, 10.0f));
+    plane_model = glm::rotate(plane_model, -90.0f, glm::vec3(1, 0, 0));
+    plane_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(plane_model));
+
+    glBindVertexArray(plane.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, plane.vbo);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, plane_tex);
+
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    glUseProgram(0);
+
+    glEnable(GL_CULL_FACE);
+}
+
+void Display()
+{
+    float sx = 2.0f / renderer.GetWidth();
+    float sy = 2.0f / renderer.GetHeight();
+
+    renderer.BeginFrame();
+    renderer.SetView(gScreenCamera.LookAt());
+
+    DrawIQM();
+    DrawMD5();
+
+    DrawSkyBox();
+    DrawFloor();
+
+    DrawText("The Quick Brown Fox Jumps Over The Lazy Dog", &g_atlas_16, -1 + 8 * sx, 1 - 50 * sy, sx, sy);
+
+    renderer.EndFrame();
+}
+
+void Reshape (int w, int h)
+{
+    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
+}
+
+int main()
+{
+    renderer.Init();
+    Init();
+    //sp::HandleGLError(glGetError());
+
+    SDL_Event window_ev;
+    const Uint8 *state = nullptr;
+
+    unsigned long elapsed = SDL_GetTicks();
+    float delta = 0.0f;
+
+    bool hide_mouse = false;
+    bool quit = false;
+    while (!quit)
+    {
+        delta = (SDL_GetTicks() - elapsed) / 1000.0f;
+        elapsed = SDL_GetTicks();
+        animate += 10.0f * delta;
+
+        state = SDL_GetKeyboardState(nullptr);
+        if (state[SDL_SCANCODE_W] && state[SDL_SCANCODE_LGUI]) quit = true;
+        if (state[SDL_SCANCODE_ESCAPE]) quit = true;
+
+        gScreenCamera.FreeRoam(delta);
+
+        while(SDL_PollEvent(&window_ev)) {
+            switch(window_ev.window.event) {
+                case SDL_WINDOWEVENT_RESIZED:
+                    Reshape(window_ev.window.data1, window_ev.window.data2);
+                    break;
+            }
+
+            switch(window_ev.type) {
+                case SDL_MOUSEMOTION:
+                    gScreenCamera.HandleMouse(window_ev.motion.xrel, window_ev.motion.yrel, delta);
+                    break;
+                case SDL_KEYUP:
+                    if (window_ev.key.keysym.sym == SDLK_k) {
+                        // std::cout << gScreenCamera << std::endl;
+                        hide_mouse = !hide_mouse;
+                        SDL_SetRelativeMouseMode(hide_mouse ? SDL_TRUE : SDL_FALSE); // hide mouse
+                    }
+                    break;
+                case SDL_QUIT:
+                    quit = true;
+                    break;
+            }
+        }
+
+        //md5_model.Update(delta);
+        Display();
+    }
+
+    return EXIT_SUCCESS;
+}
