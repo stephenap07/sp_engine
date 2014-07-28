@@ -82,6 +82,35 @@ GlyphAtlas g_atlas_48;
 GlyphAtlas g_atlas_24;
 GlyphAtlas g_atlas_16;
 
+struct SystemInfo
+{
+    void Init()
+    {
+        strcpy(platform, SDL_GetPlatform());
+        num_cpus = SDL_GetCPUCount();
+        ram = SDL_GetSystemRAM();
+        l1_cache = SDL_GetCPUCacheLineSize();
+
+        const GLubyte *_vendor = glGetString(GL_VENDOR);
+        const GLubyte *_renderer = glGetString(GL_RENDERER);
+        const GLubyte *_version = glGetString(GL_VERSION);
+
+        memcpy(vendor, _vendor, sizeof(_vendor) + 1);
+        memcpy(renderer, _renderer, sizeof(_renderer) + 1);
+        memcpy(version, _version, sizeof(_version) + 1);
+    }
+
+    char platform[32];
+    int num_cpus;
+    int ram;
+    int l1_cache;
+    GLubyte vendor[64];
+    GLubyte renderer[64];
+    GLubyte version[64];
+};
+
+SystemInfo sys_info;
+
 std::ostream& operator<<(std::ostream& os, const sp::Camera& cam)
 {
     auto print_vec3 = [&os](glm::vec3 a) {os << a[0] << ", " << a[1] << ", " << a[2];};
@@ -141,8 +170,8 @@ bool InitializeFontMap()
 
     glm::mat4 model;
     text_program.SetUniform(sp::kMatrix4fv, "uni_model", glm::value_ptr(model));
-    glm::vec4 cyan(0.0f, 1.0f, 1.0f, 1.0f);
-    text_program.SetUniform(sp::k4fv, "uni_color", glm::value_ptr(cyan));
+    glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
+    text_program.SetUniform(sp::k4fv, "uni_color", glm::value_ptr(white));
 
     g_atlas_48.LoadFace(face, 48);
     g_atlas_24.LoadFace(face, 24);
@@ -167,6 +196,8 @@ void Init()
             glm::vec3(0.0f, -0.25f, -1.0f),
             glm::vec3(0.0f, 1.0f, 0.0f))
     );
+
+    sys_info.Init();
 
     InitializeProgram();
     InitializeFontMap(); 
@@ -311,21 +342,32 @@ inline void DrawFloor()
     glEnable(GL_CULL_FACE);
 }
 
-void Display()
+void DrawTextScaled(const std::string &label, float x, float y)
 {
     float sx = 2.0f / renderer.GetWidth();
     float sy = 2.0f / renderer.GetHeight();
+    DrawText(label, &g_atlas_16, -1 + x * sx, 1 - y * sy, sx, sy);
+}
 
+void Display(float delta)
+{
     renderer.BeginFrame();
     renderer.SetView(gScreenCamera.LookAt());
-
-    DrawIQM();
-    DrawMD5();
 
     DrawSkyBox();
     DrawFloor();
 
-    DrawText("The Quick Brown Fox Jumps Over The Lazy Dog", &g_atlas_16, -1 + 8 * sx, 1 - 50 * sy, sx, sy);
+    DrawMD5();
+    DrawIQM();
+
+    DrawTextScaled(std::string("FPS: ") + std::to_string((int)(1 / delta)), 8, 35);
+    DrawTextScaled(std::string("Platform: ") + sys_info.platform, 8, 50);
+    DrawTextScaled(std::string("CPU Count: ") + std::to_string(sys_info.num_cpus), 8, 65);
+    DrawTextScaled(std::string("System Ram: ") + std::to_string(sys_info.ram) + std::string("mb"), 8, 80);
+    DrawTextScaled(std::string("L1 cache: ") + std::to_string(sys_info.l1_cache) + std::string("kb"), 8, 95);
+    DrawTextScaled(std::string("Vendor: ") + (char*)sys_info.vendor, 8, 110);
+    DrawTextScaled(std::string("Renderer: ") + (char*)sys_info.renderer, 8, 125);
+    DrawTextScaled(std::string("GL Version: ") + (char*)sys_info.version, 8, 140);
 
     renderer.EndFrame();
 }
@@ -339,7 +381,6 @@ int main()
 {
     renderer.Init();
     Init();
-    //sp::HandleGLError(glGetError());
 
     SDL_Event window_ev;
     const Uint8 *state = nullptr;
@@ -386,7 +427,7 @@ int main()
         }
 
         //md5_model.Update(delta);
-        Display();
+        Display(delta);
     }
 
     return EXIT_SUCCESS;
