@@ -5,7 +5,7 @@ namespace sp {
 
 class VertexBuffer;
 
-void MakeCube(VertexBuffer *buffer);
+void MakeCube(VertexBuffer *buffer, bool has_normals=false);
 void MakeQuad(VertexBuffer *buffer);
 void MakeTexturedQuad(VertexBuffer *buffer, GLuint gl_hint=GL_STATIC_DRAW);
 

@@ -29,18 +29,14 @@ namespace sp {
 
 static glm::mat4 MakeBoneMat(glm::quat rot, glm::vec3 trans, glm::vec3 scale)
 {
-    glm::mat3 rotation_mat = glm::inverse(glm::mat3_cast(glm::normalize(rot)));
-    rotation_mat *= scale;
+    glm::mat4 rotation_mat = glm::mat4_cast(glm::normalize(rot));
+    glm::mat4 scale_mat = glm::scale(scale);
+    glm::mat4 trans_mat = glm::translate(trans);
 
-    glm::mat4 out = glm::mat4(rotation_mat);
-    out[0].w = trans.x;
-    out[1].w = trans.y;
-    out[2].w = trans.z;
-    out[3].w = 1.0f;
+    glm::mat4 out = trans_mat * rotation_mat * scale_mat;
 
     return out;
 }
-
 
 //------------------------------------------------------------------------------
 
@@ -116,45 +112,45 @@ bool IQMModel::LoadModel(const char *filename)
         iqmvertexarray &vert = vertices[i];
         switch(vert.type)
         {
-            case IQM_POSITION:
-                if (vert.format != IQM_FLOAT || vert.size != 3) {
-                    return false;
-                }
-                inposition = (float *)&buffer[vert.offset];
-                lilswap(inposition, 3 * header.num_vertexes);
-                break;
-            case IQM_NORMAL:
-                if (vert.format != IQM_FLOAT || vert.size != 3) {
-                    return false;
-                } innormal = (float *)&buffer[vert.offset];
-                lilswap(innormal, 3 * header.num_vertexes);
-                break;
-            case IQM_TANGENT:
-                if (vert.format != IQM_FLOAT || vert.size != 4) {
-                    return false;
-                }
-                intangent = (float *)&buffer[vert.offset];
-                lilswap(intangent, 4 * header.num_vertexes);
-                break;
-            case IQM_TEXCOORD:
-                if (vert.format != IQM_FLOAT || vert.size != 2) {
-                    return false;
-                }
-                intexcoord = (float *)&buffer[vert.offset];
-                lilswap(intexcoord, 2 * header.num_vertexes);
-                break;
-            case IQM_BLENDINDEXES:
-                if (vert.format != IQM_UBYTE || vert.size != 4) {
-                    return false;
-                }
-                inblendindex = (uchar *)&buffer[vert.offset];
-                break;
-            case IQM_BLENDWEIGHTS:
-                if (vert.format != IQM_UBYTE || vert.size != 4) {
-                    return false;
-                }
-                inblendweight = (uchar *)&buffer[vert.offset];
-                break;
+        case IQM_POSITION:
+            if (vert.format != IQM_FLOAT || vert.size != 3) {
+                return false;
+            }
+            inposition = (float *)&buffer[vert.offset];
+            lilswap(inposition, 3 * header.num_vertexes);
+            break;
+        case IQM_NORMAL:
+            if (vert.format != IQM_FLOAT || vert.size != 3) {
+                return false;
+            } innormal = (float *)&buffer[vert.offset];
+            lilswap(innormal, 3 * header.num_vertexes);
+            break;
+        case IQM_TANGENT:
+            if (vert.format != IQM_FLOAT || vert.size != 4) {
+                return false;
+            }
+            intangent = (float *)&buffer[vert.offset];
+            lilswap(intangent, 4 * header.num_vertexes);
+            break;
+        case IQM_TEXCOORD:
+            if (vert.format != IQM_FLOAT || vert.size != 2) {
+                return false;
+            }
+            intexcoord = (float *)&buffer[vert.offset];
+            lilswap(intexcoord, 2 * header.num_vertexes);
+            break;
+        case IQM_BLENDINDEXES:
+            if (vert.format != IQM_UBYTE || vert.size != 4) {
+                return false;
+            }
+            inblendindex = (uchar *)&buffer[vert.offset];
+            break;
+        case IQM_BLENDWEIGHTS:
+            if (vert.format != IQM_UBYTE || vert.size != 4) {
+                return false;
+            }
+            inblendweight = (uchar *)&buffer[vert.offset];
+            break;
         }
     }
 
@@ -171,7 +167,6 @@ bool IQMModel::LoadModel(const char *filename)
         iqmjoint &j = joints[i];
 
         glm::quat rot_q = glm::quat(j.rotate[3], j.rotate[0], j.rotate[1], j.rotate[2]);
-
         glm::vec3 trans = glm::vec3(j.translate[0], j.translate[1], j.translate[2]);
         glm::vec3 scale = glm::vec3(j.scale[0], j.scale[1], j.scale[2]);
 
@@ -180,8 +175,8 @@ bool IQMModel::LoadModel(const char *filename)
 
         if(j.parent >= 0) 
         {
-            baseframe[i] = baseframe[i] * baseframe[j.parent];
-            inversebaseframe[i] = inversebaseframe[j.parent] * inversebaseframe[i];
+            baseframe[i] = baseframe[j.parent] * baseframe[i];
+            inversebaseframe[i] *= inversebaseframe[j.parent];
         }
     }
 
@@ -191,16 +186,25 @@ bool IQMModel::LoadModel(const char *filename)
 
     for(int i = 0; i < (int)header.num_meshes; i++)
     {
-        iqmmesh &m = meshes[i];
-        fs::path mat_path(&str[m.material]);
+        iqmmesh &mesh = meshes[i];
+        fs::path mat_path(&str[mesh.material]);
         fs::path texture_path = parent_path / mat_path;
 
+        if (!texture_path.has_extension()) {
+            texture_path.replace_extension(".tga");
+        }
+
+        log::InfoLog("Loaded mesh: %s\n", &str[mesh.name]);
+
         if (!fs::is_regular_file(texture_path)) {
-            log::ErrorLog("%s: There is no material for mesh %s called %s\n", filename, m.name, texture_path.string().c_str());
+            log::ErrorLog("%s: There is no material for mesh %s called %s\n",
+                          filename, &str[mesh.name],
+                          texture_path.string().c_str());
         } else {
             textures[i] = MakeTexture(texture_path.string(), GL_TEXTURE_2D);
             if (!textures[i]) {
-                log::ErrorLog("%s: Failed to load texture %s\n", filename, texture_path.string().c_str());
+                log::ErrorLog("%s: Failed to load texture %s\n",
+                              filename, texture_path.string().c_str());
             }
         }
     }
@@ -246,7 +250,7 @@ bool IQMModel::LoadModel(const char *filename)
                 glm::mat4 m = MakeBoneMat(rotate, translate, scale);
 
                 if (p.parent >= 0) {
-                    frames[i * header.num_poses + j] = inversebaseframe[j] * m * baseframe[p.parent];
+                    frames[i * header.num_poses + j] = baseframe[p.parent] * m * inversebaseframe[j];
                 } else {
                     frames[i * header.num_poses + j] = m * inversebaseframe[j];
                 }
@@ -258,7 +262,6 @@ bool IQMModel::LoadModel(const char *filename)
             iqmanim &a = anims[i];
             log::InfoLog("%s: loaded anim: %s\n", filename, &str[a.name]);
         }
-
     }
 
     Vertex verts[header.num_vertexes];

@@ -11,7 +11,8 @@ namespace sp {
 enum GLUniformType{
     k4fv,
     k2fv,
-    kMatrix4fv
+    kMatrix4fv,
+    kMatrix3x4fv,
 };
 
 struct Vertex {

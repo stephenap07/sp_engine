@@ -35,8 +35,8 @@ void Renderer::Init()
 
     IMG_Init(IMG_INIT_JPG|IMG_INIT_PNG|IMG_INIT_TIF);
 
-    screen_width = 800;
-    screen_height = 600;
+    screen_width = 1280;
+    screen_height = 720;
 
     window = SDL_CreateWindow(
         "SP Engine Test", 100, 100,

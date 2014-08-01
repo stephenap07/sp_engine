@@ -24,11 +24,11 @@ private:
     iqmjoint               *joints;
     iqmtriangle            *tris;
 
-    std::vector<glm::mat4> baseframe;
-    std::vector<glm::mat4> inversebaseframe;
+    std::vector<glm::mat4x4> baseframe;
+    std::vector<glm::mat4x4> inversebaseframe;
     std::vector<GLuint>    textures;
 
-    std::vector<glm::mat4> frames;
+    std::vector<glm::mat4x4> frames;
 
     unsigned char          *buffer;
     int                    num_tris;
