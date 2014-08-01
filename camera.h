@@ -9,14 +9,15 @@ public:
     Camera();
     void Init();
     void Init(const glm::mat3x3 &camera_mat);
-    void MoveForward(float dt);
-    void MoveBackward(float dt);
-    void MoveRight(float dt);
-    void MoveLeft(float dt);
-    void HandleMouse(int x, int y, float dt);
     void Update();
     void FreeRoam(float delta);
     glm::mat4 LookAt();
+
+    virtual void MoveForward(float dt);
+    virtual void MoveBackward(float dt);
+    virtual void MoveRight(float dt);
+    virtual void MoveLeft(float dt);
+    virtual void HandleMouse(int x, int y, float dt);
 
     glm::vec3 pos;
     glm::vec3 dir;

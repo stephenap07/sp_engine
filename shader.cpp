@@ -175,6 +175,8 @@ void Shader::SetUniform(GLUniformType type, const char *name, GLsizei count, GLv
             case kMatrix4fv:
                 glUniformMatrix4fv(uniform, count, GL_FALSE, (GLfloat*)data);
                 break;
+            case kMatrix3x4fv:
+                glUniformMatrix3x4fv(uniform, count, GL_FALSE, (GLfloat*)data);
             default:
                 std::cerr << "Invalid uniform type\n";
                 break;

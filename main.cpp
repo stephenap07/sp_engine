@@ -43,6 +43,8 @@
 #include "buffer.h"
 #include "font.h"
 #include "error.h"
+#include "system.h"
+#include "debug.h"
 
 sp::Renderer renderer;
 
@@ -53,10 +55,12 @@ sp::Shader line_program;
 sp::Shader plane_program;
 sp::Shader skybox_program;
 sp::Shader text_program;
+sp::Shader player_program;
 
 sp::VertexBuffer cube;
 sp::VertexBuffer plane;
 sp::VertexBuffer text;
+sp::VertexBuffer player;
 
 MD5Model md5_model;
 sp::IQMModel iqm_model;
@@ -72,7 +76,6 @@ GLuint skybox_rotate_loc;
 float animate = 0.0f;
 
 TTF_Font *font = nullptr;
-
 FT_Library ft;
 FT_Face face;
 
@@ -82,44 +85,7 @@ GlyphAtlas g_atlas_48;
 GlyphAtlas g_atlas_24;
 GlyphAtlas g_atlas_16;
 
-struct SystemInfo
-{
-    void Init()
-    {
-        strcpy(platform, SDL_GetPlatform());
-        num_cpus = SDL_GetCPUCount();
-        ram = SDL_GetSystemRAM();
-        l1_cache = SDL_GetCPUCacheLineSize();
-
-        const GLubyte *_vendor = glGetString(GL_VENDOR);
-        const GLubyte *_renderer = glGetString(GL_RENDERER);
-        const GLubyte *_version = glGetString(GL_VERSION);
-
-        memcpy(vendor, _vendor, sizeof(_vendor) + 1);
-        memcpy(renderer, _renderer, sizeof(_renderer) + 1);
-        memcpy(version, _version, sizeof(_version) + 1);
-    }
-
-    char platform[32];
-    int num_cpus;
-    int ram;
-    int l1_cache;
-    GLubyte vendor[64];
-    GLubyte renderer[64];
-    GLubyte version[64];
-};
-
 SystemInfo sys_info;
-
-std::ostream& operator<<(std::ostream& os, const sp::Camera& cam)
-{
-    auto print_vec3 = [&os](glm::vec3 a) {os << a[0] << ", " << a[1] << ", " << a[2];};
-    os << "camera pos: "; print_vec3(cam.pos); os << std::endl;
-    os << "camera dir: "; print_vec3(cam.dir); os << std::endl;
-    os << "camera up: "; print_vec3(cam.up); os << std::endl;
-    os << "camera look: "; print_vec3(cam.look);
-    return os;
-}
 
 void InitializeProgram()
 {
@@ -148,11 +114,17 @@ void InitializeProgram()
         {std::string("assets/shaders/text.fs.glsl"), GL_FRAGMENT_SHADER}
     });
 
+    player_program.CreateProgram({
+        {std::string("assets/shaders/pass_through.vert"), GL_VERTEX_SHADER},
+        {std::string("assets/shaders/pass_through.frag"), GL_FRAGMENT_SHADER}
+    });
+
     renderer.LoadGlobalUniforms(model_program.GetID());
     renderer.LoadGlobalUniforms(line_program.GetID());
     renderer.LoadGlobalUniforms(plane_program.GetID());
     renderer.LoadGlobalUniforms(skybox_program.GetID());
     renderer.LoadGlobalUniforms(text_program.GetID());
+    renderer.LoadGlobalUniforms(player_program.GetID());
 
     sp::HandleGLError(glGetError());
 }
@@ -215,10 +187,10 @@ void Init()
     // md5_model.LoadModel("assets/models/hellknight/hellknight.md5mesh");
     // md5_model.LoadAnim("assets/models/hellknight/idle2.md5anim");
 
-    // md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
-    // md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
+    md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
+    md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
 
-    iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
+    iqm_model.LoadModel("assets/models/hellknight_iqm/hellknight.iqm");
 
     sp::MakeTexturedQuad(&plane);
     sp::MakeCube(&cube);
@@ -233,23 +205,25 @@ void Init()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    sp::MakeCube(&player, true);
+    glm::vec4 player_color(1.0f, 0.0f, 0.0f, 1.0f);
+    player_program.SetUniform(sp::k4fv, "uni_color", glm::value_ptr(player_color));
 }
 
 inline void DrawIQM()
 {
     model_program.Bind();
 
-    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
     glm::mat4 transform = glm::mat4(
         glm::vec4(1, 0, 0, 0),
-        glm::vec4(0, 0, -1, 0),
+        glm::vec4(0, 0, 1, 0),
         glm::vec4(0, 1, 0, 0),
         glm::vec4(0, 0, 0, 1)
     );
-    model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0));
-    model = glm::translate(model, glm::vec3(0.0f, -50.0f, 0.0f)) * transform;
-    model = glm::translate(model, glm::vec3(30.0f, -1.5f, 0.0f));
-    model = glm::scale(model, glm::vec3(7.0f));
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+    model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0)) * transform;
+    model = glm::scale(model, glm::vec3(0.015625f));
 
     model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
 
@@ -258,9 +232,7 @@ inline void DrawIQM()
                              iqm_model.out_frames.size(),
                              glm::value_ptr(iqm_model.out_frames[0]));
     
-    glFrontFace(GL_CW);
     iqm_model.Render();
-    glFrontFace(GL_CCW);
 
     glUseProgram(0);
 }
@@ -269,15 +241,15 @@ inline void DrawMD5()
 {
     model_program.Bind();
 
-    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
+    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.029f));
     glm::mat4 transform = glm::mat4(
         glm::vec4(1, 0, 0, 0),
         glm::vec4(0, 0, -1, 0),
         glm::vec4(0, 1, 0, 0),
         glm::vec4(0, 0, 0, 1)
     );
-    model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0));
-    model = glm::translate(model, glm::vec3(0.0f, -50.0f, 0.0f)) * transform;
+    model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0)) * transform;
+    model = glm::translate(model, glm::vec3(0.0f, -32.0f, 0.0f));
     model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
 
     glDisable(GL_CULL_FACE);
@@ -303,8 +275,9 @@ inline void DrawSkyBox()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube.ebo);
     glBindBuffer(GL_ARRAY_BUFFER, cube.vbo);
 
-    glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_SHORT, NULL);
-    glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_SHORT, BUFFER_OFFSET(8 * sizeof(GLushort)));
+    glEnable(GL_PRIMITIVE_RESTART);
+    glPrimitiveRestartIndex(0xFFFF);
+    glDrawElements(GL_TRIANGLE_STRIP, 17, GL_UNSIGNED_SHORT, NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -318,7 +291,6 @@ inline void DrawSkyBox()
 inline void DrawFloor()
 {
     plane_program.Bind();
-    glDisable(GL_CULL_FACE);
 
     glm::mat4 plane_model;
     plane_model = glm::translate(plane_model, glm::vec3(0, -1.0f, 0));
@@ -338,8 +310,55 @@ inline void DrawFloor()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glUseProgram(0);
+}
 
-    glEnable(GL_CULL_FACE);
+struct PlayerModel {
+    glm::vec3 origin;
+    glm::vec3 scale;
+    glm::quat rot;
+
+    explicit PlayerModel(const glm::vec3 &o, const glm::vec3 &s)
+    {
+        origin = o;
+        scale = s;
+    }
+
+    glm::mat4 GetModel() const
+    {
+        glm::mat4 rot_mat = glm::mat4_cast(rot);
+        glm::mat4 trans_mat = glm::translate(origin);
+        glm::mat4 scale_mat = glm::scale(scale);
+
+        return trans_mat * rot_mat * scale_mat;
+    }
+};
+
+PlayerModel p_model(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.5f, 1.0f, 0.5f));
+
+inline void DrawPlayer()
+{
+    /** SCALE
+     * 1.0 - Player Height
+     * 0.5 - Player Width
+     */
+
+    player_program.Bind();
+    glm::mat4 player_model = p_model.GetModel();
+    player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(player_model));
+
+    glBindVertexArray(player.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, player.vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, player.ebo);
+
+    glEnable(GL_PRIMITIVE_RESTART);
+    glPrimitiveRestartIndex(0xFFFF);
+    glDrawElements(GL_TRIANGLE_STRIP, 17, GL_UNSIGNED_SHORT, NULL);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    glUseProgram(0);
 }
 
 void DrawTextScaled(const std::string &label, float x, float y)
@@ -354,13 +373,17 @@ void Display(float delta)
     renderer.BeginFrame();
     renderer.SetView(gScreenCamera.LookAt());
 
+    //DrawPlayer();
     DrawSkyBox();
     DrawFloor();
+    //DrawMD5();
 
-    DrawMD5();
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     DrawIQM();
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    DrawTextScaled(std::string("FPS: ") + std::to_string((int)(1 / delta)), 8, 35);
+    glDisable(GL_DEPTH_TEST);
+    DrawTextScaled(std::string("FPS: ") + std::to_string((int)std::ceil((1 / delta))), 8, 35);
     DrawTextScaled(std::string("Platform: ") + sys_info.platform, 8, 50);
     DrawTextScaled(std::string("CPU Count: ") + std::to_string(sys_info.num_cpus), 8, 65);
     DrawTextScaled(std::string("System Ram: ") + std::to_string(sys_info.ram) + std::string("mb"), 8, 80);
@@ -368,6 +391,7 @@ void Display(float delta)
     DrawTextScaled(std::string("Vendor: ") + (char*)sys_info.vendor, 8, 110);
     DrawTextScaled(std::string("Renderer: ") + (char*)sys_info.renderer, 8, 125);
     DrawTextScaled(std::string("GL Version: ") + (char*)sys_info.version, 8, 140);
+    glEnable(GL_DEPTH_TEST);
 
     renderer.EndFrame();
 }
@@ -388,19 +412,50 @@ int main()
     unsigned long elapsed = SDL_GetTicks();
     float delta = 0.0f;
 
+    float player_speed = 10.0f;
+
     bool hide_mouse = false;
     bool quit = false;
+    bool jumping = false;
+
+    const float kGravity = 0.7f;
+    float player_vel_y = 0.0f;
+
     while (!quit)
     {
         delta = (SDL_GetTicks() - elapsed) / 1000.0f;
         elapsed = SDL_GetTicks();
         animate += 10.0f * delta;
 
+        player_vel_y -= kGravity * delta;
+        p_model.origin.y += player_vel_y;
+
+        if (p_model.origin.y < 0.0f) {
+            p_model.origin.y = 0.0f;
+            player_vel_y = 0.0f;
+            jumping = false;
+        } else {
+            jumping = true;
+        }
+
         state = SDL_GetKeyboardState(nullptr);
         if (state[SDL_SCANCODE_W] && state[SDL_SCANCODE_LGUI]) quit = true;
         if (state[SDL_SCANCODE_ESCAPE]) quit = true;
 
-        gScreenCamera.FreeRoam(delta);
+        // Player Controller
+        glm::vec3 side = glm::normalize(glm::cross(gScreenCamera.dir, gScreenCamera.up));
+        glm::vec3 forward = glm::normalize(glm::cross(gScreenCamera.up, side));
+
+        if (state[SDL_SCANCODE_W]) p_model.origin += player_speed * delta * forward;
+        if (state[SDL_SCANCODE_S]) p_model.origin -= player_speed * delta * forward;
+
+        if (state[SDL_SCANCODE_D]) p_model.origin += player_speed * delta * side;
+        if (state[SDL_SCANCODE_A]) p_model.origin -= player_speed * delta * side;
+
+        if (state[SDL_SCANCODE_SPACE] && !jumping) player_vel_y = 0.2f;
+
+        //gScreenCamera.FreeRoam(delta);
+        gScreenCamera.pos = p_model.origin + glm::vec3(0.0f, 0.7f, 0.0f);
 
         while(SDL_PollEvent(&window_ev)) {
             switch(window_ev.window.event) {
@@ -412,6 +467,8 @@ int main()
             switch(window_ev.type) {
                 case SDL_MOUSEMOTION:
                     gScreenCamera.HandleMouse(window_ev.motion.xrel, window_ev.motion.yrel, delta);
+                    p_model.rot = p_model.rot * glm::angleAxis(-10.0f * window_ev.motion.xrel * delta, glm::vec3(0.0f, 1.0f, 0.0f));
+
                     break;
                 case SDL_KEYUP:
                     if (window_ev.key.keysym.sym == SDLK_k) {
@@ -426,7 +483,7 @@ int main()
             }
         }
 
-        //md5_model.Update(delta);
+        md5_model.Update(delta);
         Display(delta);
     }
 

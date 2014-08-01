@@ -3,6 +3,7 @@ ex
 *.swp
 *.swn
 *.swm
+*.swl
 *.o
 .tags
 obj/*
@@ -10,3 +11,4 @@ obj/*
 libspengine.a
 libspengine.so
 sp
+iqm
