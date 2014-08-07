@@ -38,6 +38,20 @@ void MakeCube(VertexBuffer *buffer, bool has_normals)
         2, 6, 0, 4, 1, 5, 3, 7          // Second strip
     };
 
+    /**************************************************
+     (3) -------------_ (7)
+        |`-           |`-
+        |  `-         |  `-
+        |    `-       |    `-
+        |   (2)`------|------`- (6)
+        |_______|_____|(5)     |
+     (1)-       |      `-      |
+         `-     |        `-    |
+           `-   |          `-  |
+             `- |            `-|
+               `|______________|
+            (0)               (4)
+    **************************************************/
 
     if (!has_normals) {
         const GLfloat cube_vertices[] =
@@ -86,9 +100,9 @@ void MakeCube(VertexBuffer *buffer, bool has_normals)
 
             glm::vec3 normal = glm::normalize(glm::cross(verts[2] - verts[0], verts[1] - verts[0]));
 
-            cube_vertices[cube_indices[i]].normal += normal;
-            cube_vertices[cube_indices[i+1]].normal += normal;
-            cube_vertices[cube_indices[i+2]].normal += normal;
+            for (size_t j = 0; j < 3; j++) {
+                cube_vertices[cube_indices[i + j]].normal += normal;
+            }
         }
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GeomVertex), BUFFER_OFFSET(0));
