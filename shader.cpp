@@ -1,11 +1,11 @@
+#include <GL/glew.h>
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <fstream>
 #include <streambuf>
 #include <algorithm>
-
-#include <GL/glew.h>
 
 #include "shader.h"
 #include "logger.h"
@@ -78,23 +78,22 @@ GLuint CreateShader(const std::string &shader_file_name, GLenum target)
 static GLuint LocalCreateProgram(const std::vector<GLuint> &kShaderList)
 {
     GLuint program = glCreateProgram();
-
-    std::for_each(kShaderList.begin(), kShaderList.end(),
-                  [program](GLuint i){ glAttachShader(program, i); });
-
+    for (auto s : kShaderList) {
+        glAttachShader(program, s);
+    }
     glLinkProgram(program);
 
     GLint status;
     glGetProgramiv(program, GL_LINK_STATUS, &status);
     if (status == GL_FALSE)
     {
-        GLint infoLogLength;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
+        GLint info_log_length;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &info_log_length);
 
-        GLchar *strInfoLog = new GLchar[infoLogLength + 1];
-        glGetProgramInfoLog(program, infoLogLength, NULL, strInfoLog);
-        fprintf(stderr, "Linker failure: %s\n", strInfoLog);
-        delete[] strInfoLog;
+        GLchar *str_info_log = new GLchar[info_log_length + 1];
+        glGetProgramInfoLog(program, info_log_length, NULL, str_info_log);
+        fprintf(stderr, "Linker failure: %s\n", str_info_log);
+        delete[] str_info_log;
     }
 
     return program;
@@ -186,7 +185,7 @@ void Shader::SetUniform(GLUniformType type, const char *name, GLsizei count, GLv
 
 Shader::~Shader()
 {
-    //glDeleteProgram(id);
+    glDeleteProgram(id);
 }
 
 } // namespace sp

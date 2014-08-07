@@ -24,6 +24,7 @@
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_access.hpp> 
 
 #include <iostream>
 #include <vector>
@@ -69,8 +70,6 @@ GLuint skybox_tex;
 GLuint plane_tex;
 GLuint text_tex;
 
-int text_w, text_h;
-
 GLuint skybox_rotate_loc;
 
 float animate = 0.0f;
@@ -86,6 +85,30 @@ GlyphAtlas g_atlas_24;
 GlyphAtlas g_atlas_16;
 
 SystemInfo sys_info;
+
+struct ModelView {
+    glm::vec3 origin;
+    glm::vec3 scale;
+    glm::quat rot;
+
+    explicit ModelView(const glm::vec3 &o, const glm::vec3 &s)
+    {
+        origin = o;
+        scale = s;
+    }
+
+    glm::mat4 GetModel() const
+    {
+        glm::mat4 rot_mat = glm::mat4_cast(rot);
+        glm::mat4 trans_mat = glm::translate(origin);
+        glm::mat4 scale_mat = glm::scale(scale);
+
+        return trans_mat * rot_mat * scale_mat;
+    }
+};
+
+ModelView p_model(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.5f, 1.0f, 0.5f));
+ModelView gun_model(glm::vec3(0.1f, -0.08f, -0.19f), glm::vec3(0.02f, 0.02f, 0.09f));
 
 void InitializeProgram()
 {
@@ -174,6 +197,10 @@ void Init()
     InitializeProgram();
     InitializeFontMap(); 
 
+    // GUN Init
+    //gun_model.scale = glm::vec3(0.03f, 0.03f, 0.14f);
+    //gun_model.origin = glm::vec3(0.09f, 0.7f, -0.3f);
+
     model_program.Bind();
     glm::mat4 model;
     model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
@@ -190,7 +217,9 @@ void Init()
     md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
     md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
 
-    iqm_model.LoadModel("assets/models/hellknight_iqm/hellknight.iqm");
+    //iqm_model.LoadModel("assets/models/imrod_iqm/ImrodLowPoly.iqm");
+    // iqm_model.LoadModel("assets/models/hellknight_iqm/hellknight.iqm");
+    iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
 
     sp::MakeTexturedQuad(&plane);
     sp::MakeCube(&cube);
@@ -207,7 +236,7 @@ void Init()
     glBindTexture(GL_TEXTURE_2D, 0);
 
     sp::MakeCube(&player, true);
-    glm::vec4 player_color(1.0f, 0.0f, 0.0f, 1.0f);
+    glm::vec4 player_color(0.0f, 1.0f, 1.0f, 1.0f);
     player_program.SetUniform(sp::k4fv, "uni_color", glm::value_ptr(player_color));
 }
 
@@ -223,15 +252,14 @@ inline void DrawIQM()
     );
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
     model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0)) * transform;
-    model = glm::scale(model, glm::vec3(0.015625f));
-
+    //model = glm::scale(model, glm::vec3(0.015625f));
+    model = glm::scale(model, glm::vec3(0.2));
     model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
-
-    iqm_model.AnimateIQM(animate);
+    iqm_model.Animate(animate);
+    std::vector<glm::mat4> &bones = iqm_model.GetBones();
     model_program.SetUniform(sp::kMatrix4fv, "bone_matrices",
-                             iqm_model.out_frames.size(),
-                             glm::value_ptr(iqm_model.out_frames[0]));
-    
+                             bones.size(),
+                             glm::value_ptr(bones[0]));
     iqm_model.Render();
 
     glUseProgram(0);
@@ -312,34 +340,11 @@ inline void DrawFloor()
     glUseProgram(0);
 }
 
-struct PlayerModel {
-    glm::vec3 origin;
-    glm::vec3 scale;
-    glm::quat rot;
-
-    explicit PlayerModel(const glm::vec3 &o, const glm::vec3 &s)
-    {
-        origin = o;
-        scale = s;
-    }
-
-    glm::mat4 GetModel() const
-    {
-        glm::mat4 rot_mat = glm::mat4_cast(rot);
-        glm::mat4 trans_mat = glm::translate(origin);
-        glm::mat4 scale_mat = glm::scale(scale);
-
-        return trans_mat * rot_mat * scale_mat;
-    }
-};
-
-PlayerModel p_model(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.5f, 1.0f, 0.5f));
-
 inline void DrawPlayer()
 {
     /** SCALE
      * 1.0 - Player Height
-     * 0.5 - Player Width
+     * 0.5 - Player Width/Depth
      */
 
     player_program.Bind();
@@ -361,21 +366,48 @@ inline void DrawPlayer()
     glUseProgram(0);
 }
 
+inline void DrawGun()
+{
+    player_program.Bind();
+    // glm::mat4 world_model = glm::inverse(gScreenCamera.LookAt());
+    glm::mat4 g_model =  gun_model.GetModel();
+    player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
+
+    glBindVertexArray(player.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, player.vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, player.ebo);
+
+    glEnable(GL_PRIMITIVE_RESTART);
+    glPrimitiveRestartIndex(0xFFFF);
+    glDrawElements(GL_TRIANGLE_STRIP, 17, GL_UNSIGNED_SHORT, NULL);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    glUseProgram(0);
+}
+
 void DrawTextScaled(const std::string &label, float x, float y)
 {
-    float sx = 2.0f / renderer.GetWidth();
-    float sy = 2.0f / renderer.GetHeight();
+    static float sx = 2.0f / renderer.GetWidth();
+    static float sy = 2.0f / renderer.GetHeight();
+
     DrawText(label, &g_atlas_16, -1 + x * sx, 1 - y * sy, sx, sy);
 }
 
 void Display(float delta)
 {
+    //static float ang = 0.0f;
     renderer.BeginFrame();
+    //ang += 30.0f * delta;
+    //gScreenCamera.Rotate(2.0f * sin(ang), glm::vec3(0.0f, 0.0f, 1.0f));
     renderer.SetView(gScreenCamera.LookAt());
 
     //DrawPlayer();
-    DrawSkyBox();
+    DrawGun();
     DrawFloor();
+    DrawSkyBox();
     //DrawMD5();
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -427,6 +459,34 @@ int main()
         elapsed = SDL_GetTicks();
         animate += 10.0f * delta;
 
+        while(SDL_PollEvent(&window_ev)) {
+            switch(window_ev.window.event) {
+                case SDL_WINDOWEVENT_RESIZED:
+                    Reshape(window_ev.window.data1, window_ev.window.data2);
+                    break;
+            }
+
+            switch(window_ev.type) {
+                case SDL_MOUSEMOTION:
+                    gScreenCamera.HandleMouse(window_ev.motion.xrel,
+                                              window_ev.motion.yrel, delta);
+                    p_model.rot = glm::angleAxis(-10.0f *
+                                  window_ev.motion.xrel * delta,
+                                  glm::vec3(0.0f, 1.0f, 0.0f)) * p_model.rot;
+                    break;
+                case SDL_KEYUP:
+                    if (window_ev.key.keysym.sym == SDLK_k) {
+                        // std::cout << gScreenCamera << std::endl;
+                        hide_mouse = !hide_mouse;
+                        SDL_SetRelativeMouseMode(hide_mouse ? SDL_TRUE : SDL_FALSE); // hide mouse
+                    }
+                    break;
+                case SDL_QUIT:
+                    quit = true;
+                    break;
+            }
+        }
+
         player_vel_y -= kGravity * delta;
         p_model.origin.y += player_vel_y;
 
@@ -446,42 +506,16 @@ int main()
         glm::vec3 side = glm::normalize(glm::cross(gScreenCamera.dir, gScreenCamera.up));
         glm::vec3 forward = glm::normalize(glm::cross(gScreenCamera.up, side));
 
-        if (state[SDL_SCANCODE_W]) p_model.origin += player_speed * delta * forward;
-        if (state[SDL_SCANCODE_S]) p_model.origin -= player_speed * delta * forward;
+        if (state[SDL_SCANCODE_W]) p_model.origin += delta * player_speed * forward;
+        if (state[SDL_SCANCODE_S]) p_model.origin -= delta * player_speed * forward;
 
-        if (state[SDL_SCANCODE_D]) p_model.origin += player_speed * delta * side;
-        if (state[SDL_SCANCODE_A]) p_model.origin -= player_speed * delta * side;
+        if (state[SDL_SCANCODE_D]) p_model.origin += delta * player_speed * side;
+        if (state[SDL_SCANCODE_A]) p_model.origin -= delta * player_speed * side;
 
         if (state[SDL_SCANCODE_SPACE] && !jumping) player_vel_y = 0.2f;
 
         //gScreenCamera.FreeRoam(delta);
-        gScreenCamera.pos = p_model.origin + glm::vec3(0.0f, 0.7f, 0.0f);
-
-        while(SDL_PollEvent(&window_ev)) {
-            switch(window_ev.window.event) {
-                case SDL_WINDOWEVENT_RESIZED:
-                    Reshape(window_ev.window.data1, window_ev.window.data2);
-                    break;
-            }
-
-            switch(window_ev.type) {
-                case SDL_MOUSEMOTION:
-                    gScreenCamera.HandleMouse(window_ev.motion.xrel, window_ev.motion.yrel, delta);
-                    p_model.rot = p_model.rot * glm::angleAxis(-10.0f * window_ev.motion.xrel * delta, glm::vec3(0.0f, 1.0f, 0.0f));
-
-                    break;
-                case SDL_KEYUP:
-                    if (window_ev.key.keysym.sym == SDLK_k) {
-                        // std::cout << gScreenCamera << std::endl;
-                        hide_mouse = !hide_mouse;
-                        SDL_SetRelativeMouseMode(hide_mouse ? SDL_TRUE : SDL_FALSE); // hide mouse
-                    }
-                    break;
-                case SDL_QUIT:
-                    quit = true;
-                    break;
-            }
-        }
+        gScreenCamera.pos = p_model.origin + glm::vec3(0.0f, 0.8f, 0.0f);
 
         md5_model.Update(delta);
         Display(delta);

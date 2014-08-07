@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <GL/glew.h>
+#include <SDL2/SDL_endian.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -52,6 +53,43 @@ IQMModel::~IQMModel()
 
 //------------------------------------------------------------------------------
 
+static void InitIQMHeader(IQMHeader *header)
+{
+    // TODO: Better way to do this?
+    header->version = SDL_SwapLE32(header->version);
+    header->flags = SDL_SwapLE32(header->flags);
+    header->filesize = SDL_SwapLE32(header->filesize);
+    header->num_text = SDL_SwapLE32(header->num_text);
+    header->ofs_text = SDL_SwapLE32(header->ofs_text);
+    header->num_meshes = SDL_SwapLE32(header->num_meshes);
+    header->ofs_meshes = SDL_SwapLE32(header->ofs_meshes);
+    header->num_vertexarrays = SDL_SwapLE32(header->num_vertexarrays);
+    header->num_vertexes = SDL_SwapLE32(header->num_vertexes);
+    header->ofs_vertexarrays = SDL_SwapLE32(header->ofs_vertexarrays);
+    header->num_triangles = SDL_SwapLE32(header->num_triangles);
+    header->ofs_triangles = SDL_SwapLE32(header->ofs_triangles);
+    header->ofs_adjacency = SDL_SwapLE32(header->ofs_adjacency);
+    header->num_joints = SDL_SwapLE32(header->num_joints);
+    header->ofs_joints = SDL_SwapLE32(header->ofs_joints);
+    header->num_poses = SDL_SwapLE32(header->num_poses);
+    header->ofs_poses = SDL_SwapLE32(header->ofs_poses);
+    header->num_anims = SDL_SwapLE32(header->num_anims);
+    header->ofs_anims = SDL_SwapLE32(header->ofs_anims);
+    header->num_frames = SDL_SwapLE32(header->num_frames);
+    header->num_framechannels = SDL_SwapLE32(header->num_framechannels);
+    header->ofs_frames = SDL_SwapLE32(header->ofs_frames);
+    header->ofs_bounds = SDL_SwapLE32(header->ofs_bounds);
+    header->num_comment = SDL_SwapLE32(header->num_comment);
+    header->ofs_comment = SDL_SwapLE32(header->ofs_comment);
+    header->num_extensions = SDL_SwapLE32(header->num_extensions);
+    header->ofs_extensions = SDL_SwapLE32(header->ofs_extensions);
+
+    assert(header->version == IQM_VERSION);
+    assert(header->filesize < (16 << 20));
+}
+
+//------------------------------------------------------------------------------
+
 bool IQMModel::LoadModel(const char *filename)
 {
     if (!fs::exists(filename)) {
@@ -59,7 +97,7 @@ bool IQMModel::LoadModel(const char *filename)
         return false;
     }
 
-    iqmheader header;
+    IQMHeader header;
 
     std::FILE *file = std::fopen(filename, "rb");
 
@@ -69,10 +107,7 @@ bool IQMModel::LoadModel(const char *filename)
         return false;
     }
 
-    lilswap(&header.version, (sizeof(header) - sizeof(header.magic))/sizeof(uint));
-
-    assert(header.version == IQM_VERSION);
-    assert(header.filesize < (16 << 20));
+    InitIQMHeader(&header);
 
     num_tris = header.num_triangles;
     num_meshes = header.num_meshes;
@@ -88,13 +123,13 @@ bool IQMModel::LoadModel(const char *filename)
     std::fclose(file);
 
     lilswap((uint *)&buffer[header.ofs_vertexarrays],
-            header.num_vertexarrays*sizeof(iqmvertexarray)/sizeof(uint));
+            header.num_vertexarrays*sizeof(IQMVertexarray)/sizeof(uint));
     lilswap((uint *)&buffer[header.ofs_triangles],
-            header.num_triangles*sizeof(iqmtriangle)/sizeof(uint));
+            header.num_triangles*sizeof(IQMTriangle)/sizeof(uint));
     lilswap((uint *)&buffer[header.ofs_meshes],
-            header.num_meshes*sizeof(iqmmesh)/sizeof(uint));
+            header.num_meshes*sizeof(IQMMesh)/sizeof(uint));
     lilswap((uint *)&buffer[header.ofs_joints],
-            header.num_joints*sizeof(iqmjoint)/sizeof(uint));
+            header.num_joints*sizeof(IQMJoint)/sizeof(uint));
 
     float *inposition    = NULL;
     float *innormal      = NULL;
@@ -105,11 +140,11 @@ bool IQMModel::LoadModel(const char *filename)
 
     const char *str = header.ofs_text ? (char *)&buffer[header.ofs_text] : "";
 
-    iqmvertexarray *vertices= (iqmvertexarray *)&buffer[header.ofs_vertexarrays];
+    IQMVertexarray *vertices= (IQMVertexarray *)&buffer[header.ofs_vertexarrays];
 
     for(int i = 0; i < (int)header.num_vertexarrays; i++)
     {
-        iqmvertexarray &vert = vertices[i];
+        IQMVertexarray &vert = vertices[i];
         switch(vert.type)
         {
         case IQM_POSITION:
@@ -144,19 +179,21 @@ bool IQMModel::LoadModel(const char *filename)
                 return false;
             }
             inblendindex = (uchar *)&buffer[vert.offset];
+            lilswap(inblendindex, 2 * header.num_vertexes);
             break;
         case IQM_BLENDWEIGHTS:
             if (vert.format != IQM_UBYTE || vert.size != 4) {
                 return false;
             }
             inblendweight = (uchar *)&buffer[vert.offset];
+            lilswap(inblendweight, 2 * header.num_vertexes);
             break;
         }
     }
 
-    meshes = (iqmmesh *)&buffer[header.ofs_meshes];
-    joints = (iqmjoint *)&buffer[header.ofs_joints];
-    tris   = (iqmtriangle *)&buffer[header.ofs_triangles];
+    meshes = (IQMMesh *)&buffer[header.ofs_meshes];
+    joints = (IQMJoint *)&buffer[header.ofs_joints];
+    tris   = (IQMTriangle *)&buffer[header.ofs_triangles];
 
     baseframe.resize(header.num_joints);
     inversebaseframe.resize(header.num_joints);
@@ -164,7 +201,7 @@ bool IQMModel::LoadModel(const char *filename)
 
     for(int i = 0; i < (int)header.num_joints; i++)
     {
-        iqmjoint &j = joints[i];
+        IQMJoint &j = joints[i];
 
         glm::quat rot_q = glm::quat(j.rotate[3], j.rotate[0], j.rotate[1], j.rotate[2]);
         glm::vec3 trans = glm::vec3(j.translate[0], j.translate[1], j.translate[2]);
@@ -180,17 +217,19 @@ bool IQMModel::LoadModel(const char *filename)
         }
     }
 
-    // Assuming the materials are in the same directory as the iqm file
+    // Assuming the materials are in the same directory as the IQM file
     fs::path file_path   = filename;
     fs::path parent_path = file_path.parent_path();
 
     for(int i = 0; i < (int)header.num_meshes; i++)
     {
-        iqmmesh &mesh = meshes[i];
+        IQMMesh &mesh = meshes[i];
         fs::path mat_path(&str[mesh.material]);
         fs::path texture_path = parent_path / mat_path;
 
         if (!texture_path.has_extension()) {
+            log::InfoLog("%s doesn't have extension. Assuming TGA\n",
+                         texture_path.c_str());
             texture_path.replace_extension(".tga");
         }
 
@@ -200,6 +239,7 @@ bool IQMModel::LoadModel(const char *filename)
             log::ErrorLog("%s: There is no material for mesh %s called %s\n",
                           filename, &str[mesh.name],
                           texture_path.string().c_str());
+            textures[i] = 0;
         } else {
             textures[i] = MakeTexture(texture_path.string(), GL_TEXTURE_2D);
             if (!textures[i]) {
@@ -214,23 +254,25 @@ bool IQMModel::LoadModel(const char *filename)
            return false;
         }
 
-        lilswap((uint *)&buffer[header.ofs_poses], header.num_poses*sizeof(iqmpose)/sizeof(uint));
-        lilswap((uint *)&buffer[header.ofs_anims], header.num_anims*sizeof(iqmanim)/sizeof(uint));
+        lilswap((uint *)&buffer[header.ofs_poses], header.num_poses*sizeof(IQMPose)/sizeof(uint));
+        lilswap((uint *)&buffer[header.ofs_anims], header.num_anims*sizeof(IQMAnim)/sizeof(uint));
         lilswap((ushort *)&buffer[header.ofs_frames], header.num_frames*header.num_framechannels);
 
-        iqmanim *anims     = (iqmanim *)&buffer[header.ofs_anims];
-        iqmpose *poses     = (iqmpose *)&buffer[header.ofs_poses];
+        IQMAnim *anims = (IQMAnim *)&buffer[header.ofs_anims];
+        IQMPose *poses = (IQMPose *)&buffer[header.ofs_poses];
         ushort  *framedata = (ushort *)&buffer[header.ofs_frames];
 
         num_frames = header.num_frames;
         frames.resize(header.num_frames * header.num_poses);
-        out_frames.resize(header.num_joints);
+
+        skeletons.resize(1);
+        skeletons[current_skeleton_id].frames.resize(num_joints);
 
         for(int i = 0; i < (int)header.num_frames; i++)
         {
             for(int j = 0; j < (int)header.num_poses; j++)
             {
-                iqmpose &p = poses[j];
+                IQMPose &p = poses[j];
                 glm::quat rotate;
                 glm::vec3 translate, scale;
 
@@ -259,7 +301,7 @@ bool IQMModel::LoadModel(const char *filename)
 
         for(int i = 0; i < (int)header.num_anims; i++)
         {
-            iqmanim &a = anims[i];
+            IQMAnim &a = anims[i];
             log::InfoLog("%s: loaded anim: %s\n", filename, &str[a.name]);
         }
     }
@@ -302,7 +344,7 @@ bool IQMModel::LoadModel(const char *filename)
     glBufferData(GL_ARRAY_BUFFER, header.num_vertexes*sizeof(Vertex), verts, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, header.num_triangles*sizeof(iqmtriangle), tris, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, header.num_triangles*sizeof(IQMTriangle), tris, GL_STATIC_DRAW);
 
     SetVertAttribPointers();
 
@@ -315,7 +357,7 @@ bool IQMModel::LoadModel(const char *filename)
 
 //------------------------------------------------------------------------------
 
-void IQMModel::AnimateIQM(float current_time)
+void IQMModel::Animate(float current_time)
 {
     if (!num_frames) {
         return;
@@ -334,12 +376,12 @@ void IQMModel::AnimateIQM(float current_time)
 
     for(int i = 0; i < num_joints; i++)
     {
-        glm::mat4 mat = (1 - frame_offset)*mat0[i] + frame_offset*mat1[i];
+        glm::mat4 mat = (1.0f - frame_offset)*mat0[i] + frame_offset*mat1[i];
 
         if(joints[i].parent >= 0) {
-            out_frames[i] = out_frames[joints[i].parent] * mat;
+            skeletons[0].frames[i] = skeletons[0].frames[joints[i].parent] * mat;
         } else {
-            out_frames[i] = mat;
+            skeletons[0].frames[i] = mat;
         }
     }
 }
@@ -355,15 +397,22 @@ void IQMModel::Render()
 
     for(int i = 0; i < num_meshes; i++)
     {
-        iqmmesh &m = meshes[i];
+        IQMMesh &m = meshes[i];
         glBindTexture(GL_TEXTURE_2D, textures[i]);
-        glDrawElements(GL_TRIANGLES, 3 * m.num_triangles, GL_UNSIGNED_INT, (GLvoid*)(m.first_triangle * sizeof(iqmtriangle)));
+        glDrawElements(GL_TRIANGLES, 3 * m.num_triangles, GL_UNSIGNED_INT, (GLvoid*)(m.first_triangle * sizeof(IQMTriangle)));
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+}
+
+//------------------------------------------------------------------------------
+
+std::vector<glm::mat4> &IQMModel::GetBones()
+{
+    return skeletons[0].frames;
 }
 
 } // namespace sp

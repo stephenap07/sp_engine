@@ -21,6 +21,7 @@ void Camera::Init()
     pos  = glm::vec3(1.0f, 1.0f, 1.0f);
     dir  = glm::vec3(0.0f, 0.0f, -1.0f);
     up   = glm::vec3(0.0f, 1.0f, 0.0f);
+    rot  = glm::angleAxis(0.0f, dir);
 
     look = glm::vec3(pos + dir);
 }
@@ -34,6 +35,13 @@ void Camera::Init(const glm::mat3x3 &camera_mat)
     up   = camera_mat[2];
 
     look = glm::vec3(pos + dir);
+}
+
+//------------------------------------------------------------------------------
+
+void Camera::Rotate(float angle, glm::vec3 vec)
+{
+    rot = glm::angleAxis(angle, vec);
 }
 
 //------------------------------------------------------------------------------
@@ -109,7 +117,7 @@ void Camera::FreeRoam(float delta)
 glm::mat4 Camera::LookAt()
 {
     Update();
-    return glm::lookAt(pos, look, up);
+    return glm::mat4_cast(rot) * glm::lookAt(pos, look, up);
 }
 
 } // namespace sp

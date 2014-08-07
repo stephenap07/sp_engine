@@ -5,36 +5,50 @@
 
 namespace sp {
 
+struct MeshTri {
+    unsigned int vertex[3];
+};
+
+struct Skeleton {
+    std::vector<glm::mat4> frames;
+};
+
+struct Mesh {
+    GLuint texture_id;
+    std::vector<MeshTri> vertices; 
+};
+
 class IQMModel {
 public:
     ~IQMModel();
 
     bool LoadModel(const char *filename);
-    void AnimateIQM(float current_time);
+    void Animate(float current_time);
     void Render();
-
-    std::vector<glm::mat4> out_frames;
+    std::vector<glm::mat4> &GetBones();
 
 private:
     GLuint ebo;
     GLuint vbo;
     GLuint vao;
 
-    iqmmesh                *meshes;
-    iqmjoint               *joints;
-    iqmtriangle            *tris;
+    IQMMesh *meshes;
+    IQMJoint *joints;
+    IQMTriangle *tris;
 
     std::vector<glm::mat4x4> baseframe;
     std::vector<glm::mat4x4> inversebaseframe;
-    std::vector<GLuint>    textures;
-
+    std::vector<GLuint> textures;
     std::vector<glm::mat4x4> frames;
 
-    unsigned char          *buffer;
-    int                    num_tris;
-    int                    num_joints;
-    int                    num_meshes;
-    int                    num_frames;
+    std::vector<Skeleton> skeletons;
+    int current_skeleton_id;
+
+    unsigned char *buffer;
+    int num_tris;
+    int num_joints;
+    int num_meshes;
+    int num_frames;
 };
 
 } // namespace sp

@@ -9,12 +9,13 @@ layout(std140) uniform globalMatrices {
 };
 
 uniform mat4 model_matrix;
-
-out vec4 vs_normal;
+out vec3 vs_normal;
+out vec3 vs_position;
 
 void main(void)
 {
-    float scale = 1.0f;
-    vs_normal = normalize(view_matrix * model_matrix * vec4(normal, scale));
-    gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position, scale);
+    vs_normal = normal;
+    vs_position = position;
+
+    gl_Position = projection_matrix * model_matrix * vec4(position, 1.0);
 }

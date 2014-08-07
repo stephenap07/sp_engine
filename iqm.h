@@ -4,7 +4,7 @@
 #define IQM_MAGIC "INTERQUAKEMODEL"
 #define IQM_VERSION 2
 
-struct iqmheader
+struct IQMHeader
 {
     char magic[16];
     unsigned int version;
@@ -22,7 +22,7 @@ struct iqmheader
     unsigned int num_extensions, ofs_extensions;
 };
 
-struct iqmmesh
+struct IQMMesh
 {
     unsigned int name;
     unsigned int material;
@@ -55,31 +55,31 @@ enum
     IQM_DOUBLE = 8
 };
 
-struct iqmtriangle
+struct IQMTriangle
 {
     unsigned int vertex[3];
 };
 
-struct iqmadjacency
+struct IQMAdjacency
 {
     unsigned int triangle[3];
 };
 
-struct iqmjointv1
+struct IQMJointv1
 {
     unsigned int name;
     int parent;
     float translate[3], rotate[3], scale[3];
 };
 
-struct iqmjoint
+struct IQMJoint
 {
     unsigned int name;
     int parent;
     float translate[3], rotate[4], scale[3];
 };
 
-struct iqmposev1
+struct IQMPosev1
 {
     int parent;
     unsigned int mask;
@@ -87,7 +87,7 @@ struct iqmposev1
     float channelscale[9];
 };
 
-struct iqmpose
+struct IQMPose
 {
     int parent;
     unsigned int mask;
@@ -95,7 +95,7 @@ struct iqmpose
     float channelscale[10];
 };
 
-struct iqmanim
+struct IQMAnim
 {
     unsigned int name;
     unsigned int first_frame, num_frames;
@@ -108,7 +108,7 @@ enum
     IQM_LOOP = 1<<0
 };
 
-struct iqmvertexarray
+struct IQMVertexarray
 {
     unsigned int type;
     unsigned int flags;
@@ -117,13 +117,13 @@ struct iqmvertexarray
     unsigned int offset;
 };
 
-struct iqmbounds
+struct IQMBounds
 {
     float bbmin[3], bbmax[3];
     float xyradius, radius;
 };
 
-struct iqmextension
+struct IQMExtension
 {
     unsigned int name;
     unsigned int num_data, ofs_data;
