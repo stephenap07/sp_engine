@@ -109,6 +109,7 @@ struct ModelView {
 
 ModelView p_model(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.5f, 1.0f, 0.5f));
 ModelView gun_model(glm::vec3(0.1f, -0.08f, -0.19f), glm::vec3(0.02f, 0.02f, 0.09f));
+ModelView iqm_view(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.2));
 
 void InitializeProgram()
 {
@@ -139,7 +140,7 @@ void InitializeProgram()
 
     player_program.CreateProgram({
         {std::string("assets/shaders/pass_through.vert"), GL_VERTEX_SHADER},
-        {std::string("assets/shaders/pass_through.frag"), GL_FRAGMENT_SHADER}
+        {std::string("assets/shaders/gouroud.frag"), GL_FRAGMENT_SHADER}
     });
 
     renderer.LoadGlobalUniforms(model_program.GetID());
@@ -201,6 +202,8 @@ void Init()
     //gun_model.scale = glm::vec3(0.03f, 0.03f, 0.14f);
     //gun_model.origin = glm::vec3(0.09f, 0.7f, -0.3f);
 
+    iqm_view.rot = glm::angleAxis(90.0f, glm::vec3(0, 1, 0));
+
     model_program.Bind();
     glm::mat4 model;
     model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
@@ -218,7 +221,7 @@ void Init()
     md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
 
     //iqm_model.LoadModel("assets/models/imrod_iqm/ImrodLowPoly.iqm");
-    // iqm_model.LoadModel("assets/models/hellknight_iqm/hellknight.iqm");
+    //iqm_model.LoadModel("assets/models/hellknight_iqm/hellknight.iqm");
     iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
 
     sp::MakeTexturedQuad(&plane);
@@ -237,7 +240,11 @@ void Init()
 
     sp::MakeCube(&player, true);
     glm::vec4 player_color(0.0f, 1.0f, 1.0f, 1.0f);
-    player_program.SetUniform(sp::k4fv, "uni_color", glm::value_ptr(player_color));
+    //player_program.SetUniform(sp::k4fv, "color_diffuse", glm::value_ptr(player_color));
+
+    model_program.SetUniform(sp::k1i, "is_textured", std::vector<GLint>({ 1 }));
+    model_program.SetUniform(sp::k1i, "is_rigged", std::vector<GLint>({ 1 }));
+    plane_program.SetUniform(sp::k1i, "is_textured", std::vector<GLint>({ 1 }));
 }
 
 inline void DrawIQM()
@@ -250,10 +257,7 @@ inline void DrawIQM()
         glm::vec4(0, 1, 0, 0),
         glm::vec4(0, 0, 0, 1)
     );
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-    model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0)) * transform;
-    //model = glm::scale(model, glm::vec3(0.015625f));
-    model = glm::scale(model, glm::vec3(0.2));
+    glm::mat4 model = iqm_view.GetModel() * transform;
     model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
     iqm_model.Animate(animate);
     std::vector<glm::mat4> &bones = iqm_model.GetBones();
@@ -305,7 +309,7 @@ inline void DrawSkyBox()
 
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(0xFFFF);
-    glDrawElements(GL_TRIANGLE_STRIP, 17, GL_UNSIGNED_SHORT, NULL);
+    glDrawElements(GL_TRIANGLE_FAN, 17, GL_UNSIGNED_SHORT, NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -368,8 +372,28 @@ inline void DrawPlayer()
 
 inline void DrawGun()
 {
+    glDisable(GL_CULL_FACE);
     player_program.Bind();
     // glm::mat4 world_model = glm::inverse(gScreenCamera.LookAt());
+    glm::mat4 g_model =  gun_model.GetModel();
+    player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
+
+    glBindVertexArray(player.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, player.vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, player.ebo);
+
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    glUseProgram(0);
+    glEnable(GL_CULL_FACE);
+}
+
+inline void DrawBox()
+{
+    player_program.Bind();
     glm::mat4 g_model =  gun_model.GetModel();
     player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
 
@@ -387,6 +411,7 @@ inline void DrawGun()
 
     glUseProgram(0);
 }
+
 
 void DrawTextScaled(const std::string &label, float x, float y)
 {
@@ -476,7 +501,6 @@ int main()
                     break;
                 case SDL_KEYUP:
                     if (window_ev.key.keysym.sym == SDLK_k) {
-                        // std::cout << gScreenCamera << std::endl;
                         hide_mouse = !hide_mouse;
                         SDL_SetRelativeMouseMode(hide_mouse ? SDL_TRUE : SDL_FALSE); // hide mouse
                     }
@@ -513,6 +537,13 @@ int main()
         if (state[SDL_SCANCODE_A]) p_model.origin -= delta * player_speed * side;
 
         if (state[SDL_SCANCODE_SPACE] && !jumping) player_vel_y = 0.2f;
+
+        if (state[SDL_SCANCODE_UP]) iqm_view.origin += delta * player_speed * glm::vec3(0, 0, -1);
+        if (state[SDL_SCANCODE_DOWN]) iqm_view.origin -= delta * player_speed * glm::vec3(0, 0, -1);
+
+        if (state[SDL_SCANCODE_RIGHT]) iqm_view.origin += delta * player_speed * glm::vec3(1, 0, 0);
+        if (state[SDL_SCANCODE_LEFT]) iqm_view.origin -= delta * player_speed * glm::vec3(1, 0, 0);
+
 
         //gScreenCamera.FreeRoam(delta);
         gScreenCamera.pos = p_model.origin + glm::vec3(0.0f, 0.8f, 0.0f);

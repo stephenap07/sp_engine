@@ -19,8 +19,9 @@ public:
     void SetView(const glm::mat4 &view);
     void LoadGlobalUniforms(GLuint shader_index);
 
-    int GetWidth() { return screen_width; }
-    int GetHeight() { return screen_height; }
+    int GetWidth() const { return screen_width; }
+    int GetHeight() const { return screen_height; }
+    glm::mat4 GetView() const { return view; }
 
 private:
     SDL_Window *window;

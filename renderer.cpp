@@ -61,7 +61,9 @@ void Renderer::Init()
         HandleGLError(error_enum);
     }
 
-    projection = glm::perspective(60.0f, (float)screen_width / screen_height, 0.01f, 1024.0f);
+    // TODO: Change near/fear based on drawn entities.
+    // EG: different projection matrix for guns.
+    projection = glm::perspective(60.0f, (float)screen_width / screen_height, 0.10f, 540.0f);
 
     glGenBuffers(1, &global_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
