@@ -9,6 +9,7 @@
 namespace sp {
 
 enum GLUniformType{
+    k1i,
     k4fv,
     k2fv,
     kMatrix4fv,
@@ -37,6 +38,8 @@ public:
     void Bind();
     void SetUniform(GLUniformType type, const char *name, GLvoid *data);
     void SetUniform(GLUniformType type, const char *name, GLsizei count, GLvoid *data);
+    void SetUniform(GLUniformType type, const char *name, const std::vector<GLint> &data);
+
     GLuint GetID() const { return id; }
 
 private:

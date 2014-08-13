@@ -4,6 +4,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
+#include <vector>
 #include <cmath>
 
 #include "util.h"
@@ -19,15 +20,12 @@ struct GeomVertex {
 
 void MakeCube(VertexBuffer *buffer, bool has_normals)
 {
-    static GLuint vao;
-    if (!vao) {
-        glGenVertexArrays(1, &vao);
-    }
-    buffer->vao = vao;
+    static GLuint vao_1 = 0;
+    static GLuint vao_2 = 0;
 
     glGenBuffers(1, &buffer->vbo);
     glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-    glBindVertexArray(buffer->vao);
+
     glGenBuffers(1, &buffer->ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->ebo);
 
@@ -54,16 +52,21 @@ void MakeCube(VertexBuffer *buffer, bool has_normals)
     **************************************************/
 
     if (!has_normals) {
-        const GLfloat cube_vertices[] =
-        {
+        if (!vao_1) {
+            glGenVertexArrays(1, &vao_1);
+        }
+        buffer->vao = vao_1;
+        glBindVertexArray(buffer->vao);
+
+        const GLfloat cube_vertices[] = {
             -1.0f, -1.0f, -1.0f,
             -1.0f, -1.0f,  1.0f,
             -1.0f,  1.0f, -1.0f,
             -1.0f,  1.0f,  1.0f,
-             1.0f, -1.0f, -1.0f,
-             1.0f, -1.0f,  1.0f,
-             1.0f,  1.0f, -1.0f,
-             1.0f,  1.0f,  1.0f
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f,  1.0f,
+            1.0f,  1.0f, -1.0f,
+            1.0f,  1.0f,  1.0f
         };
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), BUFFER_OFFSET(0));
@@ -72,36 +75,74 @@ void MakeCube(VertexBuffer *buffer, bool has_normals)
         glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indices), cube_indices, GL_STATIC_DRAW);
     } else {
+        if (!vao_2) {
+            glGenVertexArrays(1, &vao_2);
+        }
+        buffer->vao = vao_2;
+        glBindVertexArray(buffer->vao);
 
-        GeomVertex cube_vertices[] =
-        {
-            {.vertex = glm::vec3(-1.0f, -1.0f, -1.0f), .normal = glm::vec3(0.0f)},
-            {.vertex = glm::vec3(-1.0f, -1.0f,  1.0f), .normal = glm::vec3(0.0f)},
-            {.vertex = glm::vec3(-1.0f,  1.0f, -1.0f), .normal = glm::vec3(0.0f)},
-            {.vertex = glm::vec3(-1.0f,  1.0f,  1.0f), .normal = glm::vec3(0.0f)},
-            {.vertex = glm::vec3(1.0f, -1.0f, -1.0f),  .normal = glm::vec3(0.0f)},
-            {.vertex = glm::vec3(1.0f, -1.0f,  1.0f),  .normal = glm::vec3(0.0f)},
-            {.vertex = glm::vec3(1.0f,  1.0f, -1.0f),  .normal = glm::vec3(0.0f)},
-            {.vertex = glm::vec3(1.0f,  1.0f,  1.0f),  .normal = glm::vec3(0.0f)}
+        static const float kCubeVertexData[] = { 
+            -1.0f,-1.0f,-1.0f,
+            -1.0f,-1.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f,-1.0f,
+            -1.0f,-1.0f,-1.0f,
+            -1.0f, 1.0f,-1.0f,
+            1.0f,-1.0f, 1.0f,
+            -1.0f,-1.0f,-1.0f,
+            1.0f,-1.0f,-1.0f,
+            1.0f, 1.0f,-1.0f,
+            1.0f,-1.0f,-1.0f,
+            -1.0f,-1.0f,-1.0f,
+            -1.0f,-1.0f,-1.0f,
+            -1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f,-1.0f,
+            1.0f,-1.0f, 1.0f,
+            -1.0f,-1.0f, 1.0f,
+            -1.0f,-1.0f,-1.0f,
+            -1.0f, 1.0f, 1.0f,
+            -1.0f,-1.0f, 1.0f,
+            1.0f,-1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f,-1.0f,-1.0f,
+            1.0f, 1.0f,-1.0f,
+            1.0f,-1.0f,-1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f,-1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f,-1.0f,
+            -1.0f, 1.0f,-1.0f,
+            1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f,-1.0f,
+            -1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f,
+            1.0f,-1.0f, 1.0f
         };
+        
+        glm::vec3 cube_vertices[sizeof(kCubeVertexData)/sizeof(float) / 3];
+        for (size_t i=0; i < sizeof(kCubeVertexData)/sizeof(float); i+=3) {
+            cube_vertices[i / 3] = glm::vec3(kCubeVertexData[i], kCubeVertexData[i + 1], kCubeVertexData[i + 2]);
+        }
 
-        for (size_t i = 0; i < 16; i++) {
-            if (cube_indices[i] == 0xFFFF) {
-                continue;
-            } else if (i > 5) {
-                continue;
-            }
+        std::vector<GeomVertex> new_vertices;
 
-            glm::vec3 verts[3] = {
-                cube_vertices[cube_indices[i]].vertex,
-                cube_vertices[cube_indices[i+1]].vertex,
-                cube_vertices[cube_indices[i+2]].vertex
-            };
+        for (size_t i = 0; i < 36; i++) {
+            if (i % 3 == 2) {
+                glm::vec3 verts[3] = {
+                    cube_vertices[i-2],
+                    cube_vertices[i-1],
+                    cube_vertices[i]
+                };
+                
+                glm::vec3 f = verts[1]; 
 
-            glm::vec3 normal = glm::normalize(glm::cross(verts[2] - verts[0], verts[1] - verts[0]));
+                glm::vec3 normal = glm::normalize(glm::cross(verts[2] - verts[0], verts[1] - verts[0]));
 
-            for (size_t j = 0; j < 3; j++) {
-                cube_vertices[cube_indices[i + j]].normal += normal;
+                for (size_t j = 0; j < 3; j++) {
+                    GeomVertex v = {.vertex = verts[j], .normal = normal};
+                    new_vertices.push_back(v);
+                }
             }
         }
 
@@ -111,8 +152,7 @@ void MakeCube(VertexBuffer *buffer, bool has_normals)
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
-        glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GeomVertex), cube_vertices, GL_STATIC_DRAW);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indices), cube_indices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, new_vertices.size() * sizeof(GeomVertex), &new_vertices[0], GL_STATIC_DRAW);
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);

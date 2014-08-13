@@ -3,38 +3,23 @@
 layout (location = 0) out vec4 color;
 
 in vec3 vs_normal;
-in vec3 vs_position;
+in vec3 vs_worldpos;
 
-uniform mat4 model_matrix;
-uniform vec4 uni_color;
+uniform vec4 uni_color = vec4(0.0, 1.0, 1.0, 1.0);
+uniform vec4 color_ambient = vec4(0.3, 0.3, 0.3, 1.0);
+uniform vec4 color_diffuse = vec4(1.0, 1.0, 1.0, 1.0);
+uniform vec4 color_specular = vec4(1.0, 1.0, 1.0, 1.0);
+uniform float shininess = 97.0f;
 
-layout(std140) uniform globalMatrices {
-    mat4 projection_matrix;
-    mat4 view_matrix;
-};
-
-float cosTh;
-float cosTi;
-vec3 normal;
-vec3 light_p;
+uniform vec3 light_position = vec3(0.0, 3.0, 0.0);
 
 void main()
 {
-    mat4 normal_mat = transpose(inverse(model_matrix));
-    normal = normalize(vec3(normal_mat * vec4(vs_normal, 1.0)));
-    light_p = vec3(view_matrix * vec4(0.0, 3.0, 0.0, 1.0));
+   vec3 light_direction = normalize(light_position - vs_worldpos);
+   vec3 normal = normalize(vs_normal);
+   vec3 half_vector = normalize(light_direction + normalize(vs_worldpos));
+   float diffuse = max(0.0, dot(normal, light_direction));
+   float specular = pow(max(0.0, dot(vs_normal, half_vector)), shininess);
 
-    vec3 pv = vec3(projection_matrix * model_matrix * vec4(vs_position, 1.0));
-    vec3 v = normalize(pv - vs_position);
-    vec3 h = normalize(v + light_p);
-    vec3 n = normalize(vec3(model_matrix * vec4(normal, 1.0)));
-    cosTh = max(dot(n, h), 0);
-    cosTi = max(dot(n, light_p), 0);
-
-    float m = 0.1;
-    vec3 Kd = vec3(uni_color) / 3.14159;
-    //vec3 Ks = (m + 8) / (8 * 3.14159);
-    vec3 Lo = (Kd + 3.0f * pow(cosTh, m)) * light_p * cosTi;
-
-    color = vec4(Lo, 1.0f);
+   color = uni_color * (color_ambient + diffuse * color_diffuse + specular * color_specular);
 }
