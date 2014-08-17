@@ -15,7 +15,7 @@ uniform vec4 color_specular = vec4(1.0, 1.0, 1.0, 1.0);
 uniform float shininess = 70.0f;
 uniform bool is_textured = false;
 
-uniform vec3 light_position = vec3(0.0, 140.0, 0.0);
+uniform vec3 light_position = vec3(0.0, 3.0, 0.0);
 
 void main(void)
 {
@@ -45,4 +45,3 @@ void main(void)
     vec3 rgb = min(tex_color * scattered_light + reflected_light, vec4(1.0)).rgb;
     color = vec4(rgb, tex_color.a);
 }
-

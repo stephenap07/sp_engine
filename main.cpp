@@ -110,6 +110,7 @@ struct ModelView {
 ModelView p_model(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.5f, 1.0f, 0.5f));
 ModelView gun_model(glm::vec3(0.1f, -0.08f, -0.19f), glm::vec3(0.02f, 0.02f, 0.09f));
 ModelView iqm_view(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.2));
+ModelView block_model(glm::vec3(0.0f, 0.0f, 3.5f), glm::vec3(0.5f, 1.0f, 0.5f));
 
 void InitializeProgram()
 {
@@ -225,7 +226,7 @@ void Init()
     iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
 
     sp::MakeTexturedQuad(&plane);
-    sp::MakeCube(&cube);
+    sp::MakeCube(&cube, true);
 
     skybox_rotate_loc = glGetUniformLocation(skybox_program.GetID(), "tc_rotate");
     skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
@@ -301,7 +302,7 @@ inline void DrawSkyBox()
     glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
 
     glm::mat4 tc_matrix = glm::scale(glm::mat4(), glm::vec3(300.0f));
-    glUniformMatrix4fv(skybox_rotate_loc, 1, GL_FALSE, glm::value_ptr(tc_matrix));
+    skybox_program.SetUniform(sp::kMatrix4fv, "tc_rotate", glm::value_ptr(tc_matrix));
 
     glBindVertexArray(cube.vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube.ebo);
@@ -310,6 +311,7 @@ inline void DrawSkyBox()
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(0xFFFF);
     glDrawElements(GL_TRIANGLE_FAN, 17, GL_UNSIGNED_SHORT, NULL);
+    glDisable(GL_PRIMITIVE_RESTART);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -372,15 +374,16 @@ inline void DrawPlayer()
 
 inline void DrawGun()
 {
-    glDisable(GL_CULL_FACE);
     player_program.Bind();
     // glm::mat4 world_model = glm::inverse(gScreenCamera.LookAt());
-    glm::mat4 g_model =  gun_model.GetModel();
+    glm::mat4 g_model = glm::inverse(gScreenCamera.LookAt()) * gun_model.GetModel();
+    glm::mat4 gw_model = gScreenCamera.LookAt() * g_model;
+    //glm::mat4 gv_model = glm::mat4(1.0f);
     player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
+    player_program.SetUniform(sp::kMatrix4fv, "mv_matrix", glm::value_ptr(gw_model));
 
     glBindVertexArray(player.vao);
     glBindBuffer(GL_ARRAY_BUFFER, player.vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, player.ebo);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -388,25 +391,31 @@ inline void DrawGun()
     glBindVertexArray(0);
 
     glUseProgram(0);
-    glEnable(GL_CULL_FACE);
 }
 
-inline void DrawBox()
+inline void DrawBox(float delta)
 {
     player_program.Bind();
-    glm::mat4 g_model =  gun_model.GetModel();
-    player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
+    block_model.rot = block_model.rot * glm::angleAxis(delta * 180.0f, glm::vec3(0, 1, 0));
+
+    glm::mat4 rot_mat = glm::mat4_cast(block_model.rot);
+    glm::mat4 trans_mat = glm::translate(block_model.origin);
+    glm::mat4 scale_mat = glm::scale(block_model.scale);
+
+    glm::mat4 model = rot_mat * trans_mat * scale_mat;
+
+    glm::mat4 b_model = model;
+    glm::mat4 bv_model = gScreenCamera.LookAt() * model;
+
+    player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(b_model));
+    player_program.SetUniform(sp::kMatrix4fv, "mv_matrix", glm::value_ptr(bv_model));
 
     glBindVertexArray(player.vao);
     glBindBuffer(GL_ARRAY_BUFFER, player.vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, player.ebo);
 
-    glEnable(GL_PRIMITIVE_RESTART);
-    glPrimitiveRestartIndex(0xFFFF);
-    glDrawElements(GL_TRIANGLE_STRIP, 17, GL_UNSIGNED_SHORT, NULL);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     glUseProgram(0);
@@ -431,6 +440,7 @@ void Display(float delta)
 
     //DrawPlayer();
     DrawGun();
+    DrawBox(delta);
     DrawFloor();
     DrawSkyBox();
     //DrawMD5();
@@ -543,7 +553,6 @@ int main()
 
         if (state[SDL_SCANCODE_RIGHT]) iqm_view.origin += delta * player_speed * glm::vec3(1, 0, 0);
         if (state[SDL_SCANCODE_LEFT]) iqm_view.origin -= delta * player_speed * glm::vec3(1, 0, 0);
-
 
         //gScreenCamera.FreeRoam(delta);
         gScreenCamera.pos = p_model.origin + glm::vec3(0.0f, 0.8f, 0.0f);
