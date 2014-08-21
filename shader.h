@@ -38,7 +38,7 @@ public:
     void Bind();
     void SetUniform(GLUniformType type, const char *name, GLvoid *data);
     void SetUniform(GLUniformType type, const char *name, GLsizei count, GLvoid *data);
-    void SetUniform(GLUniformType type, const char *name, const std::vector<GLint> &data);
+    void SetUniform(GLUniformType type, const char *name, const bool data);
 
     GLuint GetID() const { return id; }
 

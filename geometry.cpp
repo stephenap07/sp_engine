@@ -166,14 +166,13 @@ void MakeQuad(VertexBuffer *buffer)
 {
     GLfloat vert_quad[] = {
         -1.0f,  1.0f, -1.0f, // Top Left
-        1.0f,  1.0f, -1.0f,  // Top Right
         1.0f, -1.0f, 1.0f,   // Bottom Right
-        -1.0f, -1.0f, 1.0f   // Bottom Left
+        -1.0f, -1.0f, 1.0f,   // Bottom Left
+        1.0f,  1.0f, -1.0f  // Top Right
     };
 
-    GLuint vert_indices[] = {
-        3, 2, 1,
-        1, 0, 3
+    GLushort vert_indices[] = {
+        0, 2, 3, 1
     };
 
     glGenBuffers(1, &buffer->ebo);

@@ -5,6 +5,7 @@ ex
 *.swm
 *.swl
 *.swk
+*.swj
 *.o
 .tags
 obj/*

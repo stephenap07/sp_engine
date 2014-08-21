@@ -107,8 +107,6 @@ void GlyphAtlas::LoadFace(FT_Face face, int face_height)
         offset_x += g->bitmap.width + 1;
     }
 
-    glBindBuffer(GL_TEXTURE_2D, 0);
-
     printf("Generated a %d x %d (%d kb) texture atlas\n", width, height, width * height / 1024);
 }
 
