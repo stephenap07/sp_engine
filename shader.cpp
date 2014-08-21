@@ -158,7 +158,7 @@ void Shader::SetUniform(GLUniformType type, const char *name, GLvoid *data)
     SetUniform(type, name, 1, data);
 }
 
-void Shader::SetUniform(GLUniformType type, const char *name, const std::vector<GLint> &data)
+void Shader::SetUniform(GLUniformType type, const char *name, const bool data)
 {
     Bind();
 
@@ -168,9 +168,10 @@ void Shader::SetUniform(GLUniformType type, const char *name, const std::vector<
     } else {
         switch (type) {
             case k1i:
-                glUniform1i(uniform, data[0]);
+                glUniform1i(uniform, data);
+                break;
             default:
-                std::cerr << "Invalid uniform type\n";
+                std::cerr << "Invalid uniform type (" << name << ") for shader id " << id << std::endl;
                 break;
         }
     }

@@ -46,6 +46,12 @@
 #include "error.h"
 #include "system.h"
 #include "debug.h"
+#include "gui.h"
+
+// Raknet headers
+#include "MessageIdentifiers.h"
+#include "RakPeerInterface.h"
+#include "RakNetTypes.h"
 
 sp::Renderer renderer;
 
@@ -57,11 +63,14 @@ sp::Shader plane_program;
 sp::Shader skybox_program;
 sp::Shader text_program;
 sp::Shader player_program;
+sp::Shader text_input_program;
+std::vector<std::shared_ptr<GUIFrame>> gui_frames;
 
 sp::VertexBuffer cube;
 sp::VertexBuffer plane;
 sp::VertexBuffer text;
 sp::VertexBuffer player;
+sp::VertexBuffer text_input;
 
 MD5Model md5_model;
 sp::IQMModel iqm_model;
@@ -144,6 +153,11 @@ void InitializeProgram()
         {std::string("assets/shaders/gouroud.frag"), GL_FRAGMENT_SHADER}
     });
 
+    text_input_program.CreateProgram({
+        {std::string("assets/shaders/2d.vert"), GL_VERTEX_SHADER},
+        {std::string("assets/shaders/2d.frag"), GL_FRAGMENT_SHADER},
+    });
+
     renderer.LoadGlobalUniforms(model_program.GetID());
     renderer.LoadGlobalUniforms(line_program.GetID());
     renderer.LoadGlobalUniforms(plane_program.GetID());
@@ -151,7 +165,6 @@ void InitializeProgram()
     renderer.LoadGlobalUniforms(text_program.GetID());
     renderer.LoadGlobalUniforms(player_program.GetID());
 
-    sp::HandleGLError(glGetError());
 }
 
 bool InitializeFontMap()
@@ -182,7 +195,20 @@ bool InitializeFontMap()
     g_atlas_24.buffer = text;
     g_atlas_16.buffer = text;
 
+
     return true;
+}
+
+void InitTextInput()
+{
+    // TODO: Find nice way to orientate user interface
+    sp::MakeQuad(&text_input);
+    glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
+    glm::mat4 text_input_model = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f/64.0f, 1.0f/64.0f, 0));
+    //text_input_model = glm::translate(text_input_model, glm::vec3(1.1f, -18.5f, 0));
+
+    text_input_program.SetUniform(sp::k4fv, "uni_color", glm::value_ptr(white));
+    text_input_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(text_input_model));
 }
 
 void Init()
@@ -198,6 +224,7 @@ void Init()
 
     InitializeProgram();
     InitializeFontMap(); 
+    InitTextInput();
 
     // GUN Init
     //gun_model.scale = glm::vec3(0.03f, 0.03f, 0.14f);
@@ -205,11 +232,9 @@ void Init()
 
     iqm_view.rot = glm::angleAxis(90.0f, glm::vec3(0, 1, 0));
 
-    model_program.Bind();
     glm::mat4 model;
     model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
     line_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
-    glUseProgram(0);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnable(GL_BLEND);
@@ -226,10 +251,13 @@ void Init()
     iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
 
     sp::MakeTexturedQuad(&plane);
+
     sp::MakeCube(&cube, true);
 
-    skybox_rotate_loc = glGetUniformLocation(skybox_program.GetID(), "tc_rotate");
     skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
+    glm::mat4 tc_matrix = glm::scale(glm::mat4(), glm::vec3(300.0f));
+    skybox_program.SetUniform(sp::kMatrix4fv, "tc_rotate", glm::value_ptr(tc_matrix));
+
     plane_tex = sp::MakeTexture("assets/textures/checker.tga", GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D, plane_tex);
@@ -243,9 +271,14 @@ void Init()
     glm::vec4 player_color(0.0f, 1.0f, 1.0f, 1.0f);
     //player_program.SetUniform(sp::k4fv, "color_diffuse", glm::value_ptr(player_color));
 
-    model_program.SetUniform(sp::k1i, "is_textured", std::vector<GLint>({ 1 }));
-    model_program.SetUniform(sp::k1i, "is_rigged", std::vector<GLint>({ 1 }));
-    plane_program.SetUniform(sp::k1i, "is_textured", std::vector<GLint>({ 1 }));
+    model_program.SetUniform(sp::k1i, "is_textured", true);
+    model_program.SetUniform(sp::k1i, "is_rigged", true);
+    plane_program.SetUniform(sp::k1i, "is_textured", true);
+
+    // GUI junk
+    std::shared_ptr<GUIFrame> sp_frame(new GUIFrame(renderer.GetWidth(), renderer.GetHeight()));
+    sp_frame->Init();
+    gui_frames.push_back(sp_frame);
 }
 
 inline void DrawIQM()
@@ -301,9 +334,6 @@ inline void DrawSkyBox()
 
     glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
 
-    glm::mat4 tc_matrix = glm::scale(glm::mat4(), glm::vec3(300.0f));
-    skybox_program.SetUniform(sp::kMatrix4fv, "tc_rotate", glm::value_ptr(tc_matrix));
-
     glBindVertexArray(cube.vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube.ebo);
     glBindBuffer(GL_ARRAY_BUFFER, cube.vbo);
@@ -311,7 +341,7 @@ inline void DrawSkyBox()
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(0xFFFF);
     glDrawElements(GL_TRIANGLE_FAN, 17, GL_UNSIGNED_SHORT, NULL);
-    glDisable(GL_PRIMITIVE_RESTART);
+    //glDisable(GL_PRIMITIVE_RESTART);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -430,6 +460,24 @@ void DrawTextScaled(const std::string &label, float x, float y)
     DrawText(label, &g_atlas_16, -1 + x * sx, 1 - y * sy, sx, sy);
 }
 
+void DrawTextInput()
+{
+    text_input_program.Bind();
+    glBindVertexArray(text_input.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, text_input.vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, text_input.ebo);
+
+    // NOTE: Take note of types GL_UNSIGNED_SHORT
+    // Make sure it's the same in the data buffer
+    // Made a mistake when it was GLuint instead of GLushort!
+    glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, nullptr);
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glUseProgram(0);
+}
+
 void Display(float delta)
 {
     //static float ang = 0.0f;
@@ -458,6 +506,12 @@ void Display(float delta)
     DrawTextScaled(std::string("Vendor: ") + (char*)sys_info.vendor, 8, 110);
     DrawTextScaled(std::string("Renderer: ") + (char*)sys_info.renderer, 8, 125);
     DrawTextScaled(std::string("GL Version: ") + (char*)sys_info.version, 8, 140);
+
+    //DrawTextInput();
+    for (auto f : gui_frames) {
+        f->Draw();
+    }
+
     glEnable(GL_DEPTH_TEST);
 
     renderer.EndFrame();
