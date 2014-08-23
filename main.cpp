@@ -47,6 +47,7 @@
 #include "system.h"
 #include "debug.h"
 #include "gui.h"
+#include "console.h"
 
 // Raknet headers
 #include "MessageIdentifiers.h"
@@ -65,6 +66,7 @@ sp::Shader text_program;
 sp::Shader player_program;
 sp::Shader text_input_program;
 std::vector<std::shared_ptr<GUIFrame>> gui_frames;
+Console console;
 
 sp::VertexBuffer cube;
 sp::VertexBuffer plane;
@@ -276,9 +278,12 @@ void Init()
     plane_program.SetUniform(sp::k1i, "is_textured", true);
 
     // GUI junk
-    std::shared_ptr<GUIFrame> sp_frame(new GUIFrame(renderer.GetWidth(), renderer.GetHeight()));
-    sp_frame->Init();
-    gui_frames.push_back(sp_frame);
+    float scale_x =  2.0f / renderer.GetWidth();
+    float scale_y = 2.0f / renderer.GetHeight();
+    //std::shared_ptr<GUIFrame> sp_frame(new GUIFrame(0.0f, 0.0f, scale_x, scale_y, renderer.GetWidth(), renderer.GetHeight()/2.0f));
+    //gui_frames.push_back(sp_frame);
+
+    console.Init(renderer.GetWidth(), renderer.GetHeight());
 }
 
 inline void DrawIQM()
@@ -512,6 +517,8 @@ void Display(float delta)
         f->Draw();
     }
 
+    console.Draw();
+
     glEnable(GL_DEPTH_TEST);
 
     renderer.EndFrame();
@@ -568,12 +575,21 @@ int main()
                         hide_mouse = !hide_mouse;
                         SDL_SetRelativeMouseMode(hide_mouse ? SDL_TRUE : SDL_FALSE); // hide mouse
                     }
+                    if (window_ev.key.keysym.sym == SDLK_BACKQUOTE) {
+                        if (console.FrameIsOpen()) {
+                            console.CloseFrame();
+                        } else {
+                            console.OpenFrame();
+                        }
+                    }
                     break;
                 case SDL_QUIT:
                     quit = true;
                     break;
             }
         }
+
+        console.Update(delta);
 
         player_vel_y -= kGravity * delta;
         p_model.origin.y += player_vel_y;
