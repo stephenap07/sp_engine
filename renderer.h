@@ -21,6 +21,16 @@ public:
 
     int GetWidth() const { return screen_width; }
     int GetHeight() const { return screen_height; }
+
+    float GetScaleWidth(float width) const
+    {
+        return width * 2.0f / screen_width;
+    }
+    float GetScaleHeight(float height) const
+    {
+        return height * 2.0f / screen_height;
+    }
+
     glm::mat4 GetView() const { return view; }
 
 private:
@@ -37,6 +47,21 @@ private:
     int screen_height;
 
     std::vector<ProgramData> program_store;
+};
+
+class ViewEntity {
+private:
+    glm::mat4 mat4_model;
+    glm::mat4 mat4_model_view;
+};
+
+class ViewDefinition {
+public:
+
+private:
+    glm::mat4 mat4_view;
+    glm::mat4 mat4_projection;
+    std::vector<ViewEntity> view_entities;
 };
 
 } // namespace sp
