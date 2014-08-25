@@ -65,8 +65,9 @@ sp::Shader skybox_program;
 sp::Shader text_program;
 sp::Shader player_program;
 sp::Shader text_input_program;
-std::vector<std::shared_ptr<GUIFrame>> gui_frames;
-Console console;
+sp::Console console;
+sp::TextDefinition text_def;
+
 
 sp::VertexBuffer cube;
 sp::VertexBuffer plane;
@@ -277,13 +278,8 @@ void Init()
     model_program.SetUniform(sp::k1i, "is_rigged", true);
     plane_program.SetUniform(sp::k1i, "is_textured", true);
 
-    // GUI junk
-    float scale_x =  2.0f / renderer.GetWidth();
-    float scale_y = 2.0f / renderer.GetHeight();
-    //std::shared_ptr<GUIFrame> sp_frame(new GUIFrame(0.0f, 0.0f, scale_x, scale_y, renderer.GetWidth(), renderer.GetHeight()/2.0f));
-    //gui_frames.push_back(sp_frame);
-
     console.Init(renderer.GetWidth(), renderer.GetHeight());
+    text_def.Init(renderer.GetWidth(), renderer.GetHeight());
 }
 
 inline void DrawIQM()
@@ -503,6 +499,7 @@ void Display(float delta)
     //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     glDisable(GL_DEPTH_TEST);
+
     DrawTextScaled(std::string("FPS: ") + std::to_string((int)std::ceil((1 / delta))), 8, 35);
     DrawTextScaled(std::string("Platform: ") + sys_info.platform, 8, 50);
     DrawTextScaled(std::string("CPU Count: ") + std::to_string(sys_info.num_cpus), 8, 65);
@@ -513,10 +510,6 @@ void Display(float delta)
     DrawTextScaled(std::string("GL Version: ") + (char*)sys_info.version, 8, 140);
 
     //DrawTextInput();
-    for (auto f : gui_frames) {
-        f->Draw();
-    }
-
     console.Draw();
 
     glEnable(GL_DEPTH_TEST);
@@ -549,6 +542,7 @@ int main()
     const float kGravity = 0.7f;
     float player_vel_y = 0.0f;
 
+    SDL_StartTextInput();
     while (!quit)
     {
         delta = (SDL_GetTicks() - elapsed) / 1000.0f;
@@ -582,6 +576,9 @@ int main()
                             console.OpenFrame();
                         }
                     }
+                    break;
+                case SDL_TEXTINPUT:
+                    console.SetText(console.GetText() + window_ev.text.text);
                     break;
                 case SDL_QUIT:
                     quit = true;

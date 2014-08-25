@@ -1,7 +1,9 @@
 #ifndef _SP_FONT_H_
 #define _SP_FONT_H_
 
+#include <string>
 #include <ft2build.h>
+#include <SDL2/SDL_ttf.h>
 #include FT_FREETYPE_H
 
 #include "buffer.h"
@@ -25,6 +27,7 @@ struct GlyphInfo
     float texture_y;
 };
 
+
 struct GlyphAtlas
 {
     GLuint tex_id;
@@ -40,6 +43,30 @@ struct GlyphAtlas
     ~GlyphAtlas();
 
     void LoadFace(FT_Face face, int face_height);
+};
+
+
+class TextDefinition
+{
+public:
+    bool Init(float window_width, float window_height);
+    void DrawText(const std::string &label, float x, float y);
+
+private:
+    // TODO: Integrate with vertex cache
+    sp::VertexBuffer text;
+    sp::Shader text_program;
+    GlyphAtlas atlas_48;
+    GlyphAtlas atlas_24;
+    GlyphAtlas atlas_16;
+
+    TTF_Font *font;
+    FT_Library ft;
+    FT_Face face;
+
+    // TODO: Do proper scaling globally?
+    // Should be a more elegant way to deal with scaling images in the window
+    float window_width, window_height;
 };
 
 void DrawText(const std::string &text_label, GlyphAtlas *atlas, float x, float y, float sx, float sy);
