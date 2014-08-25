@@ -5,10 +5,13 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_access.hpp> 
 #include "gui.h"
+#include "font.h"
+
+namespace sp {
 
 class Console {
 public:
-    Console() :width(0.0f), height(0.0f), is_active(false), can_draw(false)
+    Console() :width(0.0f), height(0.0f), is_active(false)
     {}
     Console(float window_width, float window_height) :width(window_width),
                                                       height(window_height)
@@ -21,13 +24,20 @@ public:
     bool FrameIsOpen() const { return is_active; }
     void Update(float delta);
     void Draw();
+    void SetText(const std::string &text);
+    const std::string GetText() const;
 
 private:
     GUIFrame frame;
+    GUIFrame text_box;
+    TextDefinition text_def;
+
+    std::string console_text;
+
     float width;
     float height;
     bool is_active;
-    bool can_draw;
 };
 
+} // namespace sp
 #endif

@@ -15,11 +15,18 @@ public:
     GUIFrame(float x, float y, float sx, float sy, float width, float height);
     ~GUIFrame();
     void Init(float x, float y, float sx, float sy, float width, float height);
+    void SetPos(float x, float y);
+    void SetSize(float width, float height);
+    void SetColor(const glm::vec4 &color);
     void Draw();
 
+    float GetHeight() const { return height; };
+
 private:
+
     sp::VertexBuffer buffer;
     sp::Shader program;
+    glm::vec4 color;
     float width, height;
     float x, y;
     float scale_x, scale_y;

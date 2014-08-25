@@ -7,6 +7,10 @@
 #include "font.h"
 #include "error.h"
 
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_access.hpp> 
+
 namespace sp {
 
 GlyphAtlas::GlyphAtlas() :width(0), height(0)
@@ -164,6 +168,56 @@ void DrawText(const std::string &text_label, GlyphAtlas *atlas, float x, float y
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
     glUseProgram(0);
+}
+
+
+//==============================================================================
+//
+
+bool TextDefinition::Init(float width, float height)
+{
+    window_width = 2.0f / width;
+    window_height = 2.0f / height;
+
+    text_program.CreateProgram({
+        {std::string("assets/shaders/text.vs.glsl"), GL_VERTEX_SHADER},
+        {std::string("assets/shaders/text.fs.glsl"), GL_FRAGMENT_SHADER}
+    });
+
+    text = sp::MakeTexturedQuad(GL_DYNAMIC_DRAW);
+    
+    if (FT_Init_FreeType(&ft)) {
+        std::cerr << "Could not init freetype library\n";
+        return false;
+    }
+    if (FT_New_Face(ft, "assets/fonts/SPFont.ttf", 0, &face)) {
+        std::cerr << "Could not open font\n";
+        return false;
+    }
+
+    glm::mat4 model;
+    text_program.SetUniform(sp::kMatrix4fv, "uni_model", glm::value_ptr(model));
+    glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
+    text_program.SetUniform(sp::k4fv, "uni_color", glm::value_ptr(white));
+
+    atlas_48.LoadFace(face, 48);
+    atlas_24.LoadFace(face, 24);
+    atlas_16.LoadFace(face, 16);
+
+    atlas_48.shader = text_program;
+    atlas_24.shader = text_program;
+    atlas_16.shader = text_program;
+
+    atlas_48.buffer = text;
+    atlas_24.buffer = text;
+    atlas_16.buffer = text;
+
+    return true;
+}
+
+void TextDefinition::DrawText(const std::string &label, float x, float y)
+{
+    ::sp::DrawText(label, &atlas_16, -1 + x * window_width, 1 - y * window_height, window_width, window_height);
 }
 
 } // namespace sp
