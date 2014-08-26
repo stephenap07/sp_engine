@@ -10,7 +10,7 @@ void Console::Init(float window_width, float window_height)
 
     frame.Init(0, 0, 2.0f/window_width, 2.0f/window_height, window_width, 0.0f);
     text_box.Init(0, 0, 2.0f/window_width, 2.0f/window_height, window_width, 15.0f);
-    text_box.SetColor(glm::vec4(0.0, 0.0, 0.0, 0.8f));
+    text_box.SetColor(glm::vec4(0.0, 0.0, 0.0, 0.4f));
 
     is_active = false;
 
@@ -36,6 +36,12 @@ void Console::Update(float delta)
         return;
     }
 
+    text_bar_counter += delta;
+    if (text_bar_counter >= 0.3f) {
+        text_bar_counter = 0.0f;
+        draw_text_bar = !draw_text_bar;
+    } 
+
     float frame_height = frame.GetHeight();
     float target_height = height / 2.0f;
 
@@ -53,7 +59,13 @@ void Console::Draw()
     if (is_active) {
         frame.Draw();
         text_box.Draw();
-        text_def.DrawText(console_text, 0, frame.GetHeight() - 5.0f);
+        std::string label;
+        if (draw_text_bar) {
+            label = console_text + "|";
+        } else {
+            label = console_text;
+        }
+        text_def.DrawText(label, 0, frame.GetHeight() - 5.0f);
     }
 }
 
