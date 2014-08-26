@@ -11,7 +11,7 @@ namespace sp {
 
 class Console {
 public:
-    Console() :width(0.0f), height(0.0f), is_active(false)
+    Console() :width(0.0f), height(0.0f), is_active(false), draw_text_bar(false)
     {}
     Console(float window_width, float window_height) :width(window_width),
                                                       height(window_height)
@@ -36,7 +36,9 @@ private:
 
     float width;
     float height;
+    float text_bar_counter;
     bool is_active;
+    bool draw_text_bar;
 };
 
 } // namespace sp

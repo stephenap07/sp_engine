@@ -527,7 +527,7 @@ int main()
     renderer.Init();
     Init();
 
-    SDL_Event window_ev;
+    SDL_Event sdl_event;
     const Uint8 *state = nullptr;
 
     unsigned long elapsed = SDL_GetTicks();
@@ -542,34 +542,38 @@ int main()
     const float kGravity = 0.7f;
     float player_vel_y = 0.0f;
 
-    SDL_StartTextInput();
+    SDL_Keymod key_mod;
+
     while (!quit)
     {
         delta = (SDL_GetTicks() - elapsed) / 1000.0f;
         elapsed = SDL_GetTicks();
         animate += 10.0f * delta;
 
-        while(SDL_PollEvent(&window_ev)) {
-            switch(window_ev.window.event) {
+        key_mod = SDL_GetModState();
+
+        SDL_StartTextInput();
+        while(SDL_PollEvent(&sdl_event)) {
+            switch(sdl_event.window.event) {
                 case SDL_WINDOWEVENT_RESIZED:
-                    Reshape(window_ev.window.data1, window_ev.window.data2);
+                    Reshape(sdl_event.window.data1, sdl_event.window.data2);
                     break;
             }
 
-            switch(window_ev.type) {
+            switch(sdl_event.type) {
                 case SDL_MOUSEMOTION:
-                    gScreenCamera.HandleMouse(window_ev.motion.xrel,
-                                              window_ev.motion.yrel, delta);
+                    gScreenCamera.HandleMouse(sdl_event.motion.xrel,
+                                              sdl_event.motion.yrel, delta);
                     p_model.rot = glm::angleAxis(-10.0f *
-                                  window_ev.motion.xrel * delta,
+                                  sdl_event.motion.xrel * delta,
                                   glm::vec3(0.0f, 1.0f, 0.0f)) * p_model.rot;
                     break;
                 case SDL_KEYUP:
-                    if (window_ev.key.keysym.sym == SDLK_k) {
+                    if (sdl_event.key.keysym.sym == SDLK_k) {
                         hide_mouse = !hide_mouse;
                         SDL_SetRelativeMouseMode(hide_mouse ? SDL_TRUE : SDL_FALSE); // hide mouse
                     }
-                    if (window_ev.key.keysym.sym == SDLK_BACKQUOTE) {
+                    if (sdl_event.key.keysym.sym == SDLK_BACKQUOTE) {
                         if (console.FrameIsOpen()) {
                             console.CloseFrame();
                         } else {
@@ -577,14 +581,28 @@ int main()
                         }
                     }
                     break;
+                case SDL_KEYDOWN:
+                    if (sdl_event.key.keysym.sym == SDLK_BACKSPACE) {
+                        std::string console_text = console.GetText();
+                        console.SetText(console_text.substr(0, console_text.length() - 1));
+                    }
+                    if (key_mod & KMOD_CTRL) {
+                        if (sdl_event.key.keysym.sym == SDLK_a) {
+                        }
+                    }
+                    break;
                 case SDL_TEXTINPUT:
-                    console.SetText(console.GetText() + window_ev.text.text);
+                    console.SetText(console.GetText() + sdl_event.text.text);
+                    break;
+                case SDL_TEXTEDITING:
+                    sp::log::InfoLog("SDL Text editing event\n");
                     break;
                 case SDL_QUIT:
                     quit = true;
                     break;
             }
         }
+        SDL_StopTextInput();
 
         console.Update(delta);
 
