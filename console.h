@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_access.hpp> 
 #include "gui.h"
 #include "font.h"
+#include "command.h"
 
 namespace sp {
 
@@ -18,14 +19,23 @@ public:
     {
         Init(width, height);
     }
+
     void Init(float window_width, float window_height);
     void OpenFrame();
     void CloseFrame();
-    bool FrameIsOpen() const { return is_active; }
+
+    void HandleEvent(const SDL_Event &sdl_event);
+    void HandleCommand(const std::string &command_string);
     void Update(float delta);
     void Draw();
+
     void SetText(const std::string &text);
+
     const std::string GetText() const;
+    bool FrameIsOpen() const
+    {
+        return is_active;
+    }
 
 private:
     GUIFrame frame;
@@ -33,6 +43,7 @@ private:
     TextDefinition text_def;
 
     std::string console_text;
+    std::vector<std::string> command_history;
 
     float width;
     float height;
@@ -42,4 +53,5 @@ private:
 };
 
 } // namespace sp
+
 #endif
