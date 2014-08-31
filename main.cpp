@@ -48,6 +48,7 @@
 #include "debug.h"
 #include "gui.h"
 #include "console.h"
+#include "command.h"
 
 // Raknet headers
 #include "MessageIdentifiers.h"
@@ -59,7 +60,6 @@ sp::Renderer renderer;
 sp::Camera gScreenCamera;
 
 sp::Shader model_program;
-sp::Shader line_program;
 sp::Shader plane_program;
 sp::Shader skybox_program;
 sp::Shader text_program;
@@ -131,11 +131,6 @@ void InitializeProgram()
         {std::string("assets/shaders/gouroud.frag"), GL_FRAGMENT_SHADER}
     });
 
-    line_program.CreateProgram({
-        {std::string("assets/shaders/line_shader.vert"), GL_VERTEX_SHADER},
-        {std::string("assets/shaders/pass_through.frag"), GL_FRAGMENT_SHADER}
-    });
-
     plane_program.CreateProgram({
         {std::string("assets/shaders/basic_texture.vs"), GL_VERTEX_SHADER},
         {std::string("assets/shaders/gouroud.frag"), GL_FRAGMENT_SHADER}
@@ -162,7 +157,6 @@ void InitializeProgram()
     });
 
     renderer.LoadGlobalUniforms(model_program.GetID());
-    renderer.LoadGlobalUniforms(line_program.GetID());
     renderer.LoadGlobalUniforms(plane_program.GetID());
     renderer.LoadGlobalUniforms(skybox_program.GetID());
     renderer.LoadGlobalUniforms(text_program.GetID());
@@ -237,7 +231,6 @@ void Init()
 
     glm::mat4 model;
     model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
-    line_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnable(GL_BLEND);
@@ -542,15 +535,13 @@ int main()
     const float kGravity = 0.7f;
     float player_vel_y = 0.0f;
 
-    SDL_Keymod key_mod;
+    sp::CommandManager::AddCommand("quit", [&quit](const sp::CommandArg &args) { quit = true; });
 
     while (!quit)
     {
         delta = (SDL_GetTicks() - elapsed) / 1000.0f;
         elapsed = SDL_GetTicks();
         animate += 10.0f * delta;
-
-        key_mod = SDL_GetModState();
 
         SDL_StartTextInput();
         while(SDL_PollEvent(&sdl_event)) {
@@ -580,26 +571,17 @@ int main()
                             console.OpenFrame();
                         }
                     }
-                    break;
-                case SDL_KEYDOWN:
-                    if (sdl_event.key.keysym.sym == SDLK_BACKSPACE) {
-                        std::string console_text = console.GetText();
-                        console.SetText(console_text.substr(0, console_text.length() - 1));
+                    if (sdl_event.key.keysym.sym == SDLK_ESCAPE) {
+                        quit = true;
                     }
-                    if (key_mod & KMOD_CTRL) {
-                        if (sdl_event.key.keysym.sym == SDLK_a) {
-                        }
-                    }
-                    break;
-                case SDL_TEXTINPUT:
-                    console.SetText(console.GetText() + sdl_event.text.text);
-                    break;
-                case SDL_TEXTEDITING:
-                    sp::log::InfoLog("SDL Text editing event\n");
                     break;
                 case SDL_QUIT:
                     quit = true;
                     break;
+            }
+
+            if (console.FrameIsOpen()) {
+                console.HandleEvent(sdl_event);
             }
         }
         SDL_StopTextInput();
@@ -617,30 +599,33 @@ int main()
             jumping = true;
         }
 
-        state = SDL_GetKeyboardState(nullptr);
-        if (state[SDL_SCANCODE_W] && state[SDL_SCANCODE_LGUI]) quit = true;
-        if (state[SDL_SCANCODE_ESCAPE]) quit = true;
-
         // Player Controller
         glm::vec3 side = glm::normalize(glm::cross(gScreenCamera.dir, gScreenCamera.up));
         glm::vec3 forward = glm::normalize(glm::cross(gScreenCamera.up, side));
 
-        if (state[SDL_SCANCODE_W]) p_model.origin += delta * player_speed * forward;
-        if (state[SDL_SCANCODE_S]) p_model.origin -= delta * player_speed * forward;
 
-        if (state[SDL_SCANCODE_D]) p_model.origin += delta * player_speed * side;
-        if (state[SDL_SCANCODE_A]) p_model.origin -= delta * player_speed * side;
+        if (!console.FrameIsOpen()) {
+            state = SDL_GetKeyboardState(nullptr);
 
-        if (state[SDL_SCANCODE_SPACE] && !jumping) player_vel_y = 0.2f;
+            if (state[SDL_SCANCODE_W] && state[SDL_SCANCODE_LGUI]) quit = true;
 
-        if (state[SDL_SCANCODE_UP]) iqm_view.origin += delta * player_speed * glm::vec3(0, 0, -1);
-        if (state[SDL_SCANCODE_DOWN]) iqm_view.origin -= delta * player_speed * glm::vec3(0, 0, -1);
+            if (state[SDL_SCANCODE_W]) p_model.origin += delta * player_speed * forward;
+            if (state[SDL_SCANCODE_S]) p_model.origin -= delta * player_speed * forward;
 
-        if (state[SDL_SCANCODE_RIGHT]) iqm_view.origin += delta * player_speed * glm::vec3(1, 0, 0);
-        if (state[SDL_SCANCODE_LEFT]) iqm_view.origin -= delta * player_speed * glm::vec3(1, 0, 0);
+            if (state[SDL_SCANCODE_D]) p_model.origin += delta * player_speed * side;
+            if (state[SDL_SCANCODE_A]) p_model.origin -= delta * player_speed * side;
 
-        //gScreenCamera.FreeRoam(delta);
-        gScreenCamera.pos = p_model.origin + glm::vec3(0.0f, 0.8f, 0.0f);
+            if (state[SDL_SCANCODE_SPACE] && !jumping) player_vel_y = 0.2f;
+
+            if (state[SDL_SCANCODE_UP]) iqm_view.origin += delta * player_speed * glm::vec3(0, 0, -1);
+            if (state[SDL_SCANCODE_DOWN]) iqm_view.origin -= delta * player_speed * glm::vec3(0, 0, -1);
+
+            if (state[SDL_SCANCODE_RIGHT]) iqm_view.origin += delta * player_speed * glm::vec3(1, 0, 0);
+            if (state[SDL_SCANCODE_LEFT]) iqm_view.origin -= delta * player_speed * glm::vec3(1, 0, 0);
+
+            //gScreenCamera.FreeRoam(delta);
+            gScreenCamera.pos = p_model.origin + glm::vec3(0.0f, 0.8f, 0.0f);
+        }
 
         md5_model.Update(delta);
         Display(delta);

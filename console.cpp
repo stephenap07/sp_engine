@@ -1,4 +1,6 @@
+#include <iostream>
 #include "console.h"
+#include "logger.h"
 
 
 namespace sp {
@@ -66,6 +68,10 @@ void Console::Draw()
             label = console_text;
         }
         text_def.DrawText(label, 0, frame.GetHeight() - 5.0f);
+        int cmd_count = command_history.size();
+        for (int i = 0; i < cmd_count; i++) {
+            text_def.DrawText(command_history[i], 0, frame.GetHeight() - 35.0f * (cmd_count - i));
+        }
     }
 }
 
@@ -77,6 +83,46 @@ void Console::SetText(const std::string &text)
 const std::string Console::GetText() const
 {
     return console_text;
+}
+
+void Console::HandleEvent(const SDL_Event &sdl_event)
+{
+    SDL_Keymod key_mod = SDL_GetModState();
+    switch(sdl_event.type) {
+        case SDL_KEYDOWN:
+            if (sdl_event.key.keysym.sym == SDLK_BACKSPACE) {
+                std::string console_text = GetText();
+                SetText(console_text.substr(0, console_text.length() - 1));
+            }
+            if (sdl_event.key.keysym.sym == SDLK_RETURN) {
+                std::string command_string = GetText();
+                command_history.push_back(command_string);
+                HandleCommand(command_string);
+                SetText("");
+            }
+            if (key_mod & KMOD_CTRL) {
+                if (sdl_event.key.keysym.sym == SDLK_a) {
+                }
+            }
+            break;
+        case SDL_TEXTINPUT:
+            if (strcmp(sdl_event.text.text, "`") != 0) {
+                SetText(GetText() + sdl_event.text.text);
+            }
+            break;
+        case SDL_TEXTEDITING:
+            log::InfoLog("SDL Text editing event\n");
+            break;
+    }
+}
+
+void Console::HandleCommand(const std::string &command_string)
+{
+    CommandArg args(command_string.c_str());
+    bool success = CommandManager::FindAndExecute(args.GetArg(0), args);
+    if (!success) {
+        log::ErrorLog("Invalid command\n");
+    }
 }
 
 } // namespace sp
