@@ -96,7 +96,7 @@ GlyphAtlas g_atlas_48;
 GlyphAtlas g_atlas_24;
 GlyphAtlas g_atlas_16;
 
-SystemInfo sys_info;
+sp::SystemInfo sys_info;
 
 struct ModelView {
     glm::vec3 origin;
