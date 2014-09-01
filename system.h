@@ -1,6 +1,8 @@
 #ifndef _SP_SYSTEM_H_
 #define _SP_SYSTEM_H_
 
+namespace sp {
+
 struct SystemInfo
 {
     void Init()
@@ -27,5 +29,7 @@ struct SystemInfo
     GLubyte renderer[64];
     GLubyte version[64];
 };
+
+} // namespace sp
 
 #endif
