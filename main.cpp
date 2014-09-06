@@ -62,39 +62,23 @@ sp::Camera gScreenCamera;
 sp::Shader model_program;
 sp::Shader plane_program;
 sp::Shader skybox_program;
-sp::Shader text_program;
 sp::Shader player_program;
-sp::Shader text_input_program;
 sp::Console console;
 sp::TextDefinition text_def;
 
-
 sp::VertexBuffer cube;
 sp::VertexBuffer plane;
-sp::VertexBuffer text;
 sp::VertexBuffer player;
-sp::VertexBuffer text_input;
 
 MD5Model md5_model;
 sp::IQMModel iqm_model;
 
 GLuint skybox_tex;
 GLuint plane_tex;
-GLuint text_tex;
 
 GLuint skybox_rotate_loc;
 
 float animate = 0.0f;
-
-TTF_Font *font = nullptr;
-FT_Library ft;
-FT_Face face;
-
-using sp::GlyphAtlas;
-
-GlyphAtlas g_atlas_48;
-GlyphAtlas g_atlas_24;
-GlyphAtlas g_atlas_16;
 
 sp::SystemInfo sys_info;
 
@@ -141,71 +125,16 @@ void InitializeProgram()
         {std::string("assets/shaders/skybox.frag"), GL_FRAGMENT_SHADER}
     });
 
-    text_program.CreateProgram({
-        {std::string("assets/shaders/text.vs.glsl"), GL_VERTEX_SHADER},
-        {std::string("assets/shaders/text.fs.glsl"), GL_FRAGMENT_SHADER}
-    });
-
     player_program.CreateProgram({
         {std::string("assets/shaders/pass_through.vert"), GL_VERTEX_SHADER},
         {std::string("assets/shaders/gouroud.frag"), GL_FRAGMENT_SHADER}
     });
 
-    text_input_program.CreateProgram({
-        {std::string("assets/shaders/2d.vert"), GL_VERTEX_SHADER},
-        {std::string("assets/shaders/2d.frag"), GL_FRAGMENT_SHADER},
-    });
-
     renderer.LoadGlobalUniforms(model_program.GetID());
     renderer.LoadGlobalUniforms(plane_program.GetID());
     renderer.LoadGlobalUniforms(skybox_program.GetID());
-    renderer.LoadGlobalUniforms(text_program.GetID());
     renderer.LoadGlobalUniforms(player_program.GetID());
 
-}
-
-bool InitializeFontMap()
-{
-    text = sp::MakeTexturedQuad(GL_DYNAMIC_DRAW);
-    
-    if (FT_Init_FreeType(&ft)) {
-        std::cerr << "Could not init freetype library\n";
-    }
-    if (FT_New_Face(ft, "assets/fonts/SPFont.ttf", 0, &face)) {
-        std::cerr << "Could not open font\n";
-    }
-
-    glm::mat4 model;
-    text_program.SetUniform(sp::kMatrix4fv, "uni_model", glm::value_ptr(model));
-    glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
-    text_program.SetUniform(sp::k4fv, "uni_color", glm::value_ptr(white));
-
-    g_atlas_48.LoadFace(face, 48);
-    g_atlas_24.LoadFace(face, 24);
-    g_atlas_16.LoadFace(face, 16);
-
-    g_atlas_48.shader = text_program;
-    g_atlas_24.shader = text_program;
-    g_atlas_16.shader = text_program;
-
-    g_atlas_48.buffer = text;
-    g_atlas_24.buffer = text;
-    g_atlas_16.buffer = text;
-
-
-    return true;
-}
-
-void InitTextInput()
-{
-    // TODO: Find nice way to orientate user interface
-    sp::MakeQuad(&text_input);
-    glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
-    glm::mat4 text_input_model = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f/64.0f, 1.0f/64.0f, 0));
-    //text_input_model = glm::translate(text_input_model, glm::vec3(1.1f, -18.5f, 0));
-
-    text_input_program.SetUniform(sp::k4fv, "uni_color", glm::value_ptr(white));
-    text_input_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(text_input_model));
 }
 
 void Init()
@@ -220,8 +149,6 @@ void Init()
     sys_info.Init();
 
     InitializeProgram();
-    InitializeFontMap(); 
-    InitTextInput();
 
     // GUN Init
     //gun_model.scale = glm::vec3(0.03f, 0.03f, 0.14f);
@@ -446,32 +373,6 @@ inline void DrawBox(float delta)
 }
 
 
-void DrawTextScaled(const std::string &label, float x, float y)
-{
-    static float sx = 2.0f / renderer.GetWidth();
-    static float sy = 2.0f / renderer.GetHeight();
-
-    DrawText(label, &g_atlas_16, -1 + x * sx, 1 - y * sy, sx, sy);
-}
-
-void DrawTextInput()
-{
-    text_input_program.Bind();
-    glBindVertexArray(text_input.vao);
-    glBindBuffer(GL_ARRAY_BUFFER, text_input.vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, text_input.ebo);
-
-    // NOTE: Take note of types GL_UNSIGNED_SHORT
-    // Make sure it's the same in the data buffer
-    // Made a mistake when it was GLuint instead of GLushort!
-    glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, nullptr);
-
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glUseProgram(0);
-}
-
 void Display(float delta)
 {
     //static float ang = 0.0f;
@@ -485,28 +386,25 @@ void Display(float delta)
     DrawBox(delta);
     DrawFloor();
     DrawSkyBox();
-    //DrawMD5();
+    DrawMD5();
 
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     DrawIQM();
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     glDisable(GL_DEPTH_TEST);
 
-    DrawTextScaled(std::string("FPS: ") + std::to_string((int)std::ceil((1 / delta))), 8, 35);
-    DrawTextScaled(std::string("Platform: ") + sys_info.platform, 8, 50);
-    DrawTextScaled(std::string("CPU Count: ") + std::to_string(sys_info.num_cpus), 8, 65);
-    DrawTextScaled(std::string("System Ram: ") + std::to_string(sys_info.ram) + std::string("mb"), 8, 80);
-    DrawTextScaled(std::string("L1 cache: ") + std::to_string(sys_info.l1_cache) + std::string("kb"), 8, 95);
-    DrawTextScaled(std::string("Vendor: ") + (char*)sys_info.vendor, 8, 110);
-    DrawTextScaled(std::string("Renderer: ") + (char*)sys_info.renderer, 8, 125);
-    DrawTextScaled(std::string("GL Version: ") + (char*)sys_info.version, 8, 140);
+    text_def.DrawText(std::string("FPS: ") + std::to_string((int)std::ceil((1 / delta))), 8, 35);
+    text_def.DrawText(std::string("Platform: ") + sys_info.platform, 8, 50);
+    text_def.DrawText(std::string("CPU Count: ") + std::to_string(sys_info.num_cpus), 8, 65);
+    text_def.DrawText(std::string("System Ram: ") + std::to_string(sys_info.ram) + std::string("mb"), 8, 80);
+    text_def.DrawText(std::string("L1 cache: ") + std::to_string(sys_info.l1_cache) + std::string("kb"), 8, 95);
+    text_def.DrawText(std::string("Vendor: ") + (char*)sys_info.vendor, 8, 110);
+    text_def.DrawText(std::string("Renderer: ") + (char*)sys_info.renderer, 8, 125);
+    text_def.DrawText(std::string("GL Version: ") + (char*)sys_info.version, 8, 140);
 
-    //DrawTextInput();
     console.Draw();
-
     glEnable(GL_DEPTH_TEST);
-
     renderer.EndFrame();
 }
 

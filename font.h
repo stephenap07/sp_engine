@@ -54,7 +54,7 @@ public:
 
 private:
     // TODO: Integrate with vertex cache
-    sp::VertexBuffer text;
+    sp::VertexBuffer text_buffer;
     sp::Shader text_program;
     GlyphAtlas atlas_48;
     GlyphAtlas atlas_24;

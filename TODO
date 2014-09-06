@@ -1,0 +1,24 @@
+Must have:
+
+1. Add support for materials
+2. Use a rendering queue for multi processing
+   a. Front end - visible surface determination
+   b. Back end - render based on a render command and context/view
+   c. Occlusion queries and clipping on GPU
+3. Deferred rendering
+4. Entity system (component or no?)
+5. Event system
+6. Scripting support (Either C or some lisp/scheme language)
+7. Retained mode GUI
+8. Particles engine
+9. Model viewer for prototyping assets
+10. Data driven design
+11. Terrain rendering
+12. File system (compression)
+
+Nice to have:
+1. Physics engine
+2. Level editor
+3. Material editor
+4. Particle editor
+5. An actual game

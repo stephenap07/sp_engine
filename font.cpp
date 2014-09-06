@@ -184,13 +184,13 @@ bool TextDefinition::Init(float width, float height)
         {std::string("assets/shaders/text.fs.glsl"), GL_FRAGMENT_SHADER}
     });
 
-    text = sp::MakeTexturedQuad(GL_DYNAMIC_DRAW);
+    text_buffer = sp::MakeTexturedQuad(GL_DYNAMIC_DRAW);
     
     if (FT_Init_FreeType(&ft)) {
         std::cerr << "Could not init freetype library\n";
         return false;
     }
-    if (FT_New_Face(ft, "assets/fonts/SPFont.ttf", 0, &face)) {
+    if (FT_New_Face(ft, "assets/fonts/FreeMonoBold.otf", 0, &face)) {
         std::cerr << "Could not open font\n";
         return false;
     }
@@ -204,13 +204,14 @@ bool TextDefinition::Init(float width, float height)
     atlas_24.LoadFace(face, 24);
     atlas_16.LoadFace(face, 16);
 
+    // TODO: Automatically set program & buffer via vertex/program cache
     atlas_48.shader = text_program;
     atlas_24.shader = text_program;
     atlas_16.shader = text_program;
 
-    atlas_48.buffer = text;
-    atlas_24.buffer = text;
-    atlas_16.buffer = text;
+    atlas_48.buffer = text_buffer;
+    atlas_24.buffer = text_buffer;
+    atlas_16.buffer = text_buffer;
 
     return true;
 }
