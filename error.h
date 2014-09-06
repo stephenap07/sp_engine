@@ -1,4 +1,5 @@
 #include <GL/glew.h>
+#include "logger.h"
 
 namespace sp {
 
@@ -8,25 +9,25 @@ inline void HandleGLError(GLenum error)
         case GL_NO_ERROR:
             break;
         case GL_INVALID_ENUM:
-            std::cerr << "GL_ERROR: Invalid enum\n";
+            log::ErrorLog("GL_ERROR: Invalid enum\n");
             break;
         case GL_INVALID_VALUE:
-            std::cerr << "GL_ERROR: Invalid value\n";
+            log::ErrorLog("GL_ERROR: Invalid value\n");
             break;
         case GL_INVALID_OPERATION:
-            std::cerr << "GL_ERROR: Invalid operation\n";
+            log::ErrorLog("GL_ERROR: Invalid operation\n");
             break;
         case GL_INVALID_FRAMEBUFFER_OPERATION:
-            std::cerr << "GL_ERROR: Invalid framebuffer operation\n";
+            log::ErrorLog("GL_ERROR: Invalid framebuffer operation\n");
             break;
         case GL_OUT_OF_MEMORY:
-            std::cerr << "GL_ERROR: Out of memory\n";
+            log::ErrorLog("GL_ERROR: Out of memory\n");
             break;
         case GL_STACK_UNDERFLOW:
-            std::cerr << "GL_ERROR: Stack underflow\n";
+            log::ErrorLog("GL_ERROR: Stack underflow\n");
             break;
         case GL_STACK_OVERFLOW:
-            std::cerr << "GL_ERROR: Stack overflow\n";
+            log::ErrorLog("GL_ERROR: Stack overflow\n");
             break;
         default:
             break;

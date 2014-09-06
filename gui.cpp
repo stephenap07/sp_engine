@@ -79,4 +79,3 @@ void GUIFrame::SetPos(float x, float y)
     this->y = y;
     SetSize(width, height);
 }
-
