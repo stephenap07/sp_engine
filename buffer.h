@@ -3,8 +3,6 @@
 
 namespace sp {
 
-void UnbindAllBuffers();
-
 struct Point {
     GLfloat x, y, z, s, t;
 };
@@ -19,8 +17,10 @@ public:
 
     void Bind();
     void Init();
+    void DeleteBuffers();
 };
 
+void UnbindAllBuffers();
 VertexBuffer MakeTexturedQuad(GLuint gl_hint=GL_TEXTURE_2D);
 VertexBuffer MakeQuadWithTexcoord(float width, float height, float x, float y);
 

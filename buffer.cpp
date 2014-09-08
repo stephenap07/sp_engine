@@ -37,6 +37,13 @@ void VertexBuffer::Init()
     //glDeleteBuffers(1, &vbo);
 }
 
+void VertexBuffer::DeleteBuffers()
+{
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
+    glDeleteVertexArrays(1, &vao);
+}
+
 VertexBuffer MakeTexturedQuad(GLuint gl_hint)
 {
     Point vert_quad[] = {
