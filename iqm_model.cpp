@@ -43,11 +43,7 @@ static glm::mat4 MakeBoneMat(glm::quat rot, glm::vec3 trans, glm::vec3 scale)
 
 IQMModel::~IQMModel()
 {
-    if (vbo)
-        glDeleteBuffers(1, &vbo);
-    if (ebo)
-        glDeleteBuffers(1, &ebo);
-
+    v_buffer.DeleteBuffers();
     delete buffer;
 }
 
@@ -334,16 +330,16 @@ bool IQMModel::LoadModel(const char *filename)
 
     // Abstract out ogl buffer calls?
 
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    glGenVertexArrays(1, &v_buffer.vao);
+    glBindVertexArray(v_buffer.vao);
 
-    glGenBuffers(1, &ebo);
-    glGenBuffers(1, &vbo);
+    glGenBuffers(1, &v_buffer.ebo);
+    glGenBuffers(1, &v_buffer.vbo);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, v_buffer.vbo);
     glBufferData(GL_ARRAY_BUFFER, header.num_vertexes*sizeof(Vertex), verts, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, v_buffer.ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, header.num_triangles*sizeof(IQMTriangle), tris, GL_STATIC_DRAW);
 
     SetVertAttribPointers();
@@ -390,9 +386,9 @@ void IQMModel::Animate(float current_time)
 
 void IQMModel::Render()
 {
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBindVertexArray(v_buffer.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, v_buffer.vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, v_buffer.ebo);
     glActiveTexture(GL_TEXTURE0);
 
     for(int i = 0; i < num_meshes; i++)

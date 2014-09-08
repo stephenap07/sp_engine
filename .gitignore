@@ -1,12 +1,6 @@
 ex
-*.swo
-*.swp
-*.swn
-*.swm
-*.swl
-*.swk
-*.swj
-*.swi
+~
+*.sw[a-z]
 *.o
 .tags
 obj/*

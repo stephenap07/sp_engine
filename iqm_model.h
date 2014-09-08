@@ -2,6 +2,7 @@
 #define _SP_IQM_MODEL_H_
 
 #include "iqm.h"
+#include "buffer.h"
 
 namespace sp {
 
@@ -28,9 +29,7 @@ public:
     std::vector<glm::mat4> &GetBones();
 
 private:
-    GLuint ebo;
-    GLuint vbo;
-    GLuint vao;
+    VertexBuffer v_buffer;
 
     IQMMesh *meshes;
     IQMJoint *joints;

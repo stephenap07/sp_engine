@@ -135,7 +135,7 @@ void MakeCube(VertexBuffer *buffer, bool has_normals)
                     cube_vertices[i]
                 };
                 
-                glm::vec3 f = verts[1]; 
+                //glm::vec3 f = verts[1]; 
 
                 glm::vec3 normal = glm::normalize(glm::cross(verts[2] - verts[0], verts[1] - verts[0]));
 

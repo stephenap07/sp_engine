@@ -49,6 +49,7 @@
 #include "gui.h"
 #include "console.h"
 #include "command.h"
+#include "model_view.h"
 
 // Raknet headers
 #include "MessageIdentifiers.h"
@@ -63,8 +64,9 @@ sp::Shader model_program;
 sp::Shader plane_program;
 sp::Shader skybox_program;
 sp::Shader player_program;
-sp::Console console;
+
 sp::TextDefinition text_def;
+sp::Console console;
 
 sp::VertexBuffer cube;
 sp::VertexBuffer plane;
@@ -81,32 +83,19 @@ GLuint skybox_rotate_loc;
 float animate = 0.0f;
 
 sp::SystemInfo sys_info;
+sp::ModelView p_model(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.5f, 1.0f, 0.5f));
+sp::ModelView gun_model(glm::vec3(0.1f, -0.08f, -0.19f), glm::vec3(0.02f, 0.02f, 0.09f));
+sp::ModelView iqm_view(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.2));
+sp::ModelView block_model(glm::vec3(0.0f, 0.0f, 3.5f), glm::vec3(0.5f, 1.0f, 0.5f));
 
-struct ModelView {
-    glm::vec3 origin;
-    glm::vec3 scale;
-    glm::quat rot;
-
-    explicit ModelView(const glm::vec3 &o, const glm::vec3 &s)
-    {
-        origin = o;
-        scale = s;
-    }
-
-    glm::mat4 GetModel() const
-    {
-        glm::mat4 rot_mat = glm::mat4_cast(rot);
-        glm::mat4 trans_mat = glm::translate(origin);
-        glm::mat4 scale_mat = glm::scale(scale);
-
-        return trans_mat * rot_mat * scale_mat;
-    }
+struct AnimatedObject {
+    sp::Shader       *program;
+    sp::VertexBuffer *renderable;
+    sp::IQMModel     *model;
+    sp::ModelView    *view;
 };
 
-ModelView p_model(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.5f, 1.0f, 0.5f));
-ModelView gun_model(glm::vec3(0.1f, -0.08f, -0.19f), glm::vec3(0.02f, 0.02f, 0.09f));
-ModelView iqm_view(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.2));
-ModelView block_model(glm::vec3(0.0f, 0.0f, 3.5f), glm::vec3(0.5f, 1.0f, 0.5f));
+AnimatedObject mr_fixit;
 
 void InitializeProgram()
 {
@@ -134,7 +123,6 @@ void InitializeProgram()
     renderer.LoadGlobalUniforms(plane_program.GetID());
     renderer.LoadGlobalUniforms(skybox_program.GetID());
     renderer.LoadGlobalUniforms(player_program.GetID());
-
 }
 
 void Init()
@@ -200,6 +188,9 @@ void Init()
 
     console.Init(renderer.GetWidth(), renderer.GetHeight());
     text_def.Init(renderer.GetWidth(), renderer.GetHeight());
+
+    mr_fixit.program = &model_program;
+    //mr_fixit.renderable = 
 }
 
 inline void DrawIQM()
@@ -262,7 +253,7 @@ inline void DrawSkyBox()
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(0xFFFF);
     glDrawElements(GL_TRIANGLE_FAN, 17, GL_UNSIGNED_SHORT, NULL);
-    //glDisable(GL_PRIMITIVE_RESTART);
+    glDisable(GL_PRIMITIVE_RESTART);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -433,7 +424,7 @@ int main()
     const float kGravity = 0.7f;
     float player_vel_y = 0.0f;
 
-    sp::CommandManager::AddCommand("quit", [&quit](const sp::CommandArg &args) { quit = true; });
+    sp::CommandManager::AddCommand("exit", [&quit](const sp::CommandArg &args) { quit = true; });
 
     while (!quit)
     {
