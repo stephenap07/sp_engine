@@ -65,7 +65,7 @@ sp::Shader plane_program;
 sp::Shader skybox_program;
 sp::Shader player_program;
 
-sp::TextDefinition text_def;
+sp::TextDefinition *text_def;
 sp::Console console;
 
 sp::VertexBuffer cube;
@@ -187,7 +187,8 @@ void Init()
     plane_program.SetUniform(sp::k1i, "is_textured", true);
 
     console.Init(renderer.GetWidth(), renderer.GetHeight());
-    text_def.Init(renderer.GetWidth(), renderer.GetHeight());
+    sp::font::Init(renderer.GetWidth(), renderer.GetHeight());
+    text_def = sp::font::GetTextDef("SPFont.ttf");
 
     mr_fixit.program = &model_program;
     //mr_fixit.renderable = 
@@ -385,14 +386,14 @@ void Display(float delta)
 
     glDisable(GL_DEPTH_TEST);
 
-    text_def.DrawText(std::string("FPS: ") + std::to_string((int)std::ceil((1 / delta))), 8, 35);
-    text_def.DrawText(std::string("Platform: ") + sys_info.platform, 8, 50);
-    text_def.DrawText(std::string("CPU Count: ") + std::to_string(sys_info.num_cpus), 8, 65);
-    text_def.DrawText(std::string("System Ram: ") + std::to_string(sys_info.ram) + std::string("mb"), 8, 80);
-    text_def.DrawText(std::string("L1 cache: ") + std::to_string(sys_info.l1_cache) + std::string("kb"), 8, 95);
-    text_def.DrawText(std::string("Vendor: ") + (char*)sys_info.vendor, 8, 110);
-    text_def.DrawText(std::string("Renderer: ") + (char*)sys_info.renderer, 8, 125);
-    text_def.DrawText(std::string("GL Version: ") + (char*)sys_info.version, 8, 140);
+    text_def->DrawText(std::string("FPS: ") + std::to_string((int)std::ceil((1 / delta))), 8, 35);
+    text_def->DrawText(std::string("Platform: ") + sys_info.platform, 8, 50);
+    text_def->DrawText(std::string("CPU Count: ") + std::to_string(sys_info.num_cpus), 8, 65);
+    text_def->DrawText(std::string("System Ram: ") + std::to_string(sys_info.ram) + std::string("mb"), 8, 80);
+    text_def->DrawText(std::string("L1 cache: ") + std::to_string(sys_info.l1_cache) + std::string("kb"), 8, 95);
+    text_def->DrawText(std::string("Vendor: ") + (char*)sys_info.vendor, 8, 110);
+    text_def->DrawText(std::string("Renderer: ") + (char*)sys_info.renderer, 8, 125);
+    text_def->DrawText(std::string("GL Version: ") + (char*)sys_info.version, 8, 140);
 
     console.Draw();
     glEnable(GL_DEPTH_TEST);

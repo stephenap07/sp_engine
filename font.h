@@ -71,6 +71,11 @@ private:
 
 void DrawText(const std::string &text_label, GlyphAtlas *atlas, float x, float y, float sx, float sy);
 
+namespace font {
+    bool Init(float window_width, float window_height);
+    TextDefinition *const GetTextDef(const std::string &text_def_name);    
+}
+
 } // namespace sp
 
 #endif

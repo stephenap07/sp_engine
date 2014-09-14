@@ -221,4 +221,18 @@ void TextDefinition::DrawText(const std::string &label, float x, float y)
     ::sp::DrawText(label, &atlas_16, -1 + x * window_width, 1 - y * window_height, window_width, window_height);
 }
 
+static TextDefinition gTextDef;
+
+namespace font {
+    bool Init(float window_width, float window_height)
+    {
+        return gTextDef.Init(window_width, window_height);
+    }
+
+    TextDefinition *const GetTextDef(const std::string &text_def_name)
+    {
+        return &gTextDef;
+    }
+}
+
 } // namespace sp
