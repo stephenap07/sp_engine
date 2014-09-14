@@ -1,4 +1,3 @@
-#include <iostream>
 #include "console.h"
 #include "logger.h"
 
@@ -18,19 +17,26 @@ void Console::Init(float window_width, float window_height)
 
     // Generating a whole new 3 texture atlases
     // TODO: Change this
-    text_def.Init(window_width, window_height);
+    // text_def.Init(window_width, window_height);
+    text_def = font::GetTextDef("SPFont.ttf");
 }
+
+//=============================================================================
 
 void Console::OpenFrame()
 {
     is_active = true;
 }
 
+//=============================================================================
+
 void Console::CloseFrame()
 {
     is_active = false;
     frame.SetSize(width, 0.0f);
 }
+
+//=============================================================================
 
 void Console::Update(float delta)
 {
@@ -56,6 +62,8 @@ void Console::Update(float delta)
     text_box.SetPos(0, frame_height - text_box.GetHeight());
 }
 
+//=============================================================================
+
 void Console::Draw()
 {
     if (is_active) {
@@ -67,23 +75,29 @@ void Console::Draw()
         } else {
             label = console_text;
         }
-        text_def.DrawText(label, 0, frame.GetHeight() - 5.0f);
+        text_def->DrawText(label, 0, frame.GetHeight() - 5.0f);
         int cmd_count = command_history.size();
         for (int i = 0; i < cmd_count; i++) {
-            text_def.DrawText(command_history[i], 0, frame.GetHeight() - 35.0f * (cmd_count - i));
+            text_def->DrawText(command_history[i], 0, frame.GetHeight() - 35.0f * (cmd_count - i));
         }
     }
 }
+
+//=============================================================================
 
 void Console::SetText(const std::string &text)
 {
     console_text = text;
 }
 
+//=============================================================================
+
 const std::string Console::GetText() const
 {
     return console_text;
 }
+
+//=============================================================================
 
 void Console::HandleEvent(const SDL_Event &sdl_event)
 {
@@ -115,6 +129,8 @@ void Console::HandleEvent(const SDL_Event &sdl_event)
             break;
     }
 }
+
+//=============================================================================
 
 void Console::HandleCommand(const std::string &command_string)
 {
