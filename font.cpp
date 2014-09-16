@@ -170,9 +170,7 @@ void DrawText(const std::string &text_label, GlyphAtlas *atlas, float x, float y
     glUseProgram(0);
 }
 
-
 //==============================================================================
-//
 
 bool TextDefinition::Init(float width, float height)
 {
@@ -216,14 +214,18 @@ bool TextDefinition::Init(float width, float height)
     return true;
 }
 
+//==============================================================================
+
 void TextDefinition::DrawText(const std::string &label, float x, float y)
 {
     ::sp::DrawText(label, &atlas_16, -1 + x * window_width, 1 - y * window_height, window_width, window_height);
 }
 
-static TextDefinition gTextDef;
+//==============================================================================
 
 namespace font {
+    static TextDefinition gTextDef;
+
     bool Init(float window_width, float window_height)
     {
         return gTextDef.Init(window_width, window_height);
