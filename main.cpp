@@ -163,7 +163,7 @@ void Init()
 
     sp::MakeTexturedQuad(&plane);
 
-    sp::MakeCube(&cube, true);
+    sp::MakeCube(&cube, false);
 
     skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
     glm::mat4 tc_matrix = glm::scale(glm::mat4(), glm::vec3(300.0f));
@@ -355,12 +355,10 @@ inline void DrawBox(float delta)
 
     glBindVertexArray(player.vao);
     glBindBuffer(GL_ARRAY_BUFFER, player.vbo);
-
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-
     glUseProgram(0);
 }
 

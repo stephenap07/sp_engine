@@ -12,14 +12,14 @@ uniform sampler2D tex;
 uniform vec4 color_ambient = vec4(0.2, 0.2, 0.2, 1.0);
 uniform vec4 color_light = vec4(1.0, 1.0, 1.0, 1.0);
 uniform vec4 color_specular = vec4(1.0, 1.0, 1.0, 1.0);
-uniform float shininess = 70.0f;
+uniform float shininess = 13.0f;
 uniform bool is_textured = false;
 
-uniform vec3 light_position = vec3(0.0, 3.0, 0.0);
+uniform vec3 light_position = vec3(0.0, 165.0, 0.0);
 
 void main(void)
 {
-    vec3 light_direction = normalize(light_position - vs_worldpos);
+    vec3 light_direction = normalize(vs_worldpos - light_position);
     vec3 normal = normalize(vs_normal);
 
     vec3 half_vector = normalize(light_direction + normalize(vs_worldpos));
@@ -42,6 +42,6 @@ void main(void)
     vec4 scattered_light = color_ambient + color_light * diffuse;
     vec4 reflected_light = color_light * specular;
 
-    vec3 rgb = min(tex_color * scattered_light + reflected_light, vec4(1.0)).rgb;
+    vec3 rgb = min(tex_color * (scattered_light + reflected_light), vec4(1.0)).rgb;
     color = vec4(rgb, tex_color.a);
 }

@@ -32,7 +32,7 @@ void main(void)
     }
 
     vs_color = vec4(1.0, 1.0, 1.0, 0.0);
-    vs_normal = normalize(mat3(transpose(inverse(model_matrix * m))) * normal);
+    vs_normal = normalize(-mat3(transpose(inverse(model_matrix * m))) * normal);
     vs_tex_coord = tex_coord;
 
     vec4 pos = model_matrix * m * vec4(position, 1.0);
