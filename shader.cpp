@@ -141,11 +141,9 @@ void Shader::CreateProgram(const std::vector<std::pair<const std::string &, GLen
     if (id == 0) {
         std::cerr << "Invalid program\n";
     }
-
-    /*
-    std::for_each(shaders.begin(), shaders.end(),
-            [id](GLuint shader_id) { glDetachShader(id, shader_id); });
-            */
+    const GLuint local_id = id;
+    auto detach_shader = [local_id](GLuint shader_id) { glDetachShader(local_id, shader_id); };
+    std::for_each(shaders.begin(), shaders.end(), detach_shader);
 }
 
 void Shader::Bind()
@@ -164,7 +162,7 @@ void Shader::SetUniform(GLUniformType type, const char *name, const bool data)
 
     GLint uniform = glGetUniformLocation(id, name);
     if (uniform == -1) {
-        std::cerr << "Invalid uniform for " << name << std::endl;
+        std::cerr << "Invalid uniform type (" << name << ") for shader id " << id << std::endl;
     } else {
         switch (type) {
             case k1i:

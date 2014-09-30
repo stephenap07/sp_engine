@@ -28,8 +28,8 @@ namespace sp {
 void Renderer::Init()
 {
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
@@ -108,8 +108,8 @@ void Renderer::EndFrame()
 
 void Renderer::FreeResources()
 {
-    for(auto it = program_store.begin(); it != program_store.end(); it++) {
-        glDeleteProgram(it->program);
+    for(auto it : program_store) {
+        glDeleteProgram(it.program);
     }
 
     SDL_GL_DeleteContext(context);

@@ -149,8 +149,8 @@ void Init()
     // md5_model.LoadModel("assets/models/hellknight/hellknight.md5mesh");
     // md5_model.LoadAnim("assets/models/hellknight/idle2.md5anim");
 
-    md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
-    md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
+    //md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
+    //md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
 
     //iqm_model.LoadModel("assets/models/imrod_iqm/ImrodLowPoly.iqm");
     //iqm_model.LoadModel("assets/models/hellknight_iqm/hellknight.iqm");
@@ -417,8 +417,10 @@ int main()
     const float kGravity = 0.7f;
     float player_vel_y = 0.0f;
 
-    sp::CommandManager::AddCommand("exit", [&quit](const sp::CommandArg &args) { quit = true; });
-    sp::CommandManager::AddCommand("fov", [](const sp::CommandArg &args) { renderer.SetAngleOfView(args.GetAs<float>(1)); });
+    sp::CommandManager::AddCommand("exit",
+        [&quit](const sp::CommandArg &args) { quit = true; });
+    sp::CommandManager::AddCommand("fov",
+        [](const sp::CommandArg &args) { renderer.SetAngleOfView(args.GetAs<float>(1)); });
 
     while (!quit)
     {
