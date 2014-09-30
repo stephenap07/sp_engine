@@ -51,11 +51,6 @@
 #include "command.h"
 #include "model_view.h"
 
-// Raknet headers
-#include "MessageIdentifiers.h"
-#include "RakPeerInterface.h"
-#include "RakNetTypes.h"
-
 sp::Renderer renderer;
 
 sp::Camera gScreenCamera;
@@ -269,8 +264,7 @@ inline void DrawFloor()
 {
     plane_program.Bind();
 
-    glm::mat4 plane_model;
-    plane_model = glm::translate(plane_model, glm::vec3(0, -1.0f, 0));
+    glm::mat4 plane_model = glm::translate(glm::mat4(1.0f), glm::vec3(0, -1.0f, 0));
     plane_model = glm::scale(plane_model, glm::vec3(10.0f, 1.0f, 10.0f));
     plane_model = glm::rotate(plane_model, -90.0f, glm::vec3(1, 0, 0));
     plane_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(plane_model));
@@ -375,7 +369,7 @@ void Display(float delta)
     DrawGun();
     DrawBox(delta);
     DrawFloor();
-    DrawSkyBox();
+    //DrawSkyBox();
     DrawMD5();
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -424,6 +418,7 @@ int main()
     float player_vel_y = 0.0f;
 
     sp::CommandManager::AddCommand("exit", [&quit](const sp::CommandArg &args) { quit = true; });
+    sp::CommandManager::AddCommand("fov", [](const sp::CommandArg &args) { renderer.SetAngleOfView(args.GetAs<float>(1)); });
 
     while (!quit)
     {

@@ -17,6 +17,7 @@ public:
     void EndFrame();
     void FreeResources();
     void SetView(const glm::mat4 &view);
+    void SetAngleOfView(const float angle);
     void LoadGlobalUniforms(GLuint shader_index);
 
     int GetWidth() const { return screen_width; }

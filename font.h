@@ -27,7 +27,6 @@ struct GlyphInfo
     float texture_y;
 };
 
-
 struct GlyphAtlas
 {
     GLuint tex_id;
@@ -44,7 +43,6 @@ struct GlyphAtlas
 
     void LoadFace(FT_Face face, int face_height);
 };
-
 
 class TextDefinition
 {
