@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -137,6 +138,16 @@ void Renderer::LoadGlobalUniforms(GLuint shader_index)
 {
     GLint uni_block_index = glGetUniformBlockIndex(shader_index, "globalMatrices");
     glUniformBlockBinding(shader_index, uni_block_index, global_uniform_binding);
+}
+
+//------------------------------------------------------------------------------
+
+void Renderer::SetAngleOfView(const float angle)
+{
+    projection = glm::perspective(angle, (float)screen_width / screen_height, 0.10f, 540.0f);
+    glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection)); 
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 } // namespace sp

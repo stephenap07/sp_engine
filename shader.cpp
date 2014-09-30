@@ -182,12 +182,16 @@ void Shader::SetUniform(GLUniformType type, const char *name, GLsizei count, GLv
     Bind();
 
     GLint uniform = glGetUniformLocation(id, name);
+    HandleGLError(glGetError());
     if (uniform == -1) {
-        std::cerr << "Invalid uniform for " << name << std::endl;
+        std::cerr << "Invalid uniform type (" << name << ") for shader id " << id << std::endl;
+        HandleGLError(glGetError());
     } else {
         switch (type) {
             case k4fv:
-                glUniform4fv(uniform, count, (GLfloat*)data); break; case k2fv:
+                glUniform4fv(uniform, count, (GLfloat*)data);
+                break;
+            case k2fv:
                 glUniform2fv(uniform, count, (GLfloat*)data);
                 break;
             case kMatrix4fv:

@@ -5,6 +5,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <sstream>
+#include <iostream>
 
 namespace sp {
 
@@ -14,6 +16,16 @@ public:
     CommandArg(const char *text);
     const std::string &GetArg(unsigned int place) const;
     const int Argc() const;
+
+    template <typename T>
+    const T GetAs(unsigned int place) const
+    {
+        T value;
+        std::cout << "Test " << GetArg(place) << std::endl;
+        std::istringstream buffer(GetArg(place));
+        buffer >> value;
+        return value;
+    }
 private:
     void TokenizeString(const char *text);
 
