@@ -47,7 +47,8 @@ struct GlyphAtlas
 class TextDefinition
 {
 public:
-    bool Init(float window_width, float window_height);
+    bool Init(const char *font_name, float window_width, float window_height);
+    bool IsInit () const { return is_initialized; }
     void DrawText(const std::string &label, float x, float y);
 
 private:
@@ -61,6 +62,7 @@ private:
     TTF_Font *font;
     FT_Library ft;
     FT_Face face;
+    bool is_initialized;
 
     // TODO: Do proper scaling globally?
     // Should be a more elegant way to deal with scaling images in the window
