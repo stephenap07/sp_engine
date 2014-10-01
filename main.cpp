@@ -161,8 +161,8 @@ void Init()
     sp::MakeCube(&cube, false);
 
     skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
-    glm::mat4 tc_matrix = glm::scale(glm::mat4(), glm::vec3(300.0f));
-    skybox_program.SetUniform(sp::kMatrix4fv, "tc_rotate", glm::value_ptr(tc_matrix));
+    glm::mat4 rotate_matrix = glm::scale(glm::mat4(), glm::vec3(300.0f));
+    skybox_program.SetUniform(sp::kMatrix4fv, "rotate_matrix", glm::value_ptr(rotate_matrix));
 
     plane_tex = sp::MakeTexture("assets/textures/checker.tga", GL_TEXTURE_2D);
 
@@ -183,7 +183,7 @@ void Init()
 
     console.Init(renderer.GetWidth(), renderer.GetHeight());
     sp::font::Init(renderer.GetWidth(), renderer.GetHeight());
-    text_def = sp::font::GetTextDef("SPFont.ttf");
+    text_def = sp::font::GetTextDef("SPFont3.ttf");
 
     mr_fixit.program = &model_program;
     //mr_fixit.renderable = 
