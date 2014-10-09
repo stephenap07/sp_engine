@@ -188,7 +188,7 @@ bool TextDefinition::Init(float width, float height)
         std::cerr << "Could not init freetype library\n";
         return false;
     }
-    if (FT_New_Face(ft, "assets/fonts/FreeMonoBold.otf", 0, &face)) {
+    if (FT_New_Face(ft, "assets/fonts/FreeSansBold.ttf", 0, &face)) {
         std::cerr << "Could not open font\n";
         return false;
     }
