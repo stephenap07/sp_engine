@@ -12,7 +12,7 @@ void UnbindAllBuffers()
 
 //------------------------------------------------------------------------------
 
-VertexBuffer::VertexBuffer() :vao(0), vbo(0)
+VertexBuffer::VertexBuffer() :vao(0), vbo(0), ebo(0), num_triangles(0)
 {}
 
 //------------------------------------------------------------------------------
@@ -27,7 +27,12 @@ VertexBuffer::~VertexBuffer()
 void VertexBuffer::Bind()
 {
     glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    if (vbo) {
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    }
+    if (ebo) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    }
 }
 
 //------------------------------------------------------------------------------

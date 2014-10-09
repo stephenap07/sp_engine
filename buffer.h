@@ -11,6 +11,7 @@ class VertexBuffer
 {
 public:
     GLuint vao, vbo, ebo;
+    unsigned int num_triangles;
 
     VertexBuffer();
     ~VertexBuffer();
