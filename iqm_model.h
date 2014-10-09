@@ -28,8 +28,8 @@ public:
     void Render();
     std::vector<glm::mat4> &GetBones();
 
-private:
     VertexBuffer v_buffer;
+private:
 
     IQMMesh *meshes;
     IQMJoint *joints;
