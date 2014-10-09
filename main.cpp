@@ -184,9 +184,6 @@ void Init()
     console.Init(renderer.GetWidth(), renderer.GetHeight());
     sp::font::Init(renderer.GetWidth(), renderer.GetHeight());
     text_def = sp::font::GetTextDef("SPFont.ttf");
-
-    mr_fixit.program = &model_program;
-    //mr_fixit.renderable = 
 }
 
 inline void DrawIQM()
@@ -309,6 +306,34 @@ inline void DrawPlayer()
     glUseProgram(0);
 }
 
+struct Entity
+{
+    sp::Shader *program;
+    sp::ModelView *model;
+    sp::VertexBuffer *buffer;
+};
+
+Entity gun_entity = {&player_program, &gun_model, &player};
+
+inline void DrawGunEnt(Entity *ent, glm::mat4 view)
+{
+    ent->program->Bind();
+    //glm::mat4 world_model = glm::inverse(gScreenCamera.LookAt());
+    glm::mat4 g_model = glm::inverse(view) * ent->model->GetModel();
+    glm::mat4 gw_model = gScreenCamera.LookAt() * g_model;
+
+    //glm::mat4 gv_model = glm::mat4(1.0f);
+    player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
+    player_program.SetUniform(sp::kMatrix4fv, "mv_matrix", glm::value_ptr(gw_model));
+
+    ent->buffer->Bind();
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    glUseProgram(0);
+}
+
 inline void DrawGun()
 {
     player_program.Bind();
@@ -366,7 +391,8 @@ void Display(float delta)
     renderer.SetView(gScreenCamera.LookAt());
 
     //DrawPlayer();
-    DrawGun();
+    //DrawGun();
+    DrawGunEnt(&gun_entity, gScreenCamera.LookAt());
     DrawBox(delta);
     DrawFloor();
     //DrawSkyBox();
@@ -487,7 +513,6 @@ int main()
         // Player Controller
         glm::vec3 side = glm::normalize(glm::cross(gScreenCamera.dir, gScreenCamera.up));
         glm::vec3 forward = glm::normalize(glm::cross(gScreenCamera.up, side));
-
 
         if (!console.FrameIsOpen()) {
             state = SDL_GetKeyboardState(nullptr);
