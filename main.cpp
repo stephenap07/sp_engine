@@ -396,7 +396,7 @@ void Display(float delta)
     DrawBox(delta);
     DrawFloor();
     //DrawSkyBox();
-    DrawMD5();
+    //DrawMD5();
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     DrawIQM();
