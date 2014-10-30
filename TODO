@@ -1,6 +1,6 @@
 Must have:
 
-1. Add support for materials
+1. Add support for materials (metal, plastic demos)
 2. Use a rendering queue for multi processing
    a. Front end - visible surface determination
    b. Back end - render based on a render command and context/view
