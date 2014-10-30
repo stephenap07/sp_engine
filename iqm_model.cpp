@@ -153,7 +153,8 @@ bool IQMModel::LoadModel(const char *filename)
         case IQM_NORMAL:
             if (vert.format != IQM_FLOAT || vert.size != 3) {
                 return false;
-            } innormal = (float *)&buffer[vert.offset];
+            }
+            innormal = (float *)&buffer[vert.offset];
             lilswap(innormal, 3 * header.num_vertexes);
             break;
         case IQM_TANGENT:
