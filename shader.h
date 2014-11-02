@@ -31,8 +31,8 @@ public:
     Shader(): id(0)
     {}
 
-    Shader(const std::vector<std::pair<const std::string &, GLenum>> &shader_pair);
-    void CreateProgram(const std::vector<std::pair<const std::string &, GLenum>> &shader_pair);
+    Shader(const std::vector<std::pair<const char*, GLenum>> &shader_pair);
+    void CreateProgram(const std::vector<std::pair<const char*, GLenum>> &shader_pair);
     ~Shader();
 
     void Bind();
@@ -46,7 +46,7 @@ private:
     GLuint id;
 };
 
-std::string ReadFileToString(const std::string &file_name);
+std::string ReadFileToString(const char* file_name);
 GLuint CreateProgram(const std::vector<GLuint> &kShaderList);
 void SetVertAttribPointers();
 
