@@ -1,15 +1,73 @@
 #include <GL/glew.h>
 
+#include "os_properties.h"
 #include <iostream>
+#include <stdio.h>
+#include <cmath>
+#include <algorithm>
 
 #include "buffer.h"
 #include "shader.h"
-#include "font.h"
 #include "error.h"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_access.hpp> 
+#include <glm/gtc/matrix_access.hpp>
+
+#include "font.h"
+
+static void Priv_DrawText(const std::string &text_label, sp::GlyphAtlas *atlas, float x, float y, float sx, float sy)
+{
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	atlas->shader.Bind();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, atlas->tex_id);
+
+	glBindVertexArray(atlas->buffer.vao);
+	glBindBuffer(GL_ARRAY_BUFFER, atlas->buffer.vbo);
+
+	sp::Point *coords = new sp::Point[6 * text_label.size()];
+	int c = 0;
+
+	for (auto ch : text_label) {
+		sp::GlyphInfo glyph = atlas->glyphs[(int) ch];
+
+		float x2 = x + glyph.bitmap_left * sx;
+		float y2 = -y - glyph.bitmap_top * sy;
+		float w = glyph.bitmap_width * sx;
+		float h = glyph.bitmap_height * sy;
+
+		x += glyph.advance_x * sx;
+		y += glyph.advance_y * sy;
+
+		if (!w || !h) {
+			continue;
+		}
+
+		float s_w = glyph.bitmap_width / atlas->width;
+		float s_h = glyph.bitmap_height / atlas->height;
+
+		coords[c++] = { x2, -y2 - h, 0.0f, glyph.texture_x, glyph.texture_y + s_h };
+		coords[c++] = { x2 + w, -y2 - h, 0.0f, glyph.texture_x + s_w, glyph.texture_y + s_h };
+		coords[c++] = { x2, -y2, 0.0f, glyph.texture_x, glyph.texture_y };
+
+		coords[c++] = { x2 + w, -y2, 0.0f, glyph.texture_x + s_w, glyph.texture_y };
+		coords[c++] = { x2, -y2, 0.0f, glyph.texture_x, glyph.texture_y };
+		coords[c++] = { x2 + w, -y2 - h, 0.0f, glyph.texture_x + s_w, glyph.texture_y + s_h };
+	}
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(coords), coords, GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_TRIANGLES, 0, c);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glUseProgram(0);
+
+	delete[] coords;
+}
 
 namespace sp {
 
@@ -97,21 +155,21 @@ void GlyphAtlas::LoadFace(FT_Face face, int face_height)
                         g->bitmap.width, g->bitmap.rows, GL_RED,
                         GL_UNSIGNED_BYTE, (GLubyte*)g->bitmap.buffer);
         glyphs[i] = {
-            .advance_x = (float)(g->advance.x >> 6),
-            .advance_y = (float)(g->advance.y >> 6),
-            .bitmap_width = (float)g->bitmap.width,
-            .bitmap_height = (float)g->bitmap.rows,
-            .bitmap_left = (float)g->bitmap_left,
-            .bitmap_top = (float)g->bitmap_top,
-            .texture_x = offset_x / (float)width,
-            .texture_y = offset_y / (float)height
+            (float)(g->advance.x >> 6),
+            (float)(g->advance.y >> 6),
+            (float)g->bitmap.width,
+            (float)g->bitmap.rows,
+            (float)g->bitmap_left,
+            (float)g->bitmap_top,
+            offset_x / (float)width,
+            offset_y / (float)height
         };
 
         row_h = std::max(row_h, g->bitmap.rows);
         offset_x += g->bitmap.width + 1;
     }
 
-    printf("Generated a %d x %d (%d kb) texture atlas\n", width, height, width * height / 1024);
+    //printf("Generated a %d x %d (%d kb) texture atlas\n", width, height, width * height / 1024);
 }
 
 GlyphAtlas::~GlyphAtlas()
@@ -119,56 +177,6 @@ GlyphAtlas::~GlyphAtlas()
     glDeleteTextures(1, &tex_id);
 }
 
-void DrawText(const std::string &text_label, GlyphAtlas *atlas, float x, float y, float sx, float sy)
-{
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    atlas->shader.Bind();
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, atlas->tex_id);
-
-    glBindVertexArray(atlas->buffer.vao);
-    glBindBuffer(GL_ARRAY_BUFFER, atlas->buffer.vbo);
-
-    Point coords[6 * text_label.size()];
-    int c = 0;
-
-    for (auto ch : text_label) {
-        GlyphInfo glyph = atlas->glyphs[(int)ch];
-
-        float x2 = x + glyph.bitmap_left * sx;
-        float y2 = -y - glyph.bitmap_top * sy;
-        float w = glyph.bitmap_width * sx;
-        float h = glyph.bitmap_height * sy;
-
-        x += glyph.advance_x * sx;
-        y += glyph.advance_y * sy;
-
-        if (!w || !h) {
-            continue;
-        }
-
-        float s_w = glyph.bitmap_width / atlas->width;
-        float s_h = glyph.bitmap_height / atlas->height;
-
-        coords[c++] = {x2, -y2 - h, 0.0f, glyph.texture_x, glyph.texture_y + s_h};
-        coords[c++] = {x2 + w, -y2 - h, 0.0f, glyph.texture_x + s_w, glyph.texture_y + s_h};
-        coords[c++] = {x2, -y2, 0.0f, glyph.texture_x, glyph.texture_y};
-
-        coords[c++] = {x2 + w, -y2, 0.0f, glyph.texture_x + s_w, glyph.texture_y};
-        coords[c++] = {x2, -y2, 0.0f, glyph.texture_x, glyph.texture_y};
-        coords[c++] = {x2 + w, -y2 - h, 0.0f, glyph.texture_x + s_w, glyph.texture_y + s_h};
-    }
-    
-    glBufferData(GL_ARRAY_BUFFER, sizeof(coords), coords, GL_DYNAMIC_DRAW);
-    glDrawArrays(GL_TRIANGLES, 0, c);
-
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glUseProgram(0);
-}
 
 //==============================================================================
 
@@ -178,8 +186,8 @@ bool TextDefinition::Init(const char *font_name, float width, float height)
     window_height = 2.0f / height;
 
     text_program.CreateProgram({
-        {std::string("assets/shaders/text.vs.glsl"), GL_VERTEX_SHADER},
-        {std::string("assets/shaders/text.fs.glsl"), GL_FRAGMENT_SHADER}
+        {"assets/shaders/text.vs.glsl", GL_VERTEX_SHADER},
+        {"assets/shaders/text.fs.glsl", GL_FRAGMENT_SHADER}
     });
 
     text_buffer = sp::MakeTexturedQuad(GL_DYNAMIC_DRAW);
@@ -188,7 +196,10 @@ bool TextDefinition::Init(const char *font_name, float width, float height)
         std::cerr << "Could not init freetype library\n";
         return false;
     }
-    if (FT_New_Face(ft, std::string("assets/fonts/") + std::string(font_name), 0, &face)) {
+	std::string font_folder = "assets/fonts";
+	std::string font_name_str = std::string(font_name);
+	std::string full_path_to_font = font_folder + font_name_str;
+	if (FT_New_Face(ft, full_path_to_font.c_str(), 0, &face)) {
         std::cerr << "Could not open font\n";
         return false;
     }
@@ -219,20 +230,22 @@ bool TextDefinition::Init(const char *font_name, float width, float height)
 
 void TextDefinition::DrawText(const std::string &label, float x, float y)
 {
-    ::sp::DrawText(label, &atlas_16, -1 + x * window_width, 1 - y * window_height, window_width, window_height);
+	Priv_DrawText(label, &atlas_16, -1 + x * window_width, 1 - y * window_height, window_width, window_height);
 }
 
 //==============================================================================
 
 namespace font {
     static TextDefinition gTextDef;
-    static int local_window_width;
-    static int local_window_height;
+    static float local_window_width;
+    static float local_window_height;
 
     bool Init(float window_width, float window_height)
     {
-        local_window_width = window_width;
-        local_window_height = window_height;
+        local_window_width = (float)window_width;
+        local_window_height = (float)window_height;
+
+		return true;
     }
 
     TextDefinition *const GetTextDef(const std::string &text_def_name)
