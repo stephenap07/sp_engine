@@ -141,9 +141,9 @@ void Shader::CreateProgram(const std::vector<std::pair<const std::string &, GLen
     if (id == 0) {
         std::cerr << "Invalid program\n";
     }
-    const GLuint local_id = id;
-    auto detach_shader = [local_id](GLuint shader_id) { glDetachShader(local_id, shader_id); };
-    std::for_each(shaders.begin(), shaders.end(), detach_shader);
+    GLuint local_id = id;
+    std::for_each(shaders.begin(), shaders.end(),
+            [local_id](GLuint shader_id) { glDetachShader(local_id, shader_id); });
 }
 
 void Shader::Bind()
@@ -156,11 +156,17 @@ void Shader::SetUniform(GLUniformType type, const char *name, GLvoid *data)
     SetUniform(type, name, 1, data);
 }
 
-void Shader::SetUniform(GLUniformType type, const char *name, const bool data)
+void Shader::SetUniform(GLUniformType type, const char *name, const GLint data)
 {
     Bind();
 
     GLint uniform = glGetUniformLocation(id, name);
+    GLenum error = glGetError();
+    if (error) {
+        log::ErrorLog("Error in shader (%d), uniform (%s)\n", id, name);
+        HandleGLError(error);
+    }
+
     if (uniform == -1) {
         std::cerr << "Invalid uniform type (" << name << ") for shader id " << id << std::endl;
     } else {
@@ -180,10 +186,14 @@ void Shader::SetUniform(GLUniformType type, const char *name, GLsizei count, GLv
     Bind();
 
     GLint uniform = glGetUniformLocation(id, name);
-    HandleGLError(glGetError());
+    GLenum error = glGetError();
+    if (error) {
+        log::ErrorLog("Error in shader (%d), uniform (%s)\n", id, name);
+        HandleGLError(error);
+    }
+
     if (uniform == -1) {
         std::cerr << "Invalid uniform type (" << name << ") for shader id " << id << std::endl;
-        HandleGLError(glGetError());
     } else {
         switch (type) {
             case k4fv:
@@ -197,6 +207,7 @@ void Shader::SetUniform(GLUniformType type, const char *name, GLsizei count, GLv
                 break;
             case kMatrix3x4fv:
                 glUniformMatrix3x4fv(uniform, count, GL_FALSE, (GLfloat*)data);
+                break;
             default:
                 std::cerr << "Invalid uniform type\n";
                 break;

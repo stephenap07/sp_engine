@@ -172,7 +172,7 @@ void DrawText(const std::string &text_label, GlyphAtlas *atlas, float x, float y
 
 //==============================================================================
 
-bool TextDefinition::Init(float width, float height)
+bool TextDefinition::Init(const char *font_name, float width, float height)
 {
     window_width = 2.0f / width;
     window_height = 2.0f / height;
@@ -188,7 +188,7 @@ bool TextDefinition::Init(float width, float height)
         std::cerr << "Could not init freetype library\n";
         return false;
     }
-    if (FT_New_Face(ft, "assets/fonts/FreeSansBold.ttf", 0, &face)) {
+    if (FT_New_Face(ft, std::string("assets/fonts/") + std::string(font_name), 0, &face)) {
         std::cerr << "Could not open font\n";
         return false;
     }
@@ -211,6 +211,7 @@ bool TextDefinition::Init(float width, float height)
     atlas_24.buffer = text_buffer;
     atlas_16.buffer = text_buffer;
 
+    is_initialized = true;
     return true;
 }
 
@@ -225,14 +226,21 @@ void TextDefinition::DrawText(const std::string &label, float x, float y)
 
 namespace font {
     static TextDefinition gTextDef;
+    static int local_window_width;
+    static int local_window_height;
 
     bool Init(float window_width, float window_height)
     {
-        return gTextDef.Init(window_width, window_height);
+        local_window_width = window_width;
+        local_window_height = window_height;
     }
 
     TextDefinition *const GetTextDef(const std::string &text_def_name)
     {
+        bool did_init = true;
+        if (!gTextDef.IsInit()) {
+            did_init = gTextDef.Init(text_def_name.c_str(), local_window_width, local_window_height);
+        }
         return &gTextDef;
     }
 }
