@@ -1,3 +1,4 @@
+#include <SDL2/SDL.h>
 #include "console.h"
 #include "logger.h"
 
@@ -69,11 +70,9 @@ void Console::Draw()
     if (is_active) {
         frame.Draw();
         text_box.Draw();
-        std::string label;
+		std::string label = console_text;
         if (draw_text_bar) {
-            label = console_text + "|";
-        } else {
-            label = console_text;
+            label += "|";
         }
         text_def->DrawText(label, 0, frame.GetHeight() - 5.0f);
         int cmd_count = command_history.size();
@@ -102,6 +101,7 @@ const std::string Console::GetText() const
 void Console::HandleEvent(const SDL_Event &sdl_event)
 {
     SDL_Keymod key_mod = SDL_GetModState();
+
     switch(sdl_event.type) {
         case SDL_KEYDOWN:
             if (sdl_event.key.keysym.sym == SDLK_BACKSPACE) {

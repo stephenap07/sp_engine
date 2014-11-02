@@ -27,8 +27,8 @@ void GUIFrame::Init(float x, float y, float sx, float sy, float width, float hei
     this->scale_y = sy;
 
     program.CreateProgram({
-        {std::string("assets/shaders/2d.vert"), GL_VERTEX_SHADER},
-        {std::string("assets/shaders/2d.frag"), GL_FRAGMENT_SHADER},
+        {"assets/shaders/2d.vert", GL_VERTEX_SHADER},
+        {"assets/shaders/2d.frag", GL_FRAGMENT_SHADER},
     });
 
     sp::MakeQuad(&buffer);
