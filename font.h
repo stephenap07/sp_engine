@@ -3,7 +3,6 @@
 
 #include <string>
 #include <ft2build.h>
-#include <SDL2/SDL_ttf.h>
 #include FT_FREETYPE_H
 
 #include "buffer.h"
@@ -27,8 +26,9 @@ struct GlyphInfo
     float texture_y;
 };
 
-struct GlyphAtlas
+class GlyphAtlas
 {
+public:
     GLuint tex_id;
     Shader shader;
     VertexBuffer buffer;
@@ -59,7 +59,6 @@ private:
     GlyphAtlas atlas_24;
     GlyphAtlas atlas_16;
 
-    TTF_Font *font;
     FT_Library ft;
     FT_Face face;
     bool is_initialized;
