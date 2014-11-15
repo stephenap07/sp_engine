@@ -188,7 +188,9 @@ bool TextDefinition::Init(const char *font_name, float width, float height)
         std::cerr << "Could not init freetype library\n";
         return false;
     }
-    if (FT_New_Face(ft, std::string("assets/fonts/") + std::string(font_name), 0, &face)) {
+    std::string font_path = std::string("assets/fonts/") + std::string(font_name);
+    std::cout << "Loading font " << font_path << std::endl;
+    if (FT_New_Face(ft, font_path.c_str(), 0, &face)) {
         std::cerr << "Could not open font\n";
         return false;
     }
@@ -226,20 +228,20 @@ void TextDefinition::DrawText(const std::string &label, float x, float y)
 
 namespace font {
     static TextDefinition gTextDef;
-    static int local_window_width;
-    static int local_window_height;
+    static float local_window_width;
+    static float local_window_height;
 
     bool Init(float window_width, float window_height)
     {
         local_window_width = window_width;
         local_window_height = window_height;
+        return true;
     }
 
     TextDefinition *const GetTextDef(const std::string &text_def_name)
     {
-        bool did_init = true;
         if (!gTextDef.IsInit()) {
-            did_init = gTextDef.Init(text_def_name.c_str(), local_window_width, local_window_height);
+            gTextDef.Init(text_def_name.c_str(), local_window_width, local_window_height);
         }
         return &gTextDef;
     }

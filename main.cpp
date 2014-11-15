@@ -53,7 +53,7 @@
 
 sp::Renderer renderer;
 
-sp::Camera gScreenCamera;
+sp::Camera screen_camera;
 
 sp::Shader model_program;
 sp::Shader plane_program;
@@ -72,6 +72,9 @@ sp::IQMModel iqm_model;
 
 GLuint skybox_tex;
 GLuint plane_tex;
+GLuint depth_texture;
+
+GLuint depth_fbo;
 
 GLuint skybox_rotate_loc;
 
@@ -120,9 +123,37 @@ void InitializeProgram()
     renderer.LoadGlobalUniforms(player_program.GetID());
 }
 
+/*
+void InitFrameBuffers()
+{
+    glGenTextures(1, &depth_texture);    
+    glBindTexture(GL_TEXTURE_2D, depth_texture);
+    // Allocate storage for texture data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, DEPTH_TEXTURE_SIZE,
+                 DEPTH_TEXTURE_SIZE, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL); 
+    // Set default filtering modes
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+    // Set up wrapping modes
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    // Create FBO to render depth into
+    glGenFramebuffers(1, &depth_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, depth_fbo);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, depth_texture, 0);
+
+    // Disable color rendering as there are no color attachments
+    glDrawBuffer(GL_NONE);
+}
+*/
+
 void Init()
 {
-    gScreenCamera.Init(
+    screen_camera.Init(
         glm::mat3(
             glm::vec3(0.5f, 0.5f, 2.5f),
             glm::vec3(0.0f, -0.25f, -1.0f),
@@ -157,7 +188,6 @@ void Init()
     iqm_model.LoadModel("assets/models/mrfixit/mrfixit.iqm");
 
     sp::MakeTexturedQuad(&plane);
-
     sp::MakeCube(&cube, false);
 
     skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
@@ -312,9 +342,9 @@ inline void DrawPlayer()
 inline void DrawGun()
 {
     player_program.Bind();
-    // glm::mat4 world_model = glm::inverse(gScreenCamera.LookAt());
-    glm::mat4 g_model = glm::inverse(gScreenCamera.LookAt()) * gun_model.GetModel();
-    glm::mat4 gw_model = gScreenCamera.LookAt() * g_model;
+    // glm::mat4 world_model = glm::inverse(screen_camera.LookAt());
+    glm::mat4 g_model = glm::inverse(screen_camera.LookAt()) * gun_model.GetModel();
+    glm::mat4 gw_model = screen_camera.LookAt() * g_model;
     //glm::mat4 gv_model = glm::mat4(1.0f);
     player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
     player_program.SetUniform(sp::kMatrix4fv, "mv_matrix", glm::value_ptr(gw_model));
@@ -342,7 +372,7 @@ inline void DrawBox(float delta)
     glm::mat4 model = rot_mat * trans_mat * scale_mat;
 
     glm::mat4 b_model = model;
-    glm::mat4 bv_model = gScreenCamera.LookAt() * model;
+    glm::mat4 bv_model = screen_camera.LookAt() * model;
 
     player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(b_model));
     player_program.SetUniform(sp::kMatrix4fv, "mv_matrix", glm::value_ptr(bv_model));
@@ -362,8 +392,8 @@ void Display(float delta)
     //static float ang = 0.0f;
     renderer.BeginFrame();
     //ang += 30.0f * delta;
-    //gScreenCamera.Rotate(2.0f * sin(ang), glm::vec3(0.0f, 0.0f, 1.0f));
-    renderer.SetView(gScreenCamera.LookAt());
+    //screen_camera.Rotate(2.0f * sin(ang), glm::vec3(0.0f, 0.0f, 1.0f));
+    renderer.SetView(screen_camera.LookAt());
 
     //DrawPlayer();
     DrawGun();
@@ -436,7 +466,7 @@ int main()
 
             switch(sdl_event.type) {
                 case SDL_MOUSEMOTION:
-                    gScreenCamera.HandleMouse(sdl_event.motion.xrel,
+                    screen_camera.HandleMouse(sdl_event.motion.xrel,
                                               sdl_event.motion.yrel, delta);
                     p_model.rot = glm::angleAxis(-10.0f *
                                   sdl_event.motion.xrel * delta,
@@ -483,8 +513,8 @@ int main()
         }
 
         // Player Controller
-        glm::vec3 side = glm::normalize(glm::cross(gScreenCamera.dir, gScreenCamera.up));
-        glm::vec3 forward = glm::normalize(glm::cross(gScreenCamera.up, side));
+        glm::vec3 side = glm::normalize(glm::cross(screen_camera.dir, screen_camera.up));
+        glm::vec3 forward = glm::normalize(glm::cross(screen_camera.up, side));
 
 
         if (!console.FrameIsOpen()) {
@@ -506,8 +536,8 @@ int main()
             if (state[SDL_SCANCODE_RIGHT]) iqm_view.origin += delta * player_speed * glm::vec3(1, 0, 0);
             if (state[SDL_SCANCODE_LEFT]) iqm_view.origin -= delta * player_speed * glm::vec3(1, 0, 0);
 
-            //gScreenCamera.FreeRoam(delta);
-            gScreenCamera.pos = p_model.origin + glm::vec3(0.0f, 0.8f, 0.0f);
+            screen_camera.FreeRoam(delta);
+            // screen_camera.pos = p_model.origin + glm::vec3(0.0f, 0.8f, 0.0f);
         }
 
         md5_model.Update(delta);

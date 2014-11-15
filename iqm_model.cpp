@@ -44,7 +44,9 @@ static glm::mat4 MakeBoneMat(glm::quat rot, glm::vec3 trans, glm::vec3 scale)
 IQMModel::~IQMModel()
 {
     v_buffer.DeleteBuffers();
-    delete buffer;
+    if (buffer) {
+        delete buffer;
+    }
 }
 
 //------------------------------------------------------------------------------
