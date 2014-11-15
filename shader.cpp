@@ -6,6 +6,7 @@
 #include <fstream>
 #include <streambuf>
 #include <algorithm>
+#include <memory>
 
 #include "shader.h"
 #include "logger.h"
@@ -67,7 +68,7 @@ GLuint CreateShader(const std::string &shader_file_name, GLenum target)
 
         fprintf(stderr, "Compile failure in %s shader %s:\n %s\n",
                       shader_type_cstr, shader_file_name.c_str(), str_info_log);
-        delete[] str_info_log;
+        delete [] str_info_log;
     }
 
     return shader;
