@@ -140,7 +140,7 @@ void MakeCube(VertexBuffer *buffer, bool has_normals)
                 glm::vec3 normal = glm::normalize(glm::cross(verts[2] - verts[0], verts[1] - verts[0]));
 
                 for (size_t j = 0; j < 3; j++) {
-                    GeomVertex v = {.vertex = verts[j], .normal = normal};
+                    GeomVertex v = {verts[j], normal};
                     new_vertices.push_back(v);
                 }
             }

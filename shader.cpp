@@ -7,6 +7,7 @@
 #include <streambuf>
 #include <algorithm>
 #include <memory>
+#include <cassert>
 
 #include "shader.h"
 #include "logger.h"
@@ -16,12 +17,13 @@ namespace sp {
 
 //------------------------------------------------------------------------------
 
-std::string ReadFileToString(const std::string &file_name)
+std::string ReadFileToString(const char *file_name)
 {
     std::ifstream file(file_name);
 
     if (!file.good()) {
-        log::ErrorLog("Error opening file %s\n", file_name.c_str());
+        log::ErrorLog("Error opening file %s\n", file_name);
+		assert(false);
     }
 
     std::string contents;
@@ -38,7 +40,7 @@ std::string ReadFileToString(const std::string &file_name)
 
 //------------------------------------------------------------------------------
 
-GLuint CreateShader(const std::string &shader_file_name, GLenum target)
+GLuint CreateShader(const char *shader_file_name, GLenum target)
 {
     std::string contents = ReadFileToString(shader_file_name);
 
@@ -67,8 +69,8 @@ GLuint CreateShader(const std::string &shader_file_name, GLenum target)
         }
 
         fprintf(stderr, "Compile failure in %s shader %s:\n %s\n",
-                      shader_type_cstr, shader_file_name.c_str(), str_info_log);
-        delete [] str_info_log;
+        shader_type_cstr, shader_file_name, str_info_log);
+        delete[] str_info_log;
     }
 
     return shader;
@@ -125,12 +127,12 @@ void SetVertAttribPointers()
     glEnableVertexAttribArray(5);
 }
 
-Shader::Shader(const std::vector<std::pair<const std::string &, GLenum>> &shader_pair)
+Shader::Shader(const std::vector<std::pair<const char*, GLenum>> &shader_pair)
 {
     CreateProgram(shader_pair);
 }
 
-void Shader::CreateProgram(const std::vector<std::pair<const std::string &, GLenum>> &shader_pair)
+void Shader::CreateProgram(const std::vector<std::pair<const char*, GLenum>> &shader_pair)
 {
     std::vector<GLuint> shaders;
     for (auto p : shader_pair) {
@@ -142,7 +144,6 @@ void Shader::CreateProgram(const std::vector<std::pair<const std::string &, GLen
     if (id == 0) {
         std::cerr << "Invalid program\n";
     }
-
     GLuint local_id = id;
     std::for_each(shaders.begin(), shaders.end(),
             [local_id](GLuint shader_id) { glDetachShader(local_id, shader_id); });
@@ -170,7 +171,7 @@ void Shader::SetUniform(GLUniformType type, const char *name, const GLint data)
     }
 
     if (uniform == -1) {
-        std::cerr << "Invalid uniform for " << name << std::endl;
+        std::cerr << "Invalid uniform type (" << name << ") for shader id " << id << std::endl;
     } else {
         switch (type) {
             case k1i:

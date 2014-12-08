@@ -1,6 +1,8 @@
 #ifndef _SP_CAMERA_H_
 #define _SP_CAMERA_H_
 
+#include "model_view.h"
+
 namespace sp {
 
 class Camera {
