@@ -21,7 +21,6 @@ public:
     const T GetAs(unsigned int place) const
     {
         T value;
-        std::cout << "Test " << GetArg(place) << std::endl;
         std::istringstream buffer(GetArg(place));
         buffer >> value;
         return value;
