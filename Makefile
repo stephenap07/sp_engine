@@ -15,6 +15,7 @@ ifeq ($(UNAME), Linux)
 endif
 ifeq ($(UNAME), Darwin)
 	LDFLAGS += -framework OpenGL
+	CFLAGS += -I/usr/local/include
 endif
 
 .PHONY: all clean run

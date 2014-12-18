@@ -15,12 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "os_properties.h"
 #include <GL/glew.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -51,6 +51,7 @@
 #include "command.h"
 #include "model_view.h"
 
+
 sp::Renderer renderer;
 
 sp::Camera gScreenCamera;
@@ -80,7 +81,7 @@ float animate = 0.0f;
 sp::SystemInfo sys_info;
 sp::ModelView p_model(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.5f, 1.0f, 0.5f));
 sp::ModelView gun_model(glm::vec3(0.1f, -0.08f, -0.19f), glm::vec3(0.02f, 0.02f, 0.09f));
-sp::ModelView iqm_view(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.2));
+sp::ModelView iqm_view(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.2f));
 sp::ModelView block_model(glm::vec3(0.0f, 0.0f, 3.5f), glm::vec3(0.5f, 1.0f, 0.5f));
 
 struct AnimatedObject {
@@ -95,23 +96,23 @@ AnimatedObject mr_fixit;
 void InitializeProgram()
 {
     model_program.CreateProgram({
-        {std::string("assets/shaders/basic_animated.vert"), GL_VERTEX_SHADER},
-        {std::string("assets/shaders/gouroud.frag"), GL_FRAGMENT_SHADER}
+        {"assets/shaders/basic_animated.vert", GL_VERTEX_SHADER},
+        {"assets/shaders/gouroud.frag", GL_FRAGMENT_SHADER}
     });
 
     plane_program.CreateProgram({
-        {std::string("assets/shaders/basic_texture.vs"), GL_VERTEX_SHADER},
-        {std::string("assets/shaders/gouroud.frag"), GL_FRAGMENT_SHADER}
+        {"assets/shaders/basic_texture.vs", GL_VERTEX_SHADER},
+        {"assets/shaders/gouroud.frag", GL_FRAGMENT_SHADER}
     });
 
     skybox_program.CreateProgram({
-        {std::string("assets/shaders/skybox.vert"), GL_VERTEX_SHADER},
-        {std::string("assets/shaders/skybox.frag"), GL_FRAGMENT_SHADER}
+        {"assets/shaders/skybox.vert", GL_VERTEX_SHADER},
+        {"assets/shaders/skybox.frag", GL_FRAGMENT_SHADER}
     });
 
     player_program.CreateProgram({
-        {std::string("assets/shaders/pass_through.vert"), GL_VERTEX_SHADER},
-        {std::string("assets/shaders/gouroud.frag"), GL_FRAGMENT_SHADER}
+        {"assets/shaders/pass_through.vert", GL_VERTEX_SHADER},
+        {"assets/shaders/gouroud.frag", GL_FRAGMENT_SHADER}
     });
 
     renderer.LoadGlobalUniforms(model_program.GetID());
@@ -149,8 +150,8 @@ void Init()
     // md5_model.LoadModel("assets/models/hellknight/hellknight.md5mesh");
     // md5_model.LoadAnim("assets/models/hellknight/idle2.md5anim");
 
-    md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
-    md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
+    //md5_model.LoadModel("assets/models/bob_lamp/boblampclean.md5mesh");
+    //md5_model.LoadAnim("assets/models/bob_lamp/boblampclean.md5anim");
 
     //iqm_model.LoadModel("assets/models/imrod_iqm/ImrodLowPoly.iqm");
     //iqm_model.LoadModel("assets/models/hellknight_iqm/hellknight.iqm");
@@ -160,9 +161,9 @@ void Init()
 
     sp::MakeCube(&cube, false);
 
-    skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
+    //skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
     glm::mat4 rotate_matrix = glm::scale(glm::mat4(), glm::vec3(300.0f));
-    skybox_program.SetUniform(sp::kMatrix4fv, "rotate_matrix", glm::value_ptr(rotate_matrix));
+    //skybox_program.SetUniform(sp::kMatrix4fv, "rotate_matrix", glm::value_ptr(rotate_matrix));
 
     plane_tex = sp::MakeTexture("assets/textures/checker.tga", GL_TEXTURE_2D);
 
@@ -181,9 +182,9 @@ void Init()
     model_program.SetUniform(sp::k1i, "is_rigged", true);
     plane_program.SetUniform(sp::k1i, "is_textured", true);
 
-    console.Init(renderer.GetWidth(), renderer.GetHeight());
-    sp::font::Init(renderer.GetWidth(), renderer.GetHeight());
-    text_def = sp::font::GetTextDef("SPFont3.ttf");
+    console.Init((float)renderer.GetWidth(), (float)renderer.GetHeight());
+    sp::font::Init((float)renderer.GetWidth(), (float)renderer.GetHeight());
+    text_def = sp::font::GetTextDef("SPFont.ttf");
 
     mr_fixit.program = &model_program;
     //mr_fixit.renderable = 
@@ -204,7 +205,7 @@ inline void DrawIQM()
     iqm_model.Animate(animate);
     std::vector<glm::mat4> &bones = iqm_model.GetBones();
     model_program.SetUniform(sp::kMatrix4fv, "bone_matrices",
-                             bones.size(),
+                             (GLsizei)bones.size(),
                              glm::value_ptr(bones[0]));
     iqm_model.Render();
 
@@ -233,7 +234,7 @@ inline void DrawMD5()
     glUseProgram(0);
 }
 
-inline void DrawSkyBox()
+/*inline void DrawSkyBox()
 {
     skybox_program.Bind();
 
@@ -259,7 +260,7 @@ inline void DrawSkyBox()
 
     glUseProgram(0);
 }
-
+*/
 inline void DrawFloor()
 {
     plane_program.Bind();
@@ -304,6 +305,34 @@ inline void DrawPlayer()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    glUseProgram(0);
+}
+
+struct Entity
+{
+    sp::Shader *program;
+    sp::ModelView *model;
+    sp::VertexBuffer *buffer;
+};
+
+Entity gun_entity = {&player_program, &gun_model, &player};
+
+inline void DrawGunEnt(Entity *ent, glm::mat4 view)
+{
+    ent->program->Bind();
+    //glm::mat4 world_model = glm::inverse(gScreenCamera.LookAt());
+    glm::mat4 g_model = glm::inverse(view) * ent->model->GetModel();
+    glm::mat4 gw_model = gScreenCamera.LookAt() * g_model;
+
+    //glm::mat4 gv_model = glm::mat4(1.0f);
+    player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
+    player_program.SetUniform(sp::kMatrix4fv, "mv_matrix", glm::value_ptr(gw_model));
+
+    ent->buffer->Bind();
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     glUseProgram(0);
@@ -366,11 +395,12 @@ void Display(float delta)
     renderer.SetView(gScreenCamera.LookAt());
 
     //DrawPlayer();
-    DrawGun();
+    //DrawGun();
+    DrawGunEnt(&gun_entity, gScreenCamera.LookAt());
     DrawBox(delta);
     DrawFloor();
     //DrawSkyBox();
-    DrawMD5();
+    //DrawMD5();
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     DrawIQM();
@@ -378,6 +408,7 @@ void Display(float delta)
 
     glDisable(GL_DEPTH_TEST);
 
+	/*
     text_def->DrawText(std::string("FPS: ") + std::to_string((int)std::ceil((1 / delta))), 8, 35);
     text_def->DrawText(std::string("Platform: ") + sys_info.platform, 8, 50);
     text_def->DrawText(std::string("CPU Count: ") + std::to_string(sys_info.num_cpus), 8, 65);
@@ -386,6 +417,7 @@ void Display(float delta)
     text_def->DrawText(std::string("Vendor: ") + (char*)sys_info.vendor, 8, 110);
     text_def->DrawText(std::string("Renderer: ") + (char*)sys_info.renderer, 8, 125);
     text_def->DrawText(std::string("GL Version: ") + (char*)sys_info.version, 8, 140);
+	*/
 
     console.Draw();
     glEnable(GL_DEPTH_TEST);
@@ -397,7 +429,11 @@ void Reshape (int w, int h)
     glViewport(0, 0, (GLsizei) w, (GLsizei) h);
 }
 
-int main()
+#ifdef WIN32
+int wmain(int argc, wchar_t *argv[])
+#else
+int main(int argc, char **argv)
+#endif
 {
     renderer.Init();
     Init();
@@ -417,8 +453,10 @@ int main()
     const float kGravity = 0.7f;
     float player_vel_y = 0.0f;
 
-    sp::CommandManager::AddCommand("exit", [&quit](const sp::CommandArg &args) { quit = true; });
-    sp::CommandManager::AddCommand("fov", [](const sp::CommandArg &args) { renderer.SetAngleOfView(args.GetAs<float>(1)); });
+    sp::CommandManager::AddCommand("exit",
+        [&quit](const sp::CommandArg &args) { quit = true; });
+    sp::CommandManager::AddCommand("fov",
+        [](const sp::CommandArg &args) { renderer.SetAngleOfView(args.GetAs<float>(1)); });
 
     while (!quit)
     {
@@ -486,7 +524,6 @@ int main()
         glm::vec3 side = glm::normalize(glm::cross(gScreenCamera.dir, gScreenCamera.up));
         glm::vec3 forward = glm::normalize(glm::cross(gScreenCamera.up, side));
 
-
         if (!console.FrameIsOpen()) {
             state = SDL_GetKeyboardState(nullptr);
 
@@ -514,5 +551,5 @@ int main()
         Display(delta);
     }
 
-    return EXIT_SUCCESS;
+    return 0;
 }
