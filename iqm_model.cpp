@@ -153,7 +153,8 @@ bool IQMModel::LoadModel(const char *filename)
         case IQM_NORMAL:
             if (vert.format != IQM_FLOAT || vert.size != 3) {
                 return false;
-            } innormal = (float *)&buffer[vert.offset];
+            }
+            innormal = (float *)&buffer[vert.offset];
             lilswap(innormal, 3 * header.num_vertexes);
             break;
         case IQM_TANGENT:
@@ -302,8 +303,10 @@ bool IQMModel::LoadModel(const char *filename)
         }
     }
 
-    Vertex verts[header.num_vertexes];
-    memset(verts, 0, header.num_vertexes*sizeof(Vertex));
+	assert(header.num_vertexes);
+	Vertex *verts = new Vertex[header.num_vertexes];
+	memset(verts, 0, header.num_vertexes*sizeof(Vertex));
+
     for(int i = 0; i < (int)header.num_vertexes; i++)
     {
         Vertex &v = verts[i];
@@ -348,6 +351,7 @@ bool IQMModel::LoadModel(const char *filename)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+	delete [] verts;
     return true;
 }
 
