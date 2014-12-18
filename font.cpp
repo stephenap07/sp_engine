@@ -188,7 +188,7 @@ bool TextDefinition::Init(const char *font_name, float width, float height)
         std::cerr << "Could not init freetype library\n";
         return false;
     }
-    if (FT_New_Face(ft, std::string("assets/fonts/") + std::string(font_name), 0, &face)) {
+    if (FT_New_Face(ft, (std::string("assets/fonts/") + std::string(font_name)).c_str(), 0, &face)) {
         std::cerr << "Could not open font\n";
         return false;
     }
