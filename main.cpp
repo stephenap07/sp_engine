@@ -178,6 +178,7 @@ void Init()
     glm::vec4 player_color(0.0f, 1.0f, 1.0f, 1.0f);
     //player_program.SetUniform(sp::k4fv, "color_diffuse", glm::value_ptr(player_color));
 
+    glGetError();
     model_program.SetUniform(sp::k1i, "is_textured", true);
     model_program.SetUniform(sp::k1i, "is_rigged", true);
     plane_program.SetUniform(sp::k1i, "is_textured", true);
@@ -379,7 +380,6 @@ void Display(float delta)
 
     glDisable(GL_DEPTH_TEST);
 
-	/*
     text_def->DrawText(std::string("FPS: ") + std::to_string((int)std::ceil((1 / delta))), 8, 35);
     text_def->DrawText(std::string("Platform: ") + sys_info.platform, 8, 50);
     text_def->DrawText(std::string("CPU Count: ") + std::to_string(sys_info.num_cpus), 8, 65);
@@ -388,7 +388,6 @@ void Display(float delta)
     text_def->DrawText(std::string("Vendor: ") + (char*)sys_info.vendor, 8, 110);
     text_def->DrawText(std::string("Renderer: ") + (char*)sys_info.renderer, 8, 125);
     text_def->DrawText(std::string("GL Version: ") + (char*)sys_info.version, 8, 140);
-	*/
 
     console.Draw();
     glEnable(GL_DEPTH_TEST);

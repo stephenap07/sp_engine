@@ -198,7 +198,7 @@ bool TextDefinition::Init(const char *font_name, float width, float height)
     }
 	std::string font_folder = "assets/fonts";
 	std::string font_name_str = std::string(font_name);
-	std::string full_path_to_font = font_folder + font_name_str;
+	std::string full_path_to_font = font_folder + "/" + font_name_str;
 	if (FT_New_Face(ft, full_path_to_font.c_str(), 0, &face)) {
         std::cerr << "Could not open font\n";
         return false;
