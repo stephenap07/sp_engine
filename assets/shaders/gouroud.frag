@@ -9,11 +9,11 @@ layout (location = 0) out vec4 color;
 
 uniform sampler2D tex;
 
+uniform bool is_textured = false;
 uniform vec4 color_ambient = vec4(0.2, 0.2, 0.2, 1.0);
 uniform vec4 color_light = vec4(1.0, 1.0, 1.0, 1.0);
 uniform vec4 color_specular = vec4(1.0, 1.0, 1.0, 1.0);
 uniform float shininess = 13.0f;
-uniform bool is_textured = false;
 
 uniform vec3 light_position = vec3(0.0, 165.0, 0.0);
 

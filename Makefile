@@ -3,7 +3,7 @@ SRC  = $(wildcard *.cpp) $(wildcard src/*/*.cpp)
 OBJ  = $(addprefix obj/,$(notdir $(SRC:.cpp=.o)))  
 DEPS = $(SRC:%.cpp=obj/%.d)
 
-LDFLAGS = -lboost_system -lboost_filesystem -lGLEW -lSDL2 -lSDL2_image -L/usr/local/lib -lfreetype -L ./RakNet/build/Lib/LibStatic -lRakNetLibStatic -lpthread
+LDFLAGS = -lboost_system -lboost_filesystem -lGLEW -lSDL2 -lSDL2_image -L/usr/local/lib -lfreetype -lpthread
 CFLAGS  = -std=c++11 -Wall -fPIC -g -I/usr/include/freetype2 -I ./RakNet/Source/
 
 EXE = sp
@@ -15,6 +15,7 @@ ifeq ($(UNAME), Linux)
 endif
 ifeq ($(UNAME), Darwin)
 	LDFLAGS += -framework OpenGL
+	CFLAGS += -I/usr/local/include/freetype2
 endif
 
 .PHONY: all clean run
