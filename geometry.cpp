@@ -10,6 +10,7 @@
 #include "util.h"
 #include "buffer.h"
 #include "geometry.h"
+#include "error.h"
 
 namespace sp {
 
@@ -25,16 +26,6 @@ void MakeCube(VertexBuffer *buffer, bool has_normals)
 
     glGenBuffers(1, &buffer->vbo);
     glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-
-    glGenBuffers(1, &buffer->ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->ebo);
-
-    const GLushort cube_indices[] =
-    {
-        0, 1, 2, 3, 6, 7, 4, 5,         // First strip
-        0xFFFF,
-        2, 6, 0, 4, 1, 5, 3, 7          // Second strip
-    };
 
     /**************************************************
      (3) -------------_ (7)
@@ -52,21 +43,30 @@ void MakeCube(VertexBuffer *buffer, bool has_normals)
     **************************************************/
 
     if (!has_normals) {
-        if (!vao_1) {
+        if (vao_1 == 0) {
             glGenVertexArrays(1, &vao_1);
         }
         buffer->vao = vao_1;
         glBindVertexArray(buffer->vao);
+        glGenBuffers(1, &buffer->ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->ebo);
+        glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
 
-        const GLfloat cube_vertices[] = {
+        GLfloat cube_vertices[] = {
+            -1.0f, -1.0f, 1.0f,
             -1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f,  1.0f,
-            -1.0f,  1.0f, -1.0f,
-            -1.0f,  1.0f,  1.0f,
+            -1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f, -1.0f,
+            1.0f, -1.0f, 1.0f,
             1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f,  1.0f,
-            1.0f,  1.0f, -1.0f,
-            1.0f,  1.0f,  1.0f
+            1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, -1.0f
+        };
+
+        GLushort cube_indices[] = {
+            0, 1, 2, 3, 6, 7, 4, 5,         // First strip
+            0xFFFF,
+            2, 6, 0, 4, 1, 5, 3, 7          // Second strip
         };
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), BUFFER_OFFSET(0));
@@ -167,8 +167,8 @@ void MakeQuad(VertexBuffer *buffer)
     GLfloat vert_quad[] = {
         -1.0f,  1.0f, -1.0f, // Top Left
         1.0f, -1.0f, 1.0f,   // Bottom Right
-        -1.0f, -1.0f, 1.0f,   // Bottom Left
-        1.0f,  1.0f, -1.0f  // Top Right
+        -1.0f, -1.0f, 1.0f,  // Bottom Left
+        1.0f,  1.0f, -1.0f   // Top Right
     };
 
     GLushort vert_indices[] = {
@@ -227,6 +227,5 @@ void MakeTexturedQuad(VertexBuffer *buffer, GLuint gl_hint)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
-
 
 } // namespace sp

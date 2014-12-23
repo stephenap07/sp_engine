@@ -61,7 +61,7 @@ sp::Shader plane_program;
 sp::Shader skybox_program;
 sp::Shader player_program;
 
-sp::TextDefinition *text_def;
+sp::TextDefinition *textDef;
 sp::Console console;
 
 sp::VertexBuffer cube;
@@ -79,7 +79,7 @@ GLuint skybox_rotate_loc;
 float animate = 0.0f;
 
 sp::SystemInfo sys_info;
-sp::ModelView p_model(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.5f, 1.0f, 0.5f));
+sp::ModelView pModel(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.5f, 1.0f, 0.5f));
 sp::ModelView gun_model(glm::vec3(0.1f, -0.08f, -0.19f), glm::vec3(0.02f, 0.02f, 0.09f));
 sp::ModelView iqm_view(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.2f));
 sp::ModelView block_model(glm::vec3(0.0f, 0.0f, 3.5f), glm::vec3(0.5f, 1.0f, 0.5f));
@@ -134,10 +134,6 @@ void Init()
 
     InitializeProgram();
 
-    // GUN Init
-    //gun_model.scale = glm::vec3(0.03f, 0.03f, 0.14f);
-    //gun_model.origin = glm::vec3(0.09f, 0.7f, -0.3f);
-
     iqm_view.rot = glm::angleAxis(90.0f, glm::vec3(0, 1, 0));
 
     glm::mat4 model;
@@ -161,9 +157,9 @@ void Init()
 
     sp::MakeCube(&cube, false);
 
-    //skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
+    skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
     glm::mat4 rotate_matrix = glm::scale(glm::mat4(), glm::vec3(300.0f));
-    //skybox_program.SetUniform(sp::kMatrix4fv, "rotate_matrix", glm::value_ptr(rotate_matrix));
+    skybox_program.SetUniform(sp::kMatrix4fv, "rotate_matrix", glm::value_ptr(rotate_matrix));
 
     plane_tex = sp::MakeTexture("assets/textures/checker.tga", GL_TEXTURE_2D);
 
@@ -178,14 +174,13 @@ void Init()
     glm::vec4 player_color(0.0f, 1.0f, 1.0f, 1.0f);
     //player_program.SetUniform(sp::k4fv, "color_diffuse", glm::value_ptr(player_color));
 
-    glGetError();
     model_program.SetUniform(sp::k1i, "is_textured", true);
     model_program.SetUniform(sp::k1i, "is_rigged", true);
     plane_program.SetUniform(sp::k1i, "is_textured", true);
 
     console.Init((float)renderer.GetWidth(), (float)renderer.GetHeight());
     sp::font::Init((float)renderer.GetWidth(), (float)renderer.GetHeight());
-    text_def = sp::font::GetTextDef("SPFont3.ttf");
+    textDef = sp::font::GetTextDef("SPFont3.ttf");
 
     mr_fixit.program = &model_program;
     //mr_fixit.renderable = 
@@ -235,7 +230,7 @@ inline void DrawMD5()
     glUseProgram(0);
 }
 
-/*inline void DrawSkyBox()
+inline void DrawSkyBox()
 {
     skybox_program.Bind();
 
@@ -250,7 +245,7 @@ inline void DrawMD5()
 
     glEnable(GL_PRIMITIVE_RESTART);
     glPrimitiveRestartIndex(0xFFFF);
-    glDrawElements(GL_TRIANGLE_FAN, 17, GL_UNSIGNED_SHORT, NULL);
+    glDrawElements(GL_TRIANGLE_STRIP, 17, GL_UNSIGNED_SHORT, NULL);
     glDisable(GL_PRIMITIVE_RESTART);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -261,7 +256,7 @@ inline void DrawMD5()
 
     glUseProgram(0);
 }
-*/
+
 inline void DrawFloor()
 {
     plane_program.Bind();
@@ -293,7 +288,7 @@ inline void DrawPlayer()
      */
 
     player_program.Bind();
-    glm::mat4 player_model = p_model.GetModel();
+    glm::mat4 player_model = pModel.GetModel();
     player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(player_model));
 
     glBindVertexArray(player.vao);
@@ -367,12 +362,12 @@ void Display(float delta)
     //gScreenCamera.Rotate(2.0f * sin(ang), glm::vec3(0.0f, 0.0f, 1.0f));
     renderer.SetView(gScreenCamera.LookAt());
 
+    DrawSkyBox();
     //DrawPlayer();
     DrawGun();
     DrawBox(delta);
     DrawFloor();
-    //DrawSkyBox();
-    DrawMD5();
+    //DrawMD5();
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     DrawIQM();
@@ -380,14 +375,14 @@ void Display(float delta)
 
     glDisable(GL_DEPTH_TEST);
 
-    text_def->DrawText(std::string("FPS: ") + std::to_string((int)std::ceil((1 / delta))), 8, 35);
-    text_def->DrawText(std::string("Platform: ") + sys_info.platform, 8, 50);
-    text_def->DrawText(std::string("CPU Count: ") + std::to_string(sys_info.num_cpus), 8, 65);
-    text_def->DrawText(std::string("System Ram: ") + std::to_string(sys_info.ram) + std::string("mb"), 8, 80);
-    text_def->DrawText(std::string("L1 cache: ") + std::to_string(sys_info.l1_cache) + std::string("kb"), 8, 95);
-    text_def->DrawText(std::string("Vendor: ") + (char*)sys_info.vendor, 8, 110);
-    text_def->DrawText(std::string("Renderer: ") + (char*)sys_info.renderer, 8, 125);
-    text_def->DrawText(std::string("GL Version: ") + (char*)sys_info.version, 8, 140);
+    textDef->DrawText(std::string("FPS: ") + std::to_string((int)std::ceil((1 / delta))), 8, 35);
+    textDef->DrawText(std::string("Platform: ") + sys_info.platform, 8, 50);
+    textDef->DrawText(std::string("CPU Count: ") + std::to_string(sys_info.num_cpus), 8, 65);
+    textDef->DrawText(std::string("System Ram: ") + std::to_string(sys_info.ram) + std::string("mb"), 8, 80);
+    textDef->DrawText(std::string("L1 cache: ") + std::to_string(sys_info.l1_cache) + std::string("kb"), 8, 95);
+    textDef->DrawText(std::string("Vendor: ") + (char*)sys_info.vendor, 8, 110);
+    textDef->DrawText(std::string("Renderer: ") + (char*)sys_info.renderer, 8, 125);
+    textDef->DrawText(std::string("GL Version: ") + (char*)sys_info.version, 8, 140);
 
     console.Draw();
     glEnable(GL_DEPTH_TEST);
@@ -426,6 +421,9 @@ int main(int argc, char **argv)
     sp::CommandManager::AddCommand("exit", [&quit](const sp::CommandArg &args) { quit = true; });
     sp::CommandManager::AddCommand("fov", [](const sp::CommandArg &args) { renderer.SetAngleOfView(args.GetAs<float>(1)); });
 
+    float gunRotTime = 0.0f;
+    bool leftMouseButtonDown = false;
+
     while (!quit)
     {
         delta = (SDL_GetTicks() - elapsed) / 1000.0f;
@@ -444,10 +442,20 @@ int main(int argc, char **argv)
                 case SDL_MOUSEMOTION:
                     gScreenCamera.HandleMouse(sdl_event.motion.xrel,
                                               sdl_event.motion.yrel, delta);
-                    p_model.rot = glm::angleAxis(-10.0f *
+                    pModel.rot = glm::angleAxis(-10.0f *
                                   sdl_event.motion.xrel * delta,
-                                  glm::vec3(0.0f, 1.0f, 0.0f)) * p_model.rot;
+                                  glm::vec3(0.0f, 1.0f, 0.0f)) * pModel.rot;
                     break;
+                case SDL_MOUSEBUTTONDOWN:
+                    // rotate the gun when the player presses the left mouse button
+                    if (sdl_event.button.button == SDL_BUTTON_LEFT) {
+                        leftMouseButtonDown = true;
+                    }
+                    break;
+                case SDL_MOUSEBUTTONUP:
+                    if (sdl_event.button.button == SDL_BUTTON_LEFT) {
+                        leftMouseButtonDown = false;
+                    }
                 case SDL_KEYUP:
                     if (sdl_event.key.keysym.sym == SDLK_k) {
                         hide_mouse = !hide_mouse;
@@ -477,11 +485,16 @@ int main(int argc, char **argv)
 
         console.Update(delta);
 
-        player_vel_y -= kGravity * delta;
-        p_model.origin.y += player_vel_y;
+        if (leftMouseButtonDown) {
+            gunRotTime += delta;
+            gun_model.rot = glm::angleAxis(500.0f*gunRotTime, glm::vec3(0, 0, 1));
+        }
 
-        if (p_model.origin.y < 0.0f) {
-            p_model.origin.y = 0.0f;
+        player_vel_y -= kGravity * delta;
+        pModel.origin.y += player_vel_y;
+
+        if (pModel.origin.y < 0.0f) {
+            pModel.origin.y = 0.0f;
             player_vel_y = 0.0f;
             jumping = false;
         } else {
@@ -498,11 +511,11 @@ int main(int argc, char **argv)
 
             if (state[SDL_SCANCODE_W] && state[SDL_SCANCODE_LGUI]) quit = true;
 
-            if (state[SDL_SCANCODE_W]) p_model.origin += delta * player_speed * forward;
-            if (state[SDL_SCANCODE_S]) p_model.origin -= delta * player_speed * forward;
+            if (state[SDL_SCANCODE_W]) pModel.origin += delta * player_speed * forward;
+            if (state[SDL_SCANCODE_S]) pModel.origin -= delta * player_speed * forward;
 
-            if (state[SDL_SCANCODE_D]) p_model.origin += delta * player_speed * side;
-            if (state[SDL_SCANCODE_A]) p_model.origin -= delta * player_speed * side;
+            if (state[SDL_SCANCODE_D]) pModel.origin += delta * player_speed * side;
+            if (state[SDL_SCANCODE_A]) pModel.origin -= delta * player_speed * side;
 
             if (state[SDL_SCANCODE_SPACE] && !jumping) player_vel_y = 0.2f;
 
@@ -513,7 +526,7 @@ int main(int argc, char **argv)
             if (state[SDL_SCANCODE_LEFT]) iqm_view.origin -= delta * player_speed * glm::vec3(1, 0, 0);
 
             //gScreenCamera.FreeRoam(delta);
-            gScreenCamera.pos = p_model.origin + glm::vec3(0.0f, 0.8f, 0.0f);
+            gScreenCamera.pos = pModel.origin + glm::vec3(0.0f, 0.8f, 0.0f);
         }
 
         md5_model.Update(delta);
