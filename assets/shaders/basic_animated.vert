@@ -17,9 +17,9 @@ layout(std140) uniform globalMatrices {
     mat4 view_matrix;
 };
 
+uniform bool is_rigged = false;
 uniform mat4 model_matrix;
 uniform mat4 bone_matrices[80];
-uniform bool is_rigged = false;
 
 void main(void)
 {
