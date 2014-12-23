@@ -3,7 +3,7 @@ SRC  = $(wildcard *.cpp) $(wildcard src/*/*.cpp)
 OBJ  = $(addprefix obj/,$(notdir $(SRC:.cpp=.o)))  
 DEPS = $(SRC:%.cpp=obj/%.d)
 
-LDFLAGS = -lboost_system -lboost_filesystem -lGLEW -lSDL2 -lSDL2_image -L/usr/local/lib -lfreetype -lpthread
+LDFLAGS = -lGLEW -lSDL2 -lSDL2_image -L/usr/local/lib -lfreetype -lpthread -lboost_system -lboost_filesystem 
 CFLAGS  = -std=c++11 -Wall -fPIC -g -I/usr/include/freetype2
 
 EXE = sp
