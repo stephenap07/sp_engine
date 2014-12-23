@@ -19,7 +19,7 @@ void Console::Init(float window_width, float window_height)
     // Generating a whole new 3 texture atlases
     // TODO: Change this
     // text_def.Init(window_width, window_height);
-    text_def = font::GetTextDef("SPFont3.ttf");
+    text_def = font::GetTextDef("SPFont.ttf");
 }
 
 //=============================================================================
