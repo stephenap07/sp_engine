@@ -21,13 +21,13 @@ struct SystemInfo
         memcpy(version, _version, sizeof(_version) + 1);
     }
 
-    char platform[32];
+    char platform[128];
     int num_cpus;
     int ram;
     int l1_cache;
-    GLubyte vendor[64];
-    GLubyte renderer[64];
-    GLubyte version[64];
+    GLubyte vendor[128];
+    GLubyte renderer[128];
+    GLubyte version[128];
 };
 
 } // namespace sp

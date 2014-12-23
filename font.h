@@ -3,6 +3,7 @@
 
 #include <string>
 #include <ft2build.h>
+#include <SDL2/SDL_ttf.h>
 #include FT_FREETYPE_H
 
 #include "buffer.h"
@@ -26,9 +27,8 @@ struct GlyphInfo
     float texture_y;
 };
 
-class GlyphAtlas
+struct GlyphAtlas
 {
-public:
     GLuint tex_id;
     Shader shader;
     VertexBuffer buffer;
@@ -47,8 +47,7 @@ public:
 class TextDefinition
 {
 public:
-    bool Init(const char *font_name, float window_width, float window_height);
-    bool IsInit () const { return is_initialized; }
+    bool Init(float window_width, float window_height);
     void DrawText(const std::string &label, float x, float y);
 
 private:
@@ -59,9 +58,9 @@ private:
     GlyphAtlas atlas_24;
     GlyphAtlas atlas_16;
 
+    TTF_Font *font;
     FT_Library ft;
     FT_Face face;
-    bool is_initialized;
 
     // TODO: Do proper scaling globally?
     // Should be a more elegant way to deal with scaling images in the window
