@@ -16,20 +16,12 @@ namespace sp {
 GlyphAtlas::GlyphAtlas() :width(0), height(0)
 {
     buffer.Init();
-    /*
-    shader.CreateProgram({
-        {std::string("assets/shaders/text.vs.glsl"), GL_VERTEX_SHADER},
-        {std::string("assets/shaders/text.fs.glsl"), GL_FRAGMENT_SHADER}
-    });
-    */
 }
 
 void GlyphAtlas::LoadFace(FT_Face face, int face_height)
 {
-    glGetError();
-
     FT_Set_Pixel_Sizes(face, 0, face_height); 
-    FT_GlyphSlot g = face->glyph;
+    FT_GlyphSlot glyphSlot = face->glyph;
 
     int row_w = 0;
     int row_h = 0;
@@ -43,32 +35,26 @@ void GlyphAtlas::LoadFace(FT_Face face, int face_height)
             continue;
         }
 
-        if (row_w + g->bitmap.width + 1 >= MAXWIDTH) {
+        if (row_w + glyphSlot->bitmap.width + 1 >= MAXWIDTH) {
             width = std::max(width, row_w); 
             height += row_h;
             row_w = row_h = 0;
         }
 
-        row_w += g->bitmap.width + 1;
-        row_h = std::max(row_h, g->bitmap.rows);
+        row_w += glyphSlot->bitmap.width + 1;
+        row_h = std::max(row_h, glyphSlot->bitmap.rows);
     }
 
     width = std::max(width, row_w);
     height += row_h;
 
     glActiveTexture(GL_TEXTURE0);
-    GLuint texture_id;
-    glGenTextures(1, &texture_id);
-    tex_id = texture_id;
+    glGenTextures(1, &tex_id);
 
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    GLenum e = glGetError();
-    if (e) {
-        HandleGLError(e);
-    }
+    HandleGLError(glGetError());
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
     glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -87,28 +73,28 @@ void GlyphAtlas::LoadFace(FT_Face face, int face_height)
             continue;
         }
 
-        if (offset_x + g->bitmap.width + 1 >= MAXWIDTH) {
+        if (offset_x + glyphSlot->bitmap.width + 1 >= MAXWIDTH) {
             offset_y += row_h;
             row_h = 0;
             offset_x = 0;
         }
 
         glTexSubImage2D(GL_TEXTURE_2D, 0, offset_x, offset_y,
-                        g->bitmap.width, g->bitmap.rows, GL_RED,
-                        GL_UNSIGNED_BYTE, (GLubyte*)g->bitmap.buffer);
+                        glyphSlot->bitmap.width, glyphSlot->bitmap.rows, GL_RED,
+                        GL_UNSIGNED_BYTE, (GLubyte*)glyphSlot->bitmap.buffer);
         glyphs[i] = {
-            .advance_x = (float)(g->advance.x >> 6),
-            .advance_y = (float)(g->advance.y >> 6),
-            .bitmap_width = (float)g->bitmap.width,
-            .bitmap_height = (float)g->bitmap.rows,
-            .bitmap_left = (float)g->bitmap_left,
-            .bitmap_top = (float)g->bitmap_top,
-            .texture_x = offset_x / (float)width,
-            .texture_y = offset_y / (float)height
+            (float)(glyphSlot->advance.x >> 6),
+            (float)(glyphSlot->advance.y >> 6),
+            (float)glyphSlot->bitmap.width,
+            (float)glyphSlot->bitmap.rows,
+            (float)glyphSlot->bitmap_left,
+            (float)glyphSlot->bitmap_top,
+            offset_x / (float)width,
+            offset_y / (float)height
         };
 
-        row_h = std::max(row_h, g->bitmap.rows);
-        offset_x += g->bitmap.width + 1;
+        row_h = std::max(row_h, glyphSlot->bitmap.rows);
+        offset_x += glyphSlot->bitmap.width + 1;
     }
 }
 
@@ -188,7 +174,7 @@ bool TextDefinition::Init(float width, float height)
         return false;
     }
 
-    if (FT_New_Face(ft, "assets/fonts/FreeMonoBold.otf", 0, &face)) {
+    if (FT_New_Face(ft, "assets/fonts/FreeMonoBold.ttf", 0, &face)) {
         std::cerr << "Could not open font\n";
         return false;
     }
