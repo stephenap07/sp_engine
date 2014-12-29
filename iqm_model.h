@@ -31,19 +31,18 @@ public:
     VertexBuffer v_buffer;
 private:
 
+    std::vector<glm::mat4x4> baseframe;
+    std::vector<glm::mat4x4> inversebaseframe;
+    std::vector<glm::mat4x4> frames;
+    std::vector<Skeleton> skeletons;
+    std::vector<GLuint> textures;
+
     IQMMesh *meshes;
     IQMJoint *joints;
     IQMTriangle *tris;
-
-    std::vector<glm::mat4x4> baseframe;
-    std::vector<glm::mat4x4> inversebaseframe;
-    std::vector<GLuint> textures;
-    std::vector<glm::mat4x4> frames;
-
-    std::vector<Skeleton> skeletons;
-    int current_skeleton_id;
-
     unsigned char *buffer;
+
+    int current_skeleton_id;
     int num_tris;
     int num_joints;
     int num_meshes;
