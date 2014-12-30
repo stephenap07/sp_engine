@@ -1,6 +1,14 @@
 #ifndef SP_MD5_ANIMATION_H_
 #define SP_MD5_ANIMATION_H_
 
+#include <string>
+#include <vector>
+
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_access.hpp> 
+
+
 class MD5Animation {
 public:
 	MD5Animation();
