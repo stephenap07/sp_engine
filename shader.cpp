@@ -220,7 +220,7 @@ void Shader::SetUniform(GLUniformType type, const char *name, GLsizei count, GLv
 
 Shader::~Shader()
 {
-    glDeleteProgram(id);
+    //glDeleteProgram(id);
 }
 
 } // namespace sp

@@ -50,18 +50,11 @@ public:
 
 private:
 
-    struct Entity
+    struct Renderable
     {
         sp::Shader *program;
         sp::ModelView *model;
         sp::VertexBuffer *buffer;
-    };
-
-    struct AnimatedObject {
-        sp::Shader       *program;
-        sp::VertexBuffer *renderable;
-        sp::IQMModel     *model;
-        sp::ModelView    *view;
     };
 
     void InitializeProgram();
@@ -71,35 +64,28 @@ private:
     void DrawSkyBox();
     void DrawFloor();
     void DrawPlayer();
-    void DrawGunEnt(Entity *ent, glm::mat4 view);
+    void DrawGunEnt(Renderable *ent, glm::mat4 view);
     void DrawGun();
     void DrawBox(float delta);
     void Display(float delta);
     void Reshape (int w, int h);
+
+    sp::Renderer renderer;
+    sp::Camera gScreenCamera;
+
+    sp::Shader *model_program;
+    sp::Shader *plane_program;
+    sp::Shader *skybox_program;
+    sp::Shader *player_program;
 
     sp::ModelView pModel;
     sp::ModelView gun_model;
     sp::ModelView iqm_view;
     sp::ModelView block_model;
 
-    sp::Renderer renderer;
-    sp::Camera gScreenCamera;
-
-    sp::Shader model_program;
-    sp::Shader plane_program;
-    sp::Shader skybox_program;
-    sp::Shader player_program;
-
-    sp::TextDefinition *textDef;
-    sp::Console console;
-    sp::SystemInfo sys_info;
-
     sp::VertexBuffer cube;
     sp::VertexBuffer plane;
     sp::VertexBuffer player;
-
-    MD5Model md5_model;
-    sp::IQMModel iqm_model;
 
     GLuint skybox_tex;
     GLuint plane_tex;
@@ -107,9 +93,19 @@ private:
     GLuint depth_fbo;
     GLuint skybox_rotate_loc;
 
+    sp::TextDefinition *textDef;
+    sp::Console console;
+    sp::SystemInfo sys_info;
+
+    MD5Model md5_model;
+    sp::IQMModel iqm_model;
+
     float animate = 0.0f;
-    Entity gun_entity;
-    AnimatedObject mr_fixit;
+
+    Renderable gun_entity;
+    std::vector<sp::Shader> shaders;
+    std::vector<sp::ModelView> models;
+    std::vector<sp::VertexBuffer> vertexBuffers;
 };
 
 #endif

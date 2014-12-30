@@ -141,35 +141,37 @@ void SimpleGame::run()
 
 void SimpleGame::InitializeProgram()
 {
-    model_program.CreateProgram({
+    shaders.push_back(sp::Shader({
             {"assets/shaders/basic_animated.vert", GL_VERTEX_SHADER},
             {"assets/shaders/gouroud.frag", GL_FRAGMENT_SHADER}
-            });
+            }));
+    model_program = &shaders[0];
 
-    plane_program.CreateProgram({
+    shaders.push_back(sp::Shader({
             {"assets/shaders/basic_texture.vs", GL_VERTEX_SHADER},
             {"assets/shaders/gouroud.frag", GL_FRAGMENT_SHADER}
-            });
+            }));
+    plane_program = &shaders[1];
 
-    skybox_program.CreateProgram({
+    shaders.push_back(sp::Shader({
             {"assets/shaders/skybox.vert", GL_VERTEX_SHADER},
             {"assets/shaders/skybox.frag", GL_FRAGMENT_SHADER}
-            });
+            }));
+    skybox_program = &shaders[2];
 
-    player_program.CreateProgram({
+    shaders.push_back(sp::Shader({
             {"assets/shaders/pass_through.vert", GL_VERTEX_SHADER},
             {"assets/shaders/gouroud.frag", GL_FRAGMENT_SHADER}
-            });
+            }));
+    player_program = &shaders[3];
 
-    renderer.LoadGlobalUniforms(model_program.GetID());
-    renderer.LoadGlobalUniforms(plane_program.GetID());
-    renderer.LoadGlobalUniforms(skybox_program.GetID());
-    renderer.LoadGlobalUniforms(player_program.GetID());
+    for (auto & shader : shaders) {
+        renderer.LoadGlobalUniforms(shader.GetID());
+    }
 }
 
 void SimpleGame::Init()
 {
-    gun_entity = {&player_program, &gun_model, &player};
     gScreenCamera.Init(
         glm::mat3(
             glm::vec3(0.5f, 0.5f, 2.5f),
@@ -184,7 +186,7 @@ void SimpleGame::Init()
     iqm_view.rot = glm::angleAxis(90.0f, glm::vec3(0, 1, 0));
 
     glm::mat4 model;
-    model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
+    model_program->SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnable(GL_BLEND);
@@ -205,7 +207,7 @@ void SimpleGame::Init()
 
     skybox_tex = sp::MakeTexture("assets/textures/skybox_texture.jpg", GL_TEXTURE_CUBE_MAP);
     glm::mat4 rotate_matrix = glm::scale(glm::mat4(), glm::vec3(300.0f));
-    skybox_program.SetUniform(sp::kMatrix4fv, "rotate_matrix", glm::value_ptr(rotate_matrix));
+    skybox_program->SetUniform(sp::kMatrix4fv, "rotate_matrix", glm::value_ptr(rotate_matrix));
 
     plane_tex = sp::MakeTexture("assets/textures/checker.tga", GL_TEXTURE_2D);
 
@@ -218,23 +220,22 @@ void SimpleGame::Init()
 
     sp::MakeCube(&player, true);
     glm::vec4 player_color(0.0f, 1.0f, 1.0f, 1.0f);
-    //player_program.SetUniform(sp::k4fv, "color_diffuse", glm::value_ptr(player_color));
+    //player_program->SetUniform(sp::k4fv, "color_diffuse", glm::value_ptr(player_color));
 
-    model_program.SetUniform(sp::k1i, "is_textured", true);
-    model_program.SetUniform(sp::k1i, "is_rigged", true);
-    plane_program.SetUniform(sp::k1i, "is_textured", true);
+    model_program->SetUniform(sp::k1i, "is_textured", true);
+    model_program->SetUniform(sp::k1i, "is_rigged", true);
+    plane_program->SetUniform(sp::k1i, "is_textured", true);
 
     console.Init((float)renderer.GetWidth(), (float)renderer.GetHeight());
     sp::font::Init((float)renderer.GetWidth(), (float)renderer.GetHeight());
     textDef = sp::font::GetTextDef("SPFont.ttf");
 
-    mr_fixit.program = &model_program;
-    //mr_fixit.renderable = 
+    gun_entity = {player_program, &gun_model, &player};
 }
 
 inline void SimpleGame::DrawIQM()
 {
-    model_program.Bind();
+    model_program->Bind();
 
     glm::mat4 transform = glm::mat4(
         glm::vec4(1, 0, 0, 0),
@@ -243,10 +244,10 @@ inline void SimpleGame::DrawIQM()
         glm::vec4(0, 0, 0, 1)
     );
     glm::mat4 model = iqm_view.GetModel() * transform;
-    model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
+    model_program->SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
     iqm_model.Animate(animate);
     std::vector<glm::mat4> &bones = iqm_model.GetBones();
-    model_program.SetUniform(sp::kMatrix4fv, "bone_matrices",
+    model_program->SetUniform(sp::kMatrix4fv, "bone_matrices",
                              (GLsizei)bones.size(),
                              glm::value_ptr(bones[0]));
     iqm_model.Render();
@@ -256,7 +257,7 @@ inline void SimpleGame::DrawIQM()
 
 inline void SimpleGame::DrawMD5()
 {
-    model_program.Bind();
+    model_program->Bind();
 
     glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.029f));
     glm::mat4 transform = glm::mat4(
@@ -267,7 +268,7 @@ inline void SimpleGame::DrawMD5()
     );
     model = glm::rotate(model, -55.0f, glm::vec3(0, 1, 0)) * transform;
     model = glm::translate(model, glm::vec3(0.0f, -32.0f, 0.0f));
-    model_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
+    model_program->SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
 
     glDisable(GL_CULL_FACE);
     md5_model.Render();
@@ -278,7 +279,7 @@ inline void SimpleGame::DrawMD5()
 
 inline void SimpleGame::DrawSkyBox()
 {
-    skybox_program.Bind();
+    skybox_program->Bind();
 
     glDisable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -305,12 +306,12 @@ inline void SimpleGame::DrawSkyBox()
 
 inline void SimpleGame::DrawFloor()
 {
-    plane_program.Bind();
+    plane_program->Bind();
 
     glm::mat4 plane_model = glm::translate(glm::mat4(1.0f), glm::vec3(0, -1.0f, 0));
     plane_model = glm::scale(plane_model, glm::vec3(10.0f, 1.0f, 10.0f));
     plane_model = glm::rotate(plane_model, -90.0f, glm::vec3(1, 0, 0));
-    plane_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(plane_model));
+    plane_program->SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(plane_model));
 
     glBindVertexArray(plane.vao);
     glBindBuffer(GL_ARRAY_BUFFER, plane.vbo);
@@ -333,9 +334,9 @@ inline void SimpleGame::DrawPlayer()
      * 0.5 - Player Width/Depth
      */
 
-    player_program.Bind();
+    player_program->Bind();
     glm::mat4 player_model = pModel.GetModel();
-    player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(player_model));
+    player_program->SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(player_model));
 
     glBindVertexArray(player.vao);
     glBindBuffer(GL_ARRAY_BUFFER, player.vbo);
@@ -352,34 +353,29 @@ inline void SimpleGame::DrawPlayer()
     glUseProgram(0);
 }
 
-inline void SimpleGame::DrawGunEnt(Entity *ent, glm::mat4 view)
+inline void SimpleGame::DrawGunEnt(Renderable *ent, glm::mat4 view)
 {
     ent->program->Bind();
-    //glm::mat4 world_model = glm::inverse(gScreenCamera.LookAt());
     glm::mat4 g_model = glm::inverse(view) * ent->model->GetModel();
     glm::mat4 gw_model = gScreenCamera.LookAt() * g_model;
 
-    //glm::mat4 gv_model = glm::mat4(1.0f);
-    player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
-    player_program.SetUniform(sp::kMatrix4fv, "mv_matrix", glm::value_ptr(gw_model));
+    player_program->SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
+    player_program->SetUniform(sp::kMatrix4fv, "mv_matrix", glm::value_ptr(gw_model));
 
     ent->buffer->Bind();
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    glUseProgram(0);
 }
 
 inline void SimpleGame::DrawGun()
 {
-    player_program.Bind();
+    player_program->Bind();
     // glm::mat4 world_model = glm::inverse(gScreenCamera.LookAt());
     glm::mat4 g_model = glm::inverse(gScreenCamera.LookAt()) * gun_model.GetModel();
     glm::mat4 gw_model = gScreenCamera.LookAt() * g_model;
     //glm::mat4 gv_model = glm::mat4(1.0f);
-    player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
-    player_program.SetUniform(sp::kMatrix4fv, "mv_matrix", glm::value_ptr(gw_model));
+    player_program->SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
+    player_program->SetUniform(sp::kMatrix4fv, "mv_matrix", glm::value_ptr(gw_model));
 
     glBindVertexArray(player.vao);
     glBindBuffer(GL_ARRAY_BUFFER, player.vbo);
@@ -394,7 +390,7 @@ inline void SimpleGame::DrawGun()
 
 inline void SimpleGame::DrawBox(float delta)
 {
-    player_program.Bind();
+    player_program->Bind();
     block_model.rot = block_model.rot * glm::angleAxis(delta * 180.0f, glm::vec3(0, 1, 0));
 
     glm::mat4 rot_mat = glm::mat4_cast(block_model.rot);
@@ -406,8 +402,8 @@ inline void SimpleGame::DrawBox(float delta)
     glm::mat4 b_model = model;
     glm::mat4 bv_model = gScreenCamera.LookAt() * model;
 
-    player_program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(b_model));
-    player_program.SetUniform(sp::kMatrix4fv, "mv_matrix", glm::value_ptr(bv_model));
+    player_program->SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(b_model));
+    player_program->SetUniform(sp::kMatrix4fv, "mv_matrix", glm::value_ptr(bv_model));
 
     glBindVertexArray(player.vao);
     glBindBuffer(GL_ARRAY_BUFFER, player.vbo);
