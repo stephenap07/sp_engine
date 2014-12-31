@@ -52,12 +52,13 @@ private:
 
     typedef unsigned int Key;
 
-    struct Renderable
+    struct RenderComponent
     {
         Key program;
         Key model;
         Key buffer;
     };
+
     void InitializeProgram();
     void InitEntities();
     void Init();
@@ -105,9 +106,9 @@ private:
     float animate = 0.0f;
 
     std::vector<sp::GLProgram> programs;
-    std::vector<sp::ModelView> models;
+    std::vector<sp::ModelView> modelViews;
     std::vector<sp::VertexBuffer> vertexBuffers;
-    std::vector<Renderable> renderables;
+    std::vector<RenderComponent> renderables;
 };
 
 #endif
