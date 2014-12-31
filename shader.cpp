@@ -15,6 +15,9 @@
 
 namespace sp {
 
+static std::string ReadFileToString(const char* file_name);
+static GLuint CreateShader(const char *shader_file_name, GLenum target);
+
 //------------------------------------------------------------------------------
 
 std::string ReadFileToString(const char *file_name)
@@ -104,123 +107,120 @@ static GLuint LocalCreateProgram(const std::vector<GLuint> &kShaderList)
 
 //------------------------------------------------------------------------------
 
-void SetVertAttribPointers()
-{
-    // Position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
-    // Normal
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(3 * sizeof(GLfloat)));
-    // Texcoord
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(10 * sizeof(GLfloat)));
-    // Tangent
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(6 * sizeof(GLfloat)));
-    // Blend Index
-    glVertexAttribPointer(4, 4, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(12 * sizeof(GLfloat)));
-    // Blend Weight
-    glVertexAttribPointer(5, 4, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(12 * sizeof(GLfloat) + 4 * sizeof(GLubyte)));
+namespace backend {
+    void SetVertAttribPointers()
+    {
+        // Position
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
+        // Normal
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(3 * sizeof(GLfloat)));
+        // Texcoord
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(10 * sizeof(GLfloat)));
+        // Tangent
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(6 * sizeof(GLfloat)));
+        // Blend Index
+        glVertexAttribPointer(4, 4, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(12 * sizeof(GLfloat)));
+        // Blend Weight
+        glVertexAttribPointer(5, 4, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(12 * sizeof(GLfloat) + 4 * sizeof(GLubyte)));
 
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
-    glEnableVertexAttribArray(3);
-    glEnableVertexAttribArray(4);
-    glEnableVertexAttribArray(5);
-}
-
-Shader::Shader(const std::vector<std::pair<const char*, GLenum>> &shader_pair)
-{
-    CreateProgram(shader_pair);
-}
-
-void Shader::CreateProgram(const std::vector<std::pair<const char*, GLenum>> &shader_pair)
-{
-    std::vector<GLuint> shaders;
-    for (auto p : shader_pair) {
-        shaders.push_back(CreateShader(p.first, p.second));
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
+        glEnableVertexAttribArray(4);
+        glEnableVertexAttribArray(5);
     }
 
-    id = LocalCreateProgram(shaders);
-    
-    if (id == 0) {
-        std::cerr << "Invalid program\n";
-    }
-    GLuint local_id = id;
-    std::for_each(shaders.begin(), shaders.end(),
-            [local_id](GLuint shader_id) { glDetachShader(local_id, shader_id); });
-}
 
-void Shader::Bind()
-{
-    glUseProgram(id);
-}
+    GLProgram CreateProgram(const std::vector<std::pair<const char*, GLenum> > &shader_pair)
+    {
+        GLProgram program;
+        std::vector<GLuint> shaders;
+        for (auto p : shader_pair) {
+            shaders.push_back(CreateShader(p.first, p.second));
+        }
 
-void Shader::SetUniform(GLUniformType type, const char *name, GLvoid *data)
-{
-    SetUniform(type, name, 1, data);
-}
+        program.id = LocalCreateProgram(shaders);
 
-void Shader::SetUniform(GLUniformType type, const char *name, const GLint data)
-{
-    Bind();
+        if (program.id == 0) {
+            std::cerr << "Invalid program\n";
+        }
 
-    GLint uniform = glGetUniformLocation(id, name);
-    GLenum error = glGetError();
-    if (error) {
-        log::ErrorLog("Error in shader (%d), uniform (%s)\n", id, name);
-        HandleGLError(error);
+        return program;
     }
 
-    if (uniform == -1) {
-        std::cerr << "Invalid uniform type (" << name << ") for shader id " << id << std::endl;
-    } else {
-        switch (type) {
-            case k1i:
-                glUniform1i(uniform, data);
-                break;
-            default:
-                std::cerr << "Invalid uniform type (" << name << ") for shader id " << id << std::endl;
-                break;
+    void Bind(GLProgram program)
+    {
+        glUseProgram(program.id);
+    }
+
+    void SetUniform(GLProgram program, GLUniformType type, const char *name, GLvoid *data)
+    {
+        SetUniform(program, type, name, 1, data);
+    }
+
+    void SetUniform(GLProgram program, GLUniformType type, const char *name, const GLint data)
+    {
+        Bind(program);
+
+        GLint uniform = glGetUniformLocation(program.id, name);
+        GLenum error = glGetError();
+        if (error) {
+            log::ErrorLog("Error in shader (%d), uniform (%s)\n", program.id, name);
+            HandleGLError(error);
+        }
+
+        if (uniform == -1) {
+            std::cerr << "Invalid uniform type (" << name << ") for shader id " << program.id << std::endl;
+        } else {
+            switch (type) {
+                case k1i:
+                    glUniform1i(uniform, data);
+                    break;
+                default:
+                    std::cerr << "Invalid uniform type (" << name << ") for shader id " << program.id << std::endl;
+                    break;
+            }
         }
     }
-}
 
-void Shader::SetUniform(GLUniformType type, const char *name, GLsizei count, GLvoid *data)
-{
-    Bind();
+    void SetUniform(GLProgram program, GLUniformType type, const char *name, GLsizei count, GLvoid *data)
+    {
+        Bind(program);
 
-    GLint uniform = glGetUniformLocation(id, name);
-    GLenum error = glGetError();
-    if (error) {
-        log::ErrorLog("Error in shader (%d), uniform (%s)\n", id, name);
-        HandleGLError(error);
-    }
+        GLint uniform = glGetUniformLocation(program.id, name);
+        GLenum error = glGetError();
+        if (error) {
+            log::ErrorLog("Error in shader (%d), uniform (%s)\n", program.id, name);
+            HandleGLError(error);
+        }
 
-    if (uniform == -1) {
-        std::cerr << "Invalid uniform type (" << name << ") for shader id " << id << std::endl;
-    } else {
-        switch (type) {
-            case k4fv:
-                glUniform4fv(uniform, count, (GLfloat*)data);
-                break;
-            case k2fv:
-                glUniform2fv(uniform, count, (GLfloat*)data);
-                break;
-            case kMatrix4fv:
-                glUniformMatrix4fv(uniform, count, GL_FALSE, (GLfloat*)data);
-                break;
-            case kMatrix3x4fv:
-                glUniformMatrix3x4fv(uniform, count, GL_FALSE, (GLfloat*)data);
-                break;
-            default:
-                std::cerr << "Invalid uniform type\n";
-                break;
+        if (uniform == -1) {
+            std::cerr << "Invalid uniform type (" << name << ") for shader id " << program.id << std::endl;
+        } else {
+            switch (type) {
+                case k4fv:
+                    glUniform4fv(uniform, count, (GLfloat*)data);
+                    break;
+                case k2fv:
+                    glUniform2fv(uniform, count, (GLfloat*)data);
+                    break;
+                case kMatrix4fv:
+                    glUniformMatrix4fv(uniform, count, GL_FALSE, (GLfloat*)data);
+                    break;
+                case kMatrix3x4fv:
+                    glUniformMatrix3x4fv(uniform, count, GL_FALSE, (GLfloat*)data);
+                    break;
+                default:
+                    std::cerr << "Invalid uniform type\n";
+                    break;
+            }
         }
     }
-}
 
-Shader::~Shader()
-{
-    //glDeleteProgram(id);
-}
+    void FreeGLProgram(GLProgram program) {
+        glDeleteProgram(program.id);
+    }
 
+} // namespace backend
 } // namespace sp

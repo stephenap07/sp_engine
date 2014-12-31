@@ -1,5 +1,6 @@
 #ifndef _SP_SHADER_H_
 #define _SP_SHADER_H_ 
+
 #include <GL/glew.h>
 #include <tuple>
 #include <vector>
@@ -25,30 +26,19 @@ struct Vertex {
     GLubyte blendweight[4];
 };
 
-class Shader
-{
-public:
-    Shader(): id(0)
-    {}
-
-    Shader(const std::vector<std::pair<const char*, GLenum>> &shader_pair);
-    void CreateProgram(const std::vector<std::pair<const char*, GLenum>> &shader_pair);
-    ~Shader();
-
-    void Bind();
-    void SetUniform(GLUniformType type, const char *name, GLvoid *data);
-    void SetUniform(GLUniformType type, const char *name, GLsizei count, GLvoid *data);
-    void SetUniform(GLUniformType type, const char *name, const GLint data);
-
-    GLuint GetID() const { return id; }
-
-private:
+struct GLProgram {
     GLuint id;
 };
 
-std::string ReadFileToString(const char* file_name);
-GLuint CreateProgram(const std::vector<GLuint> &kShaderList);
-void SetVertAttribPointers();
+namespace backend {
+    void Bind(GLProgram);
+    GLProgram CreateProgram(const std::vector<std::pair<const char*, GLenum>> &shader_pair);
+    void SetUniform(GLProgram program, GLUniformType type, const char *name, GLvoid *data);
+    void SetUniform(GLProgram program, GLUniformType type, const char *name, GLsizei count, GLvoid *data);
+    void SetUniform(GLProgram program, GLUniformType type, const char *name, const GLint data);
+    void FreeGLProgram(GLProgram program);
+    void SetVertAttribPointers();
+}
 
 } // namespace sp
 

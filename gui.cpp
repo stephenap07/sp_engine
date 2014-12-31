@@ -26,7 +26,7 @@ void GUIFrame::Init(float x, float y, float sx, float sy, float width, float hei
     this->scale_x = sx;
     this->scale_y = sy;
 
-    program.CreateProgram({
+    program = sp::backend::CreateProgram({
         {"assets/shaders/2d.vert", GL_VERTEX_SHADER},
         {"assets/shaders/2d.frag", GL_FRAGMENT_SHADER},
     });
@@ -39,7 +39,7 @@ void GUIFrame::Init(float x, float y, float sx, float sy, float width, float hei
 
 void GUIFrame::Draw()
 {
-    program.Bind();
+    sp::backend::Bind(program);
     glBindVertexArray(buffer.vao);
     glBindBuffer(GL_ARRAY_BUFFER, buffer.vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.ebo);
@@ -58,7 +58,7 @@ void GUIFrame::Draw()
 void GUIFrame::SetColor(const glm::vec4 &new_color)
 {
     color = new_color;
-    program.SetUniform(sp::k4fv, "uni_color", glm::value_ptr(color));
+    sp::backend::SetUniform(program, sp::k4fv, "uni_color", glm::value_ptr(color));
 }
 
 void GUIFrame::SetSize(float width, float height)
@@ -70,7 +70,7 @@ void GUIFrame::SetSize(float width, float height)
     model = glm::translate(model, glm::vec3(-1.0f/scale_x + width + x, 1.0f/scale_y - y, 0));
     model = glm::scale(model, glm::vec3(width, height, 0));
 
-    program.SetUniform(sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
+    sp::backend::SetUniform(program, sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
 }
 
 void GUIFrame::SetPos(float x, float y)

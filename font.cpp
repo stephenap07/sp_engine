@@ -108,7 +108,7 @@ void DrawText(const std::string &text_label, GlyphAtlas *atlas, float x, float y
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    atlas->shader.Bind();
+    sp::backend::Bind(atlas->shader);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, atlas->tex_id);
 
@@ -161,10 +161,9 @@ bool TextDefinition::Init(float width, float height)
     window_width = 2.0f / width;
     window_height = 2.0f / height;
 
-    text_program.CreateProgram({
+    text_program = backend::CreateProgram({
         {"assets/shaders/text.vs.glsl", GL_VERTEX_SHADER},
         {"assets/shaders/text.fs.glsl", GL_FRAGMENT_SHADER}
-
     });
 
     text_buffer = sp::MakeTexturedQuad(GL_DYNAMIC_DRAW);
@@ -180,9 +179,9 @@ bool TextDefinition::Init(float width, float height)
     }
 
     glm::mat4 model;
-    text_program.SetUniform(sp::kMatrix4fv, "uni_model", glm::value_ptr(model));
+    backend::SetUniform(text_program, sp::kMatrix4fv, "uni_model", glm::value_ptr(model));
     glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
-    text_program.SetUniform(sp::k4fv, "uni_color", glm::value_ptr(white));
+    backend::SetUniform(text_program, sp::k4fv, "uni_color", glm::value_ptr(white));
 
     atlas_48.LoadFace(face, 48);
     atlas_24.LoadFace(face, 24);

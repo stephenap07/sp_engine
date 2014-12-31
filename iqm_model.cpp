@@ -347,7 +347,7 @@ bool IQMModel::LoadModel(const char *filename)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, v_buffer.ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, header.num_triangles*sizeof(IQMTriangle), tris, GL_STATIC_DRAW);
 
-    SetVertAttribPointers();
+    backend::SetVertAttribPointers();
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);

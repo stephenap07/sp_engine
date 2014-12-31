@@ -25,7 +25,7 @@ public:
 private:
 
     sp::VertexBuffer buffer;
-    sp::Shader program;
+    sp::GLProgram program;
     glm::vec4 color;
     float width, height;
     float x, y;
