@@ -159,26 +159,33 @@ namespace backend {
         SetUniform(program, type, name, 1, data);
     }
 
-    void SetUniform(GLProgram program, GLUniformType type, const char *name, const GLint data)
+    inline GLint GetGLUniformLocation(GLProgram program, const char *name)
     {
-        Bind(program);
-
+        glGetError();
         GLint uniform = glGetUniformLocation(program.id, name);
         GLenum error = glGetError();
         if (error) {
-            log::ErrorLog("Error in shader (%d), uniform (%s)\n", program.id, name);
+            log::ErrorLog("Error getting uniform %s from program %d\n", name, program.id);
             HandleGLError(error);
         }
 
+        return uniform;
+    }
+
+    void SetUniform(GLProgram program, GLUniformType type, const char *name, const GLint data)
+    {
+        Bind(program);
+        GLint uniform = GetGLUniformLocation(program, name);
+
         if (uniform == -1) {
-            std::cerr << "Invalid uniform type (" << name << ") for shader id " << program.id << std::endl;
+            std::cerr << "Invalid uniform type (" << name << ") for program id " << program.id << std::endl;
         } else {
             switch (type) {
                 case k1i:
                     glUniform1i(uniform, data);
                     break;
                 default:
-                    std::cerr << "Invalid uniform type (" << name << ") for shader id " << program.id << std::endl;
+                    std::cerr << "Invalid uniform type (" << name << ") for program id " << program.id << std::endl;
                     break;
             }
         }
@@ -187,13 +194,7 @@ namespace backend {
     void SetUniform(GLProgram program, GLUniformType type, const char *name, GLsizei count, GLvoid *data)
     {
         Bind(program);
-
-        GLint uniform = glGetUniformLocation(program.id, name);
-        GLenum error = glGetError();
-        if (error) {
-            log::ErrorLog("Error in shader (%d), uniform (%s)\n", program.id, name);
-            HandleGLError(error);
-        }
+        GLint uniform = GetGLUniformLocation(program, name);
 
         if (uniform == -1) {
             std::cerr << "Invalid uniform type (" << name << ") for shader id " << program.id << std::endl;

@@ -21,6 +21,7 @@ struct Mesh {
 
 class IQMModel {
 public:
+    IQMModel() :meshes(nullptr), joints(nullptr), tris(nullptr), buffer(nullptr) {}
     ~IQMModel();
 
     bool LoadModel(const char *filename);
