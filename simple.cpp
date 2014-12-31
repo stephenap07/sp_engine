@@ -172,7 +172,7 @@ void SimpleGame::InitializeProgram()
 
 inline void SimpleGame::InitEntities()
 {
-    models.push_back(gun_model); 
+    modelViews.push_back(gun_model); 
     vertexBuffers.push_back(player);
     renderables.push_back({player_program, 0, 0});
 }
@@ -356,7 +356,7 @@ inline void SimpleGame::RenderEntities(glm::mat4 view)
 {
     for (auto &renderable : renderables) {
         sp::backend::Bind(programs[renderable.program]);
-        glm::mat4 g_model = glm::inverse(view) * models[renderable.model].GetModel();
+        glm::mat4 g_model = glm::inverse(view) * modelViews[renderable.model].GetModel();
         glm::mat4 gw_model = gScreenCamera.LookAt() * g_model;
 
         sp::backend::SetUniform(programs[renderable.program], sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
