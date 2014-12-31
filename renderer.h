@@ -46,8 +46,6 @@ private:
 
     int screen_width;
     int screen_height;
-
-    std::vector<ProgramData> program_store;
 };
 
 class ViewEntity {

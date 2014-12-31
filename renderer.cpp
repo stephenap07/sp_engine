@@ -107,10 +107,6 @@ void Renderer::EndFrame()
 
 void Renderer::FreeResources()
 {
-    for(auto it : program_store) {
-        glDeleteProgram(it.program);
-    }
-
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
     IMG_Quit();

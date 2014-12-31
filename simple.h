@@ -52,7 +52,7 @@ private:
 
     struct Renderable
     {
-        sp::Shader *program;
+        sp::GLProgram *program;
         sp::ModelView *model;
         sp::VertexBuffer *buffer;
     };
@@ -73,10 +73,10 @@ private:
     sp::Renderer renderer;
     sp::Camera gScreenCamera;
 
-    sp::Shader *model_program;
-    sp::Shader *plane_program;
-    sp::Shader *skybox_program;
-    sp::Shader *player_program;
+    sp::GLProgram *model_program;
+    sp::GLProgram *plane_program;
+    sp::GLProgram *skybox_program;
+    sp::GLProgram *player_program;
 
     sp::ModelView pModel;
     sp::ModelView gun_model;
@@ -103,7 +103,7 @@ private:
     float animate = 0.0f;
 
     Renderable gun_entity;
-    std::vector<sp::Shader> shaders;
+    std::vector<sp::GLProgram> programs;
     std::vector<sp::ModelView> models;
     std::vector<sp::VertexBuffer> vertexBuffers;
 };

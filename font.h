@@ -30,7 +30,7 @@ struct GlyphInfo
 struct GlyphAtlas
 {
     GLuint tex_id;
-    Shader shader;
+    GLProgram shader;
     VertexBuffer buffer;
 
     int width;
@@ -53,7 +53,7 @@ public:
 private:
     // TODO: Integrate with vertex cache
     sp::VertexBuffer text_buffer;
-    sp::Shader text_program;
+    sp::GLProgram text_program;
     GlyphAtlas atlas_48;
     GlyphAtlas atlas_24;
     GlyphAtlas atlas_16;
