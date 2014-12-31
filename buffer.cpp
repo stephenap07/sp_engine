@@ -61,12 +61,12 @@ VertexBuffer MakeTexturedQuad(GLuint gl_hint)
 
     VertexBuffer buffer;
 
-    glGenVertexArrays(1, &buffer.vao);
-    glBindVertexArray(buffer.vao);
-
     glGenBuffers(1, &buffer.vbo);
     glBindBuffer(GL_ARRAY_BUFFER, buffer.vbo);
     glBufferData(GL_ARRAY_BUFFER, 4*sizeof(Point), vert_quad, gl_hint);
+
+    glGenVertexArrays(1, &buffer.vao);
+    glBindVertexArray(buffer.vao);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), nullptr);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid*)(3 * sizeof(GLfloat)));
