@@ -50,21 +50,23 @@ public:
 
 private:
 
+    typedef unsigned int Key;
+
     struct Renderable
     {
-        sp::GLProgram *program;
-        sp::ModelView *model;
-        sp::VertexBuffer *buffer;
+        Key program;
+        Key model;
+        Key buffer;
     };
-
     void InitializeProgram();
+    void InitEntities();
     void Init();
+    void RenderEntities(glm::mat4 view);
     void DrawIQM();
     void DrawMD5();
     void DrawSkyBox();
     void DrawFloor();
     void DrawPlayer();
-    void DrawGunEnt(Renderable *ent, glm::mat4 view);
     void DrawGun();
     void DrawBox(float delta);
     void Display(float delta);
@@ -73,10 +75,10 @@ private:
     sp::Renderer renderer;
     sp::Camera gScreenCamera;
 
-    sp::GLProgram *model_program;
-    sp::GLProgram *plane_program;
-    sp::GLProgram *skybox_program;
-    sp::GLProgram *player_program;
+    Key model_program;
+    Key plane_program;
+    Key skybox_program;
+    Key player_program;
 
     sp::ModelView pModel;
     sp::ModelView gun_model;
@@ -102,10 +104,10 @@ private:
 
     float animate = 0.0f;
 
-    Renderable gun_entity;
     std::vector<sp::GLProgram> programs;
     std::vector<sp::ModelView> models;
     std::vector<sp::VertexBuffer> vertexBuffers;
+    std::vector<Renderable> renderables;
 };
 
 #endif
