@@ -186,6 +186,11 @@ void SimpleGame::Init()
             glm::vec3(0.0f, 1.0f, 0.0f))
     );
 
+    // OGL initial states
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+
     sys_info.Init();
 
     InitializeProgram();
@@ -225,11 +230,6 @@ void SimpleGame::Init()
     textDef = sp::font::GetTextDef("SPFont.ttf");
 
     InitEntities();
-
-    // OGL initial states
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 }
 
 inline void SimpleGame::DrawIQM()
@@ -426,10 +426,9 @@ void SimpleGame::Display(float delta)
 
     DrawSkyBox();
     //DrawPlayer();
-    //DrawGun();
+    DrawGun();
     DrawBox(delta);
     DrawFloor();
-    //DrawSkyBox();
     //DrawMD5();
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

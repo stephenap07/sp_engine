@@ -131,7 +131,6 @@ namespace backend {
         glEnableVertexAttribArray(5);
     }
 
-
     GLProgram CreateProgram(const std::vector<std::pair<const char*, GLenum> > &shader_pair)
     {
         GLProgram program;
