@@ -30,7 +30,7 @@ void GlyphAtlas::LoadFace(FT_Face face, int face_height)
     memset(glyphs, 0, sizeof(glyphs));
 
     for (int i = 32; i < 128; i++) {
-        if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
+        if (FT_Load_Char(face, i, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT )) {
             fprintf(stderr, "Loading character %c failed\n", i);
             continue;
         }
