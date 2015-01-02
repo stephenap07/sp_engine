@@ -9,3 +9,4 @@ libspengine.a
 libspengine.so
 sp
 iqm
+gmon.out
