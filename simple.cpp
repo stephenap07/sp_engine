@@ -93,7 +93,7 @@ void SimpleGame::run()
 
         if (leftMouseButtonDown) {
             gunRotTime += delta;
-            gun_model.rot = glm::angleAxis(500.0f*gunRotTime, glm::vec3(0, 0, 1));
+            modelViews[gun_model].rot = glm::angleAxis(500.0f*gunRotTime, glm::vec3(0, 0, 1));
         }
 
         player_vel_y -= kGravity * delta;
@@ -172,7 +172,7 @@ void SimpleGame::InitializeProgram()
 
 inline void SimpleGame::InitEntities()
 {
-    modelViews.push_back(gun_model); 
+    modelViews.push_back(sp::ModelView(glm::vec3(0.1f, -0.08f, -0.19f), glm::vec3(0.02f, 0.02f, 0.09f))); 
     vertexBuffers.push_back(player);
     renderables.push_back({player_program, 0, 0});
 }
@@ -372,7 +372,7 @@ inline void SimpleGame::DrawGun()
 {
     sp::backend::Bind(programs[player_program]);
     // glm::mat4 world_model = glm::inverse(gScreenCamera.LookAt());
-    glm::mat4 g_model = glm::inverse(gScreenCamera.LookAt()) * gun_model.GetModel();
+    glm::mat4 g_model = glm::inverse(gScreenCamera.LookAt()) * modelViews[gun_model].GetModel();
     glm::mat4 gw_model = gScreenCamera.LookAt() * g_model;
     //glm::mat4 gv_model = glm::mat4(1.0f);
     sp::backend::SetUniform(programs[player_program], sp::kMatrix4fv, "model_matrix", glm::value_ptr(g_model));
@@ -426,7 +426,7 @@ void SimpleGame::Display(float delta)
 
     DrawSkyBox();
     //DrawPlayer();
-    DrawGun();
+    //DrawGun();
     DrawBox(delta);
     DrawFloor();
     //DrawMD5();
