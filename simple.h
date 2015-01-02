@@ -50,13 +50,13 @@ public:
 
 private:
 
-    typedef unsigned int Key;
+    typedef unsigned int Handle;
 
     struct RenderComponent
     {
-        Key program;
-        Key model;
-        Key buffer;
+        Handle program;
+        Handle model;
+        Handle buffer;
     };
 
     void InitializeProgram();
@@ -76,10 +76,10 @@ private:
     sp::Renderer renderer;
     sp::Camera gScreenCamera;
 
-    Key model_program;
-    Key plane_program;
-    Key skybox_program;
-    Key player_program;
+    Handle model_program;
+    Handle plane_program;
+    Handle skybox_program;
+    Handle player_program;
 
     sp::ModelView pModel;
     sp::ModelView gun_model;
