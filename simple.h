@@ -41,7 +41,6 @@ class SimpleGame :public Game {
 public:
     SimpleGame()
         :pModel(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.5f, 1.0f, 0.5f)),
-        gun_model(glm::vec3(0.1f, -0.08f, -0.19f), glm::vec3(0.02f, 0.02f, 0.09f)),
         iqm_view(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.2f)),
         block_model(glm::vec3(0.0f, 0.0f, 3.5f), glm::vec3(0.5f, 1.0f, 0.5f))
     {}
@@ -81,8 +80,8 @@ private:
     Handle skybox_program;
     Handle player_program;
 
+    Handle gun_model;
     sp::ModelView pModel;
-    sp::ModelView gun_model;
     sp::ModelView iqm_view;
     sp::ModelView block_model;
 
