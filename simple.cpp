@@ -173,6 +173,7 @@ void SimpleGame::InitializeProgram()
 inline void SimpleGame::InitEntities()
 {
     modelViews.push_back(sp::ModelView(glm::vec3(0.1f, -0.08f, -0.19f), glm::vec3(0.02f, 0.02f, 0.09f))); 
+    gun_model = 0;
     vertexBuffers.push_back(player);
     renderables.push_back({player_program, 0, 0});
 }
