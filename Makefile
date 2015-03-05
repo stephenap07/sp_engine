@@ -4,7 +4,7 @@ OBJ  = $(addprefix obj/,$(notdir $(SRC:.cpp=.o)))
 DEPS = $(SRC:%.cpp=obj/%.d)
 
 LDFLAGS = -lboost_system -lboost_filesystem -lGLEW -lSDL2 -lSDL2_image -L/usr/local/lib -lfreetype -lpthread
-CFLAGS  = -std=c++11 -Wall -fPIC -g -pg -I/usr/include/freetype2 -I ./RakNet/Source/
+CFLAGS  = -std=c++1y -Wall -fPIC -g -pg -I/usr/include/freetype2 -I ./RakNet/Source/
 
 EXE = sp
 

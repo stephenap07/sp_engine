@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 
 #include <iostream>
+#include <algorithm>
 
 #include "buffer.h"
 #include "shader.h"
@@ -42,7 +43,7 @@ void GlyphAtlas::LoadFace(FT_Face face, int face_height)
         }
 
         row_w += glyphSlot->bitmap.width + 1;
-        row_h = std::max(row_h, glyphSlot->bitmap.rows);
+        row_h = std::max(row_h, static_cast<int>(glyphSlot->bitmap.rows));
     }
 
     width = std::max(width, row_w);
@@ -93,7 +94,7 @@ void GlyphAtlas::LoadFace(FT_Face face, int face_height)
             offset_y / (float)height
         };
 
-        row_h = std::max(row_h, glyphSlot->bitmap.rows);
+        row_h = std::max(row_h, static_cast<int>(glyphSlot->bitmap.rows));
         offset_x += glyphSlot->bitmap.width + 1;
     }
 }
