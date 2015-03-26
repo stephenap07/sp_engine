@@ -7,8 +7,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_access.hpp> 
 
-#include "geometry.h"
-#include "gui.h"
+#include "Geometry.hpp"
+#include "GUI.hpp"
+#include "Buffer.hpp"
 
 GUIFrame::GUIFrame(float x, float y, float sx, float sy, float width, float height)
 {

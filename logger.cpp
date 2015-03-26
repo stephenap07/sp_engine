@@ -1,6 +1,6 @@
 #include <cstdarg>
 #include <cstdio>
-#include "logger.h"
+#include "Logger.hpp"
 
 namespace sp {
 namespace log {

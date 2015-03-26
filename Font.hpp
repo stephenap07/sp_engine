@@ -6,11 +6,12 @@
 #include <SDL2/SDL_ttf.h>
 #include FT_FREETYPE_H
 
-#include "buffer.h"
-
 #define MAXWIDTH 1024
 
 namespace sp {
+
+// Forward Declarations
+class VertexBuffer;
 
 struct GlyphInfo
 {
@@ -58,7 +59,6 @@ private:
     GlyphAtlas atlas_24;
     GlyphAtlas atlas_16;
 
-    TTF_Font *font;
     FT_Library ft;
     FT_Face face;
 

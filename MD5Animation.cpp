@@ -9,7 +9,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <boost/filesystem.hpp>
 
-#include "md5_animation.h"
+#include "MD5Animation.hpp"
 
 namespace fs = boost::filesystem;
 

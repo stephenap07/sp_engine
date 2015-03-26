@@ -1,8 +1,8 @@
 #ifndef _SP_GUI_H_
 #define _SP_GUI_H_
 
-#include "shader.h"
-#include "buffer.h"
+#include "Buffer.hpp"
+#include "Shader.hpp"
 
 class GUIDef {
     glm::vec2 position;

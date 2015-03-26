@@ -6,7 +6,7 @@
 
 #include <SDL2/SDL.h>
 
-#include "camera.h"
+#include "Camera.hpp"
 
 namespace sp {
 

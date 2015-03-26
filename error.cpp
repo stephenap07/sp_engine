@@ -1,6 +1,6 @@
 #include <GL/glew.h>
-#include "logger.h"
-#include "error.h"
+#include "Logger.hpp"
+#include "Error.hpp"
 
 namespace sp {
 

@@ -1,7 +1,7 @@
 #ifndef SP_MD5_MODEL_H_
 #define SP_MD5_MODEL_H_
 
-#include "md5_animation.h"
+#include "MD5Animation.hpp"
 
 class MD5Model {
 

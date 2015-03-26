@@ -1,31 +1,33 @@
 #include <iostream>
 #include <cstring>
-#include "command.h"
-#include "logger.h"
+
+#include "Command.hpp"
+#include "Logger.hpp"
 
 namespace sp {
 
 namespace CommandManager {
     static std::unordered_map<std::string, tCommandFunction> commands;
+}
 
-    void AddCommand(std::string name, tCommandFunction command)
-    {
-        commands.insert(std::pair<std::string, tCommandFunction>(name, command));
-    }
 
-    bool FindAndExecute(std::string name, const CommandArg &args)
-    {
-        auto cmd = commands.find(name);
-        if (cmd != commands.end()) {
-            cmd->second(args);
-        } else {
-            log::ErrorLog("command %s not found\n", name.c_str());
-        }
+void CommandManager::AddCommand(std::string name, tCommandFunction command)
+{
+	commands.insert(std::pair<std::string, tCommandFunction>(name, command));
+}
 
-        return true;
-    }
-} // namespace CommandManager
 
+bool CommandManager::FindAndExecute(std::string name, const CommandArg &args)
+{
+	auto cmd = commands.find(name);
+	if (cmd != commands.end()) {
+		cmd->second(args);
+	} else {
+		log::ErrorLog("command %s not found\n", name.c_str());
+	}
+
+	return true;
+}
 
 CommandArg::CommandArg(const char *text)
 {

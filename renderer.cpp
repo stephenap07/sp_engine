@@ -15,10 +15,10 @@
 #include <string>
 #include <algorithm>
 
-#include "renderer.h"
-#include "shader.h"
-#include "error.h"
-#include "logger.h"
+#include "Renderer.hpp"
+#include "Shader.hpp"
+#include "Error.hpp"
+#include "Logger.hpp"
 
 namespace sp {
 

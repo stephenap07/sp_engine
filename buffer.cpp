@@ -1,6 +1,4 @@
-#include <GL/glew.h>
-
-#include "buffer.h"
+#include "Buffer.hpp"
 
 namespace sp {
 

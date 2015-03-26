@@ -5,7 +5,7 @@
 #include <string>
 #include <memory>
 
-#include "os_properties.h"
+#include "OSProperties.hpp"
 #include <GL/glew.h>
 
 #include <SDL2/SDL.h>
@@ -16,26 +16,25 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_access.hpp> 
 
-#include "md5_model.h"
-#include "md5_animation.h"
-#include "iqm_model.h"
-#include "camera.h"
-#include "asset.h"
-#include "geometry.h"
-#include "util.h"
-#include "logger.h"
-#include "renderer.h"
-#include "shader.h"
-#include "buffer.h"
-#include "font.h"
-#include "error.h"
-#include "system.h"
-#include "gui.h"
-#include "console.h"
-#include "command.h"
-#include "model_view.h"
-
-#include "game.h"
+#include "MD5Model.hpp"
+#include "MD5Animation.hpp"
+#include "IQMModel.hpp"
+#include "Camera.hpp"
+#include "Asset.hpp"
+#include "Geometry.hpp"
+#include "Util.hpp"
+#include "Logger.hpp"
+#include "Renderer.hpp"
+#include "Shader.hpp"
+#include "Buffer.hpp"
+#include "Font.hpp"
+#include "Error.hpp"
+#include "System.hpp"
+#include "GUI.hpp"
+#include "Console.hpp"
+#include "Command.hpp"
+#include "ModelView.hpp"
+#include "Game.hpp"
 
 class SimpleGame :public Game {
 public:

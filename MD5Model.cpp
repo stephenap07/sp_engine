@@ -11,9 +11,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "md5_model.h"
+#include "MD5Model.hpp"
 
-#include "asset.h"
+#include "Asset.hpp"
 
 namespace fs = boost::filesystem;
 

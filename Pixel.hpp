@@ -6,7 +6,8 @@ namespace sp {
 void PutPixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
 {
     int bpp = surface->format->BytesPerPixel;
-    /* Here p is the address to the pixel we want to set */
+
+    // p is the address to the pixel we want to set
     Uint8 *p = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
 
     switch(bpp) {

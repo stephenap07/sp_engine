@@ -1,8 +1,8 @@
 #ifndef _SP_IQM_MODEL_H_
 #define _SP_IQM_MODEL_H_
 
-#include "iqm.h"
-#include "buffer.h"
+#include "Buffer.hpp"
+#include "IQM.hpp"
 
 namespace sp {
 

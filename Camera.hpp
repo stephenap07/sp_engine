@@ -1,7 +1,7 @@
 #ifndef _SP_CAMERA_H_
 #define _SP_CAMERA_H_
 
-#include "model_view.h"
+#include "ModelView.hpp"
 
 namespace sp {
 

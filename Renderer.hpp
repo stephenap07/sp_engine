@@ -4,7 +4,7 @@
 #include <GL/glew.h>
 #include <vector>
 
-#include "gl_program.h"
+#include "GLProgram.hpp"
 
 namespace sp {
 

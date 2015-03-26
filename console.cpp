@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
-#include "console.h"
-#include "logger.h"
+
+#include "Console.hpp"
+#include "Logger.hpp"
 
 
 namespace sp {

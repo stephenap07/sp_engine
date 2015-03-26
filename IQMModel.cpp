@@ -16,11 +16,12 @@
 
 #include <boost/filesystem.hpp>
 
-#include "util.h"
-#include "iqm_model.h"
-#include "asset.h"
-#include "logger.h"
-#include "shader.h"
+#include "Buffer.hpp"
+#include "Util.hpp"
+#include "IQMModel.hpp"
+#include "Asset.hpp"
+#include "Logger.hpp"
+#include "Shader.hpp"
 
 namespace fs = boost::filesystem;
 

@@ -3,10 +3,10 @@
 #include <iostream>
 #include <algorithm>
 
-#include "buffer.h"
-#include "shader.h"
-#include "font.h"
-#include "error.h"
+#include "Buffer.hpp"
+#include "Shader.hpp"
+#include "Font.hpp"
+#include "Error.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>

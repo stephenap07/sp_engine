@@ -1,4 +1,4 @@
-#include "simple.h"
+#include "Simple.hpp"
 
 void SimpleGame::initialize()
 {
@@ -23,10 +23,14 @@ void SimpleGame::run()
     const float kGravity = 0.7f;
     float player_vel_y = 0.0f;
 
-    sp::CommandManager::AddCommand("exit",
-            [&quit](const sp::CommandArg &args) { quit = true; });
+	sp::CommandManager::AddCommand("exit",
+			[&quit](const sp::CommandArg &args) {
+				quit = true;
+			});
     sp::CommandManager::AddCommand("fov",
-            [&](const sp::CommandArg &args) { renderer.SetAngleOfView(args.GetAs<float>(1)); });
+            [&](const sp::CommandArg &args) {
+				renderer.SetAngleOfView(args.GetAs<float>(1));
+			});
 
     float gunRotTime = 0.0f;
     bool leftMouseButtonDown = false;
@@ -243,16 +247,17 @@ inline void SimpleGame::DrawIQM()
         glm::vec4(0, 1, 0, 0),
         glm::vec4(0, 0, 0, 1)
     );
+
     glm::mat4 model = iqm_view.GetModel() * transform;
     sp::backend::SetUniform(programs[model_program], sp::kMatrix4fv, "model_matrix", glm::value_ptr(model));
+
     iqm_model.Animate(animate);
+
     std::vector<glm::mat4> &bones = iqm_model.GetBones();
     sp::backend::SetUniform(programs[model_program], sp::kMatrix4fv, "bone_matrices",
                              (GLsizei)bones.size(),
                              glm::value_ptr(bones[0]));
     iqm_model.Render();
-
-    glUseProgram(0);
 }
 
 inline void SimpleGame::DrawMD5()
@@ -329,10 +334,9 @@ inline void SimpleGame::DrawFloor()
 
 inline void SimpleGame::DrawPlayer()
 {
-    /** SCALE
-     * 1.0 - Player Height
-     * 0.5 - Player Width/Depth
-     */
+    /// SCALE
+    /// 1.0 - Player Height
+    /// 0.5 - Player Width/Depth
 
     sp::backend::Bind(programs[player_program]);
     glm::mat4 player_model = pModel.GetModel();

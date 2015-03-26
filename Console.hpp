@@ -4,9 +4,10 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_access.hpp> 
-#include "gui.h"
-#include "font.h"
-#include "command.h"
+
+#include "GUI.hpp"
+#include "Font.hpp"
+#include "Command.hpp"
 
 namespace sp {
 

@@ -9,9 +9,9 @@
 #include <memory>
 #include <cassert>
 
-#include "shader.h"
-#include "logger.h"
-#include "error.h"
+#include "Shader.hpp"
+#include "Logger.hpp"
+#include "Error.hpp"
 
 namespace sp {
 

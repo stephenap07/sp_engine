@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "simple.h"
+#include "Simple.hpp"
 
 
 int main(int argc, char **argv)

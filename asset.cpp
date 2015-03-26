@@ -6,8 +6,8 @@
 #include <SDL2/SDL_image.h>
 #include <cassert>
 
-#include "asset.h"
-#include "logger.h"
+#include "Asset.hpp"
+#include "Logger.hpp"
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
     #define RMASK 0xff000000

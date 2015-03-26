@@ -7,10 +7,10 @@
 #include <vector>
 #include <cmath>
 
-#include "util.h"
-#include "buffer.h"
-#include "geometry.h"
-#include "error.h"
+#include "Util.hpp"
+#include "Buffer.hpp"
+#include "Geometry.hpp"
+#include "Error.hpp"
 
 namespace sp {
 

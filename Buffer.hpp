@@ -1,6 +1,8 @@
 #ifndef _SP_BUFFER_H_
 #define _SP_BUFFER_H_
 
+#include <GL/glew.h>
+
 namespace sp {
 
 struct Point {
