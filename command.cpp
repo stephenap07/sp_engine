@@ -10,12 +10,10 @@ namespace CommandManager {
     static std::unordered_map<std::string, tCommandFunction> commands;
 }
 
-
 void CommandManager::AddCommand(std::string name, tCommandFunction command)
 {
 	commands.insert(std::pair<std::string, tCommandFunction>(name, command));
 }
-
 
 bool CommandManager::FindAndExecute(std::string name, const CommandArg &args)
 {
@@ -62,14 +60,14 @@ void CommandArg::TokenizeString(const char *text)
     }
 }
 
-static const std::string empty_string = "";
+static const std::string kEmptyString = "";
 
 const std::string &CommandArg::GetArg(unsigned int place) const
 {
     if (place < argv.size()) {
         return argv[place];
     } else {
-        return empty_string;
+        return kEmptyString;
     }
 }
 

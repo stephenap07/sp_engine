@@ -21,7 +21,7 @@
 int main(int argc, char **argv)
 {
     SimpleGame game;
-    game.initialize();
-    game.run();
+    game.Initialize();
+    game.Run();
     return 0;
 }

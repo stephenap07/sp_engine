@@ -40,11 +40,11 @@ class SimpleGame :public Game {
 public:
     SimpleGame()
         :pModel(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.5f, 1.0f, 0.5f)),
-        iqm_view(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.2f)),
-        block_model(glm::vec3(0.0f, 0.0f, 3.5f), glm::vec3(0.5f, 1.0f, 0.5f))
+        iqmView(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.2f)),
+        blockModel(glm::vec3(0.0f, 0.0f, 3.5f), glm::vec3(0.5f, 1.0f, 0.5f))
     {}
-    virtual void initialize();
-    virtual void run();
+    virtual void Initialize();
+    virtual void Run();
 
 private:
 
@@ -59,49 +59,50 @@ private:
 
     void InitializeProgram();
     void InitEntities();
+
     void Init();
     void RenderEntities(glm::mat4 view);
+
     void DrawIQM();
     void DrawMD5();
     void DrawSkyBox();
     void DrawFloor();
     void DrawPlayer();
-    void DrawGun();
     void DrawBox(float delta);
     void Display(float delta);
     void Reshape (int w, int h);
 
+    float animate = 0.0f;
     sp::Renderer renderer;
     sp::Camera gScreenCamera;
 
-    Handle model_program;
-    Handle plane_program;
-    Handle skybox_program;
-    Handle player_program;
+    Handle modelProgram;
+    Handle planeProgram;
+    Handle skyboxProgram;
+    Handle playerProgram;
 
-    Handle gun_model;
+    Handle gunModel;
+
     sp::ModelView pModel;
-    sp::ModelView iqm_view;
-    sp::ModelView block_model;
+    sp::ModelView iqmView;
+    sp::ModelView blockModel;
 
     sp::VertexBuffer cube;
     sp::VertexBuffer plane;
     sp::VertexBuffer player;
 
-    GLuint skybox_tex;
-    GLuint plane_tex;
-    GLuint depth_texture;
-    GLuint depth_fbo;
-    GLuint skybox_rotate_loc;
+    GLuint skyboxTexture;
+    GLuint planeTexture;
+    GLuint depthTexture;
+    GLuint depthFBO;
+    GLuint skyboxRotateLoc;
 
     sp::TextDefinition *textDef;
     sp::Console console;
-    sp::SystemInfo sys_info;
+    sp::SystemInfo sysInfo;
 
-    MD5Model md5_model;
-    sp::IQMModel iqm_model;
-
-    float animate = 0.0f;
+    MD5Model md5Model;
+    sp::IQMModel iqmModel;
 
     std::vector<sp::GLProgram> programs;
     std::vector<sp::ModelView> modelViews;
