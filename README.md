@@ -6,6 +6,10 @@ Opengl framework for exploratory use. So not much of an engine really.
 
 Just to learn OpenGL and perhaps some code organization. I'm taking the approach to build upon and grow this library, constantly refactoring and pruning and optimizing. So I guess this is like growing a garden rather than building a cathedral. It started off with a combined procedural with OOP thrown in. I'm hoping this would give me some perspective on code reuse and OOP patterns.
 
+### Screenshots
+
+![Ogre Scene](/screenshots/simple_with_ogre.png?raw=true "Simple scene with gouroud shading, IQM model loading, animation and cube map")
+
 #### Dependencies
 
 - RakNet is already provided inside the repo
