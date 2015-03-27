@@ -1,10 +1,10 @@
 # SP Engine
 
-Opengl framework for exploratory use. So not much of an engine really.
+Opengl framework and small engine for education and prototyping.
 
 ### Motivation
 
-Just to learn OpenGL and perhaps some code organization. I'm taking the approach to build upon and grow this library, constantly refactoring and pruning and optimizing. So I guess this is like growing a garden rather than building a cathedral. It started off with a combined procedural with OOP thrown in. I'm hoping this would give me some perspective on code reuse and OOP patterns.
+Just to learn OpenGL and modern real time rendering techniques and perhaps some code organization. I'm taking the approach to build upon and grow this library, constantly refactoring and pruning and optimizing. So I guess this is like growing a garden rather than building a cathedral. It started off with a combined procedural with OOP thrown in. I'm hoping this would give me some perspective on code reuse and OOP patterns.
 
 ### Screenshots
 
