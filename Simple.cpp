@@ -145,29 +145,29 @@ void SimpleGame::Run()
 
 void SimpleGame::InitializeProgram()
 {
+	modelProgram = static_cast<int>(programs.size());
     programs.push_back(sp::backend::CreateProgram({
-            {"assets/shaders/basic_animated.vert", GL_VERTEX_SHADER},
-            {"assets/shaders/gouroud.frag", GL_FRAGMENT_SHADER}
+            {"assets/shaders/basic_animated.vs.glsl", GL_VERTEX_SHADER},
+            {"assets/shaders/gouroud.fs.glsl", GL_FRAGMENT_SHADER}
             }));
-    modelProgram = 0;
 
+    planeProgram = static_cast<int>(programs.size());
     programs.push_back(sp::backend::CreateProgram({
-            {"assets/shaders/basic_texture.vs", GL_VERTEX_SHADER},
-            {"assets/shaders/gouroud.frag", GL_FRAGMENT_SHADER}
+            {"assets/shaders/basic_texture.vs.glsl", GL_VERTEX_SHADER},
+            {"assets/shaders/gouroud.fs.glsl", GL_FRAGMENT_SHADER}
             }));
-    planeProgram = 1;
 
+	skyboxProgram = static_cast<int>(programs.size());
     programs.push_back(sp::backend::CreateProgram({
-            {"assets/shaders/skybox.vert", GL_VERTEX_SHADER},
-            {"assets/shaders/skybox.frag", GL_FRAGMENT_SHADER}
+            {"assets/shaders/skybox.vs.glsl", GL_VERTEX_SHADER},
+            {"assets/shaders/skybox.fs.glsl", GL_FRAGMENT_SHADER}
             }));
-    skyboxProgram = 2;
-
+	
+    playerProgram = static_cast<int>(programs.size());
     programs.push_back(sp::backend::CreateProgram({
-            {"assets/shaders/pass_through.vert", GL_VERTEX_SHADER},
-            {"assets/shaders/gouroud.frag", GL_FRAGMENT_SHADER}
+            {"assets/shaders/pass_through.vs.glsl", GL_VERTEX_SHADER},
+            {"assets/shaders/gouroud.fs.glsl", GL_FRAGMENT_SHADER}
             }));
-    playerProgram = 3;
 
     for (auto & program : programs) {
         renderer.LoadGlobalUniforms(program.id);
@@ -224,7 +224,6 @@ void SimpleGame::Init()
 
     sp::MakeCube(&player, true);
     glm::vec4 player_color(0.0f, 1.0f, 1.0f, 1.0f);
-    //playerProgram->SetUniform(sp::k4fv, "color_diffuse", glm::value_ptr(player_color));
 
     sp::backend::SetUniform(programs[modelProgram], sp::k1i, "is_textured", true);
     sp::backend::SetUniform(programs[modelProgram], sp::k1i, "is_rigged", true);
