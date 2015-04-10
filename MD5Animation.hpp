@@ -8,6 +8,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_access.hpp> 
 
+// From http://3dgep.com/loading-and-animating-md5-models-with-opengl/
 
 class MD5Animation {
 public:
