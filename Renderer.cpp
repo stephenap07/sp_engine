@@ -139,6 +139,7 @@ void Renderer::LoadGlobalUniforms(GLuint shader_index)
 
 void Renderer::SetAngleOfView(const float angle)
 {
+	// TODO: Change znear and zfar to editable parameters
     projection = glm::perspective(angle, (float)screen_width / screen_height, 0.10f, 540.0f);
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection)); 

@@ -21,6 +21,7 @@ GlyphAtlas::GlyphAtlas() :width(0), height(0)
 
 void GlyphAtlas::LoadFace(FT_Face face, int face_height)
 {
+	glGetError(); // clear errors, TODO: Remove this
     FT_Set_Pixel_Sizes(face, 0, face_height); 
     FT_GlyphSlot glyphSlot = face->glyph;
 

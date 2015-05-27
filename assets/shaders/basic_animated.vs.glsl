@@ -23,7 +23,7 @@ uniform mat4 bone_matrices[80];
 
 void main(void)
 {
-    mat4 m = mat4(1.0);
+    mat4 m;
     if (is_rigged) {
         m =  bone_matrices[int(blend_index.x)] * blend_weight.x;
         m += bone_matrices[int(blend_index.y)] * blend_weight.y;
@@ -31,11 +31,10 @@ void main(void)
         m += bone_matrices[int(blend_index.w)] * blend_weight.w;
     }
 
-    vs_color = vec4(1.0, 1.0, 1.0, 0.0);
-    vs_normal = normalize(-mat3(transpose(inverse(model_matrix * m))) * normal);
-    vs_tex_coord = tex_coord;
-
     vec4 pos = model_matrix * m * vec4(position, 1.0);
     gl_Position = projection_matrix * view_matrix * pos;
+    vs_color = vec4(1.0, 1.0, 1.0, 0.0);
+    vs_normal = -mat3(transpose(inverse(model_matrix * m))) * normal;
+    vs_tex_coord = tex_coord;
     vs_worldpos = pos.xyz;
 }

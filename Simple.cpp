@@ -9,7 +9,6 @@ void SimpleGame::Initialize()
 void SimpleGame::Run()
 {
     SDL_Event sdl_event;
-    const Uint8 *state = nullptr;
 
     unsigned long elapsed = SDL_GetTicks();
     float delta = 0.0f;
@@ -116,7 +115,7 @@ void SimpleGame::Run()
         glm::vec3 forward = glm::normalize(glm::cross(gScreenCamera.up, side));
 
         if (!console.FrameIsOpen()) {
-            state = SDL_GetKeyboardState(nullptr);
+            const Uint8 *state = SDL_GetKeyboardState(nullptr);
 
             if (state[SDL_SCANCODE_W] && state[SDL_SCANCODE_LGUI]) quit = true;
 

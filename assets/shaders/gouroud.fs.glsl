@@ -15,15 +15,11 @@ uniform vec4 color_light = vec4(1.0, 1.0, 1.0, 1.0);
 uniform vec4 color_specular = vec4(1.0, 1.0, 1.0, 1.0);
 uniform float shininess = 13.0f;
 
-uniform vec3 light_position = vec3(0, 216, 0.0);
+uniform vec3 light_position = vec3(0, 300, 0.0);
 
-float rand(vec2 co) {
-	return fract(sin(dot(co.xy, vec2(12.9898, 78.233)))*43758.5453);
-}
-
-void get_lighting(out vec4 total_light)
+void gouroud(out vec4 total_light)
 {
-    vec3 light_direction = rand(vec2(1.1, 0.4))*normalize(vs_worldpos - light_position);
+    vec3 light_direction = normalize(vs_worldpos - light_position);
     vec3 normal = normalize(vs_normal);
 
     vec3 half_vector = normalize(light_direction + normalize(vs_worldpos));
@@ -44,7 +40,7 @@ void get_lighting(out vec4 total_light)
 void main(void)
 {
 	vec4 total_light;
-	get_lighting(total_light);
+	gouroud(total_light);
 
     vec4 tex_color;
     if (is_textured) {
