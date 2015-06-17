@@ -12,7 +12,6 @@ Just to learn OpenGL and modern real time rendering techniques and perhaps some 
 
 #### Dependencies
 
-- RakNet is already provided inside the repo
 - Freetype2
 - SDL2
 - boost.filesystem
