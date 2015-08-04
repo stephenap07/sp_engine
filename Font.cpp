@@ -3,7 +3,7 @@
 #include <iostream>
 #include <algorithm>
 
-#include "Buffer.hpp"
+#include "VertexBuffer.hpp"
 #include "Shader.hpp"
 #include "Font.hpp"
 #include "Error.hpp"

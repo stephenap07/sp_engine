@@ -3,7 +3,6 @@
 
 #include <string>
 #include <ft2build.h>
-#include <SDL2/SDL_ttf.h>
 #include FT_FREETYPE_H
 
 #define MAXWIDTH 1024

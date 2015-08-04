@@ -9,7 +9,7 @@
 
 #include "Geometry.hpp"
 #include "GUI.hpp"
-#include "Buffer.hpp"
+#include "VertexBuffer.hpp"
 
 GUIFrame::GUIFrame(float x, float y, float sx, float sy, float width, float height)
 {

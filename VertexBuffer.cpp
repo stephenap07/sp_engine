@@ -1,4 +1,4 @@
-#include "Buffer.hpp"
+#include "VertexBuffer.hpp"
 
 namespace sp {
 

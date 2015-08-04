@@ -8,7 +8,7 @@
 #include <cmath>
 
 #include "Util.hpp"
-#include "Buffer.hpp"
+#include "VertexBuffer.hpp"
 #include "Geometry.hpp"
 #include "Error.hpp"
 

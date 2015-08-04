@@ -16,7 +16,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include "Buffer.hpp"
+#include "VertexBuffer.hpp"
 #include "Util.hpp"
 #include "IQMModel.hpp"
 #include "Asset.hpp"

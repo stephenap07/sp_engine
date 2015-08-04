@@ -26,7 +26,7 @@
 #include "Logger.hpp"
 #include "Renderer.hpp"
 #include "Shader.hpp"
-#include "Buffer.hpp"
+#include "VertexBuffer.hpp"
 #include "Font.hpp"
 #include "Error.hpp"
 #include "System.hpp"

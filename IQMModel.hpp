@@ -1,7 +1,7 @@
 #ifndef _SP_IQM_MODEL_H_
 #define _SP_IQM_MODEL_H_
 
-#include "Buffer.hpp"
+#include "VertexBuffer.hpp"
 #include "IQM.hpp"
 
 namespace sp {

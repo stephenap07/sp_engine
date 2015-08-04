@@ -1,7 +1,7 @@
 #ifndef _SP_GUI_H_
 #define _SP_GUI_H_
 
-#include "Buffer.hpp"
+#include "VertexBuffer.hpp"
 #include "Shader.hpp"
 
 class GUIDef {
