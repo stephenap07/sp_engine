@@ -35,6 +35,6 @@ run:
 	./$(EXE)
 
 clean:
-	rm $(OBJ) $(DEPS)
+	rm -f $(EXE) $(OBJ) $(DEPS)
 
 -include $(DEPS)
