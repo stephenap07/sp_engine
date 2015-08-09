@@ -10,3 +10,4 @@ libspengine.so
 sp
 iqm
 gmon.out
+clang-format.py
