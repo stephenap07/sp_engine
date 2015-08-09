@@ -1,27 +1,19 @@
 #include "Task.hpp"
 
-namespace sp {
+namespace sp
+{
 
 //=============================================================================
 
-void Task::SetNext(TaskPtr task)
-{
-    next_task = task;
-}
+void Task::SetNext(TaskPtr task) { next_task = task; }
 
 //=============================================================================
 
-void TaskManager::Attach(TaskPtr task)
-{
-    task_list.push_back(task);
-}
+void TaskManager::Attach(TaskPtr task) { task_list.push_back(task); }
 
 //=============================================================================
 
-void TaskManager::Detach(TaskPtr task)
-{
-    task_list.remove(task);
-}
+void TaskManager::Detach(TaskPtr task) { task_list.remove(task); }
 
 //=============================================================================
 

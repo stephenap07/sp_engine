@@ -17,7 +17,6 @@
 
 #include "Simple.hpp"
 
-
 int main(int argc, char **argv)
 {
     SimpleGame game;

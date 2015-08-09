@@ -1,20 +1,22 @@
 #ifndef _SP_FONT_H_
 #define _SP_FONT_H_
 
-#include <string>
+#include <GL/glew.h>
 #include <ft2build.h>
-#include <SDL2/SDL_ttf.h>
 #include FT_FREETYPE_H
+#include "Shader.hpp"
+#include "VertexBuffer.hpp"
+#include "config/ftheader.h"
 
 #define MAXWIDTH 1024
 
-namespace sp {
+namespace sp
+{
 
 // Forward Declarations
 class VertexBuffer;
 
-struct GlyphInfo
-{
+struct GlyphInfo {
     float advance_x;
     float advance_y;
 
@@ -28,8 +30,7 @@ struct GlyphInfo
     float texture_y;
 };
 
-struct GlyphAtlas
-{
+struct GlyphAtlas {
     GLuint tex_id;
     GLProgram shader;
     VertexBuffer buffer;
@@ -67,11 +68,13 @@ private:
     float window_width, window_height;
 };
 
-void DrawText(const std::string &text_label, GlyphAtlas *atlas, float x, float y, float sx, float sy);
+void DrawText(const std::string &text_label, GlyphAtlas *atlas, float x,
+              float y, float sx, float sy);
 
-namespace font {
-    bool Init(float window_width, float window_height);
-    TextDefinition *const GetTextDef(const std::string &text_def_name);    
+namespace font
+{
+bool Init(float window_width, float window_height);
+TextDefinition *const GetTextDef(const std::string &text_def_name);
 }
 
 } // namespace sp

@@ -4,8 +4,7 @@
 #define IQM_MAGIC "INTERQUAKEMODEL"
 #define IQM_VERSION 2
 
-struct IQMHeader
-{
+struct IQMHeader {
     char magic[16];
     unsigned int version;
     unsigned int filesize;
@@ -22,94 +21,80 @@ struct IQMHeader
     unsigned int num_extensions, ofs_extensions;
 };
 
-struct IQMMesh
-{
+struct IQMMesh {
     unsigned int name;
     unsigned int material;
     unsigned int first_vertex, num_vertexes;
     unsigned int first_triangle, num_triangles;
 };
 
-enum
-{
-    IQM_POSITION     = 0,
-    IQM_TEXCOORD     = 1,
-    IQM_NORMAL       = 2,
-    IQM_TANGENT      = 3,
+enum {
+    IQM_POSITION = 0,
+    IQM_TEXCOORD = 1,
+    IQM_NORMAL = 2,
+    IQM_TANGENT = 3,
     IQM_BLENDINDEXES = 4,
     IQM_BLENDWEIGHTS = 5,
-    IQM_COLOR        = 6,
-    IQM_CUSTOM       = 0x10
+    IQM_COLOR = 6,
+    IQM_CUSTOM = 0x10
 };
 
-enum
-{
-    IQM_BYTE   = 0,
-    IQM_UBYTE  = 1,
-    IQM_SHORT  = 2,
+enum {
+    IQM_BYTE = 0,
+    IQM_UBYTE = 1,
+    IQM_SHORT = 2,
     IQM_USHORT = 3,
-    IQM_INT    = 4,
-    IQM_UINT   = 5,
-    IQM_HALF   = 6,
-    IQM_FLOAT  = 7,
+    IQM_INT = 4,
+    IQM_UINT = 5,
+    IQM_HALF = 6,
+    IQM_FLOAT = 7,
     IQM_DOUBLE = 8
 };
 
-struct IQMTriangle
-{
+struct IQMTriangle {
     unsigned int vertex[3];
 };
 
-struct IQMAdjacency
-{
+struct IQMAdjacency {
     unsigned int triangle[3];
 };
 
-struct IQMJointv1
-{
+struct IQMJointv1 {
     unsigned int name;
     int parent;
     float translate[3], rotate[3], scale[3];
 };
 
-struct IQMJoint
-{
+struct IQMJoint {
     unsigned int name;
     int parent;
     float translate[3], rotate[4], scale[3];
 };
 
-struct IQMPosev1
-{
+struct IQMPosev1 {
     int parent;
     unsigned int mask;
     float channeloffset[9];
     float channelscale[9];
 };
 
-struct IQMPose
-{
+struct IQMPose {
     int parent;
     unsigned int mask;
     float channeloffset[10];
     float channelscale[10];
 };
 
-struct IQMAnim
-{
+struct IQMAnim {
     unsigned int name;
     unsigned int first_frame, num_frames;
     float framerate;
     unsigned int flags;
 };
 
-enum
-{
-    IQM_LOOP = 1<<0
-};
+enum { IQM_LOOP = 1 << 0 };
 
-struct IQMVertexarray
-{
+struct IQMVertexarray {
     unsigned int type;
     unsigned int flags;
     unsigned int format;
@@ -117,14 +102,12 @@ struct IQMVertexarray
     unsigned int offset;
 };
 
-struct IQMBounds
-{
+struct IQMBounds {
     float bbmin[3], bbmax[3];
     float xyradius, radius;
 };
 
-struct IQMExtension
-{
+struct IQMExtension {
     unsigned int name;
     unsigned int num_data, ofs_data;
     unsigned int ofs_extensions; // pointer to next extension

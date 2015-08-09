@@ -8,7 +8,7 @@
 #include <cmath>
 
 #include "Util.hpp"
-#include "Buffer.hpp"
+#include "VertexBuffer.hpp"
 #include "Geometry.hpp"
 #include "Error.hpp"
 
@@ -69,11 +69,14 @@ void MakeCube(VertexBuffer *buffer, bool has_normals)
             2, 6, 0, 4, 1, 5, 3, 7          // Second strip
         };
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), BUFFER_OFFSET(0));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat),
+                              BUFFER_OFFSET(0));
         glEnableVertexAttribArray(0);
 
-        glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indices), cube_indices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices,
+                     GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indices),
+                     cube_indices, GL_STATIC_DRAW);
     } else {
         if (!vao_2) {
             glGenVertexArrays(1, &vao_2);
@@ -119,40 +122,40 @@ void MakeCube(VertexBuffer *buffer, bool has_normals)
             -1.0f, 1.0f, 1.0f,
             1.0f,-1.0f, 1.0f
         };
-        
-        glm::vec3 cube_vertices[sizeof(kCubeVertexData)/sizeof(float) / 3];
-        for (size_t i=0; i < sizeof(kCubeVertexData)/sizeof(float); i+=3) {
-            cube_vertices[i / 3] = glm::vec3(kCubeVertexData[i], kCubeVertexData[i + 1], kCubeVertexData[i + 2]);
+
+        glm::vec3 cube_vertices[sizeof(kCubeVertexData) / sizeof(float) / 3];
+        for (size_t i = 0; i < sizeof(kCubeVertexData) / sizeof(float);
+             i += 3) {
+            cube_vertices[i / 3] =
+                glm::vec3(kCubeVertexData[i], kCubeVertexData[i + 1],
+                          kCubeVertexData[i + 2]);
         }
 
         std::vector<GeomVertex> new_vertices;
 
         for (size_t i = 0; i < 36; i++) {
             if (i % 3 == 2) {
-                glm::vec3 verts[3] = {
-                    cube_vertices[i-2],
-                    cube_vertices[i-1],
-                    cube_vertices[i]
-                };
-                
-                //glm::vec3 f = verts[1]; 
-
-                glm::vec3 normal = glm::normalize(glm::cross(verts[2] - verts[0], verts[1] - verts[0]));
-
+                glm::vec3 verts[3] = {cube_vertices[i - 2],
+                                      cube_vertices[i - 1], cube_vertices[i]};
+                //glm::vec3 f = verts[1];
+                glm::vec3 normal = glm::normalize(
+                    glm::cross(verts[2] - verts[0], verts[1] - verts[0]));
                 for (size_t j = 0; j < 3; j++) {
-                    GeomVertex v = {verts[j], normal};
-                    new_vertices.push_back(v);
+                    new_vertices.push_back(GeomVertex{verts[j], normal});
                 }
             }
         }
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GeomVertex), BUFFER_OFFSET(0));
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GeomVertex), BUFFER_OFFSET(sizeof(glm::vec3)));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GeomVertex),
+                              BUFFER_OFFSET(0));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GeomVertex),
+                              BUFFER_OFFSET(sizeof(glm::vec3)));
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
-        glBufferData(GL_ARRAY_BUFFER, new_vertices.size() * sizeof(GeomVertex), &new_vertices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, new_vertices.size() * sizeof(GeomVertex),
+                     &new_vertices[0], GL_STATIC_DRAW);
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -178,7 +181,7 @@ void MakeQuad(VertexBuffer *buffer)
     glGenBuffers(1, &buffer->ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vert_indices), vert_indices,
-            GL_STATIC_DRAW);
+                 GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     glGenVertexArrays(1, &buffer->vao);
@@ -216,10 +219,11 @@ void MakeTexturedQuad(VertexBuffer *buffer, GLuint gl_hint)
 
     glGenBuffers(1, &buffer->vbo);
     glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-    glBufferData(GL_ARRAY_BUFFER, 4*sizeof(Point), vert_quad, gl_hint);
+    glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Point), vert_quad, gl_hint);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), nullptr);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid*)(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Point),
+                          (GLvoid *)(3 * sizeof(GLfloat)));
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(2);

@@ -4,42 +4,41 @@
 #include "Command.hpp"
 #include "Logger.hpp"
 
-namespace sp {
+namespace sp
+{
 
-namespace CommandManager {
-    static std::unordered_map<std::string, tCommandFunction> commands;
+namespace CommandManager
+{
+static std::unordered_map<std::string, tCommandFunction> commands;
 }
 
 void CommandManager::AddCommand(std::string name, tCommandFunction command)
 {
-	commands.insert(std::pair<std::string, tCommandFunction>(name, command));
+    commands.insert(std::pair<std::string, tCommandFunction>(name, command));
 }
 
 bool CommandManager::FindAndExecute(std::string name, const CommandArg &args)
 {
-	auto cmd = commands.find(name);
-	if (cmd != commands.end()) {
-		cmd->second(args);
-	} else {
-		log::ErrorLog("command %s not found\n", name.c_str());
-	}
+    auto cmd = commands.find(name);
+    if (cmd != commands.end()) {
+        cmd->second(args);
+    } else {
+        log::ErrorLog("command %s not found\n", name.c_str());
+    }
 
-	return true;
+    return true;
 }
 
-CommandArg::CommandArg(const char *text)
-{
-    TokenizeString(text);
-}
+CommandArg::CommandArg(const char *text) { TokenizeString(text); }
 
 void CommandArg::TokenizeString(const char *text)
 {
-    int command_length = strlen(text);    
+    int command_length = strlen(text);
     int start_token = 0;
     char buffer[128];
     bool not_just_whitespace = false;
 
-    for(int i = 0; i < command_length; i++) {
+    for (int i = 0; i < command_length; i++) {
         if (text[i] == ' ' || i == (command_length - 1)) {
             if (not_just_whitespace) {
                 int end_of_token = i - start_token + 1;
@@ -71,9 +70,6 @@ const std::string &CommandArg::GetArg(unsigned int place) const
     }
 }
 
-const int CommandArg::Argc() const
-{
-    return argv.size();
-}
+const int CommandArg::Argc() const { return argv.size(); }
 
 } // namespace sp

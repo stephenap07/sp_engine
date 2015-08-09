@@ -1,30 +1,30 @@
 #ifndef _SP_CONSOLE_H_
 #define _SP_CONSOLE_H_
 
+#include <SDL2/SDL.h>
+
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_access.hpp> 
+#include <glm/gtc/matrix_access.hpp>
 
 #include "GUI.hpp"
 #include "Font.hpp"
 #include "Command.hpp"
 
-namespace sp {
+namespace sp
+{
 
-class Console {
+class Console
+{
 public:
-    Console() :
-        width(0.0f),
-        height(0.0f),
-        is_active(false),
-        draw_text_bar(false)
-    {}
+    Console()
+        : width(0.0f), height(0.0f), is_active(false), draw_text_bar(false)
+    {
+    }
 
-    Console(float window_width, float window_height) :
-        width(window_width),
-        height(window_height),
-        is_active(false),
-        draw_text_bar(false)
+    Console(float window_width, float window_height)
+        : width(window_width), height(window_height), is_active(false),
+          draw_text_bar(false)
     {
         Init(width, height);
     }
@@ -44,18 +44,18 @@ public:
     const std::string GetText() const;
 
 private:
-    GUIFrame                 frame;
-    GUIFrame                 text_box;
-    TextDefinition           *text_def;
+    GUIFrame frame;
+    GUIFrame text_box;
+    TextDefinition *text_def;
 
-    std::string              console_text;
+    std::string console_text;
     std::vector<std::string> command_history;
 
-    float                    width;
-    float                    height;
-    float                    text_bar_counter;
-    bool                     is_active;
-    bool                     draw_text_bar;
+    float width;
+    float height;
+    float text_bar_counter;
+    bool is_active;
+    bool draw_text_bar;
 };
 
 } // namespace sp

@@ -2,8 +2,10 @@
 #include <cstdio>
 #include "Logger.hpp"
 
-namespace sp {
-namespace log {
+namespace sp
+{
+namespace log
+{
 
 void ErrorLog(const char *format, ...)
 {

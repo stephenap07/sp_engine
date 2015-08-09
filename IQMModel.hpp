@@ -1,10 +1,11 @@
 #ifndef _SP_IQM_MODEL_H_
 #define _SP_IQM_MODEL_H_
 
-#include "Buffer.hpp"
+#include "VertexBuffer.hpp"
 #include "IQM.hpp"
 
-namespace sp {
+namespace sp
+{
 
 struct MeshTri {
     unsigned int vertex[3];
@@ -16,14 +17,18 @@ struct Skeleton {
 
 struct Mesh {
     GLuint texture_id;
-    std::vector<MeshTri> vertices; 
+    std::vector<MeshTri> vertices;
 };
 
-class IQMModel {
+class IQMModel
+{
 public:
-    IQMModel() : meshes(nullptr), joints(nullptr), tris(nullptr), buffer(nullptr),
-    current_skeleton_id(0), num_tris(0), num_joints(0), num_meshes(0), num_frames(0)
-    {}
+    IQMModel()
+        : meshes(nullptr), joints(nullptr), tris(nullptr), buffer(nullptr),
+          current_skeleton_id(0), num_tris(0), num_joints(0), num_meshes(0),
+          num_frames(0)
+    {
+    }
     ~IQMModel();
 
     bool LoadModel(const char *filename);
@@ -32,8 +37,8 @@ public:
     std::vector<glm::mat4> &GetBones();
 
     VertexBuffer v_buffer;
-private:
 
+private:
     std::vector<glm::mat4x4> baseframe;
     std::vector<glm::mat4x4> inversebaseframe;
     std::vector<glm::mat4x4> frames;

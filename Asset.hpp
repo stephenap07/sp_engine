@@ -4,20 +4,21 @@
 #include <unordered_map>
 #include <SDL2/SDL.h>
 
-#define MAX_TEXTURE_MIPS    14
+#define MAX_TEXTURE_MIPS 14
 
-namespace sp {
+namespace sp
+{
 
 struct TextureCache {
-	~TextureCache();
+    ~TextureCache();
 
-	typedef std::unordered_map<std::string, GLuint> TextureMap;
-	TextureMap cache;
+    typedef std::unordered_map<std::string, GLuint> TextureMap;
+    TextureMap cache;
 };
 
 GLuint MakeTexture(const std::string &image_file, GLenum target);
-GLuint MakeTextureFromSurface(const std::string &name, SDL_Surface *surface, GLenum target);
-
+GLuint MakeTextureFromSurface(const std::string &name, SDL_Surface *surface,
+                              GLenum target);
 }
 
 #endif

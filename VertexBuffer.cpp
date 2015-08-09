@@ -1,6 +1,7 @@
-#include "Buffer.hpp"
+#include "VertexBuffer.hpp"
 
-namespace sp {
+namespace sp
+{
 
 void UnbindAllBuffers()
 {
@@ -10,14 +11,13 @@ void UnbindAllBuffers()
 
 //------------------------------------------------------------------------------
 
-VertexBuffer::VertexBuffer() :vao(0), vbo(0), ebo(0), num_triangles(0)
-{}
+VertexBuffer::VertexBuffer() : vao(0), vbo(0), ebo(0), num_triangles(0) {}
 
 //------------------------------------------------------------------------------
 
 VertexBuffer::~VertexBuffer()
 {
-    //glDeleteBuffers(1, &vbo);
+    // glDeleteBuffers(1, &vbo);
 }
 
 //------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ void VertexBuffer::Bind()
 
 void VertexBuffer::Init()
 {
-    //glDeleteBuffers(1, &vbo);
+    // glDeleteBuffers(1, &vbo);
 }
 
 void VertexBuffer::DeleteBuffers()
@@ -61,13 +61,14 @@ VertexBuffer MakeTexturedQuad(GLuint gl_hint)
 
     glGenBuffers(1, &buffer.vbo);
     glBindBuffer(GL_ARRAY_BUFFER, buffer.vbo);
-    glBufferData(GL_ARRAY_BUFFER, 4*sizeof(Point), vert_quad, gl_hint);
+    glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Point), vert_quad, gl_hint);
 
     glGenVertexArrays(1, &buffer.vao);
     glBindVertexArray(buffer.vao);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), nullptr);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid*)(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Point),
+                          (GLvoid *)(3 * sizeof(GLfloat)));
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
@@ -77,7 +78,6 @@ VertexBuffer MakeTexturedQuad(GLuint gl_hint)
 
     return buffer;
 }
-
 
 VertexBuffer MakeQuadWithTexcoord(float width, float height, float x, float y)
 {
@@ -95,10 +95,11 @@ VertexBuffer MakeQuadWithTexcoord(float width, float height, float x, float y)
         { 1.0f,  1.0f, 0.0f, x + width, y + 0.0f}
     };
 
-    glBufferData(GL_ARRAY_BUFFER, 4*sizeof(Point), vert_quad, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Point), vert_quad, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), nullptr);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid*)(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Point),
+                          (GLvoid *)(3 * sizeof(GLfloat)));
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);

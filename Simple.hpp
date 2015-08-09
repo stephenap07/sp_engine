@@ -5,36 +5,19 @@
 #include <string>
 #include <memory>
 
-#include "OSProperties.hpp"
-#include <GL/glew.h>
-
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_image.h>
-
+#include <GL/glew.h>                                 // for GLuint
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_access.hpp> 
-
-#include "MD5Model.hpp"
-#include "MD5Animation.hpp"
-#include "IQMModel.hpp"
-#include "Camera.hpp"
-#include "Asset.hpp"
-#include "Geometry.hpp"
-#include "Util.hpp"
-#include "Logger.hpp"
-#include "Renderer.hpp"
-#include "Shader.hpp"
-#include "Buffer.hpp"
-#include "Font.hpp"
-#include "Error.hpp"
-#include "System.hpp"
-#include "GUI.hpp"
-#include "Console.hpp"
-#include "Command.hpp"
-#include "ModelView.hpp"
-#include "Game.hpp"
+#include "Camera.hpp"                                // for Camera
+#include "Console.hpp"                               // for Console
+#include "Game.hpp"                                  // for Game
+#include "IQMModel.hpp"                              // for IQMModel
+#include "MD5Model.hpp"                              // for MD5Model
+#include "ModelView.hpp"                             // for ModelView
+#include "Renderer.hpp"                              // for Renderer
+#include "System.hpp"                                // for SystemInfo
+#include "VertexBuffer.hpp"                          // for VertexBuffer
 
 class SimpleGame :public Game {
 public:

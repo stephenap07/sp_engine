@@ -3,42 +3,40 @@
 #include <iostream>
 #include <algorithm>
 
-#include "Buffer.hpp"
+#include "VertexBuffer.hpp"
 #include "Shader.hpp"
 #include "Font.hpp"
 #include "Error.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_access.hpp> 
+#include <glm/gtc/matrix_access.hpp>
 
-namespace sp {
-
-GlyphAtlas::GlyphAtlas() :width(0), height(0)
+namespace sp
 {
-    buffer.Init();
-}
+
+GlyphAtlas::GlyphAtlas() : width(0), height(0) { buffer.Init(); }
 
 void GlyphAtlas::LoadFace(FT_Face face, int face_height)
 {
-	glGetError(); // clear errors, TODO: Remove this
-    FT_Set_Pixel_Sizes(face, 0, face_height); 
+    glGetError(); // clear errors, TODO: Remove this
+    FT_Set_Pixel_Sizes(face, 0, face_height);
     FT_GlyphSlot glyphSlot = face->glyph;
 
     int row_w = 0;
     int row_h = 0;
     width = height = 0;
-    
+
     memset(glyphs, 0, sizeof(glyphs));
 
     for (int i = 32; i < 128; i++) {
-        if (FT_Load_Char(face, i, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT )) {
+        if (FT_Load_Char(face, i, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT)) {
             fprintf(stderr, "Loading character %c failed\n", i);
             continue;
         }
 
         if (row_w + glyphSlot->bitmap.width + 1 >= MAXWIDTH) {
-            width = std::max(width, row_w); 
+            width = std::max(width, row_w);
             height += row_h;
             row_w = row_h = 0;
         }
@@ -57,11 +55,12 @@ void GlyphAtlas::LoadFace(FT_Face face, int face_height)
     HandleGLError(glGetError());
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED,
+                 GL_UNSIGNED_BYTE, 0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -83,29 +82,25 @@ void GlyphAtlas::LoadFace(FT_Face face, int face_height)
 
         glTexSubImage2D(GL_TEXTURE_2D, 0, offset_x, offset_y,
                         glyphSlot->bitmap.width, glyphSlot->bitmap.rows, GL_RED,
-                        GL_UNSIGNED_BYTE, (GLubyte*)glyphSlot->bitmap.buffer);
-        glyphs[i] = {
-            (float)(glyphSlot->advance.x >> 6),
-            (float)(glyphSlot->advance.y >> 6),
-            (float)glyphSlot->bitmap.width,
-            (float)glyphSlot->bitmap.rows,
-            (float)glyphSlot->bitmap_left,
-            (float)glyphSlot->bitmap_top,
-            offset_x / (float)width,
-            offset_y / (float)height
-        };
+                        GL_UNSIGNED_BYTE, (GLubyte *)glyphSlot->bitmap.buffer);
+        glyphs[i] = {(float)(glyphSlot->advance.x >> 6),
+                     (float)(glyphSlot->advance.y >> 6),
+                     (float)glyphSlot->bitmap.width,
+                     (float)glyphSlot->bitmap.rows,
+                     (float)glyphSlot->bitmap_left,
+                     (float)glyphSlot->bitmap_top,
+                     offset_x / (float)width,
+                     offset_y / (float)height};
 
         row_h = std::max(row_h, static_cast<int>(glyphSlot->bitmap.rows));
         offset_x += glyphSlot->bitmap.width + 1;
     }
 }
 
-GlyphAtlas::~GlyphAtlas()
-{
-    glDeleteTextures(1, &tex_id);
-}
+GlyphAtlas::~GlyphAtlas() { glDeleteTextures(1, &tex_id); }
 
-void DrawText(const std::string &text_label, GlyphAtlas *atlas, float x, float y, float sx, float sy)
+void DrawText(const std::string &text_label, GlyphAtlas *atlas, float x,
+              float y, float sx, float sy)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -138,15 +133,19 @@ void DrawText(const std::string &text_label, GlyphAtlas *atlas, float x, float y
         float s_w = glyph.bitmap_width / atlas->width;
         float s_h = glyph.bitmap_height / atlas->height;
 
-        coords[c++] = {x2, -y2 - h, 0.0f, glyph.texture_x, glyph.texture_y + s_h};
-        coords[c++] = {x2 + w, -y2 - h, 0.0f, glyph.texture_x + s_w, glyph.texture_y + s_h};
+        coords[c++] = {x2, -y2 - h, 0.0f, glyph.texture_x,
+                       glyph.texture_y + s_h};
+        coords[c++] = {x2 + w, -y2 - h, 0.0f, glyph.texture_x + s_w,
+                       glyph.texture_y + s_h};
         coords[c++] = {x2, -y2, 0.0f, glyph.texture_x, glyph.texture_y};
 
-        coords[c++] = {x2 + w, -y2, 0.0f, glyph.texture_x + s_w, glyph.texture_y};
+        coords[c++] = {x2 + w, -y2, 0.0f, glyph.texture_x + s_w,
+                       glyph.texture_y};
         coords[c++] = {x2, -y2, 0.0f, glyph.texture_x, glyph.texture_y};
-        coords[c++] = {x2 + w, -y2 - h, 0.0f, glyph.texture_x + s_w, glyph.texture_y + s_h};
+        coords[c++] = {x2 + w, -y2 - h, 0.0f, glyph.texture_x + s_w,
+                       glyph.texture_y + s_h};
     }
-    
+
     glBufferData(GL_ARRAY_BUFFER, sizeof(coords), coords, GL_DYNAMIC_DRAW);
     glDrawArrays(GL_TRIANGLES, 0, c);
 
@@ -163,13 +162,12 @@ bool TextDefinition::Init(float width, float height)
     window_width = 2.0f / width;
     window_height = 2.0f / height;
 
-    text_program = backend::CreateProgram({
-        {"assets/shaders/text.vs.glsl", GL_VERTEX_SHADER},
-        {"assets/shaders/text.fs.glsl", GL_FRAGMENT_SHADER}
-    });
+    text_program = backend::CreateProgram(
+        {{"assets/shaders/text.vs.glsl", GL_VERTEX_SHADER},
+         {"assets/shaders/text.fs.glsl", GL_FRAGMENT_SHADER}});
 
     text_buffer = sp::MakeTexturedQuad(GL_DYNAMIC_DRAW);
-    
+
     if (FT_Init_FreeType(&ft)) {
         std::cerr << "Could not init freetype library\n";
         return false;
@@ -181,9 +179,11 @@ bool TextDefinition::Init(float width, float height)
     }
 
     glm::mat4 model;
-    backend::SetUniform(text_program, sp::kMatrix4fv, "uni_model", glm::value_ptr(model));
+    backend::SetUniform(text_program, sp::kMatrix4fv, "uni_model",
+                        glm::value_ptr(model));
     glm::vec4 white(1.0f, 1.0f, 1.0f, 1.0f);
-    backend::SetUniform(text_program, sp::k4fv, "uni_color", glm::value_ptr(white));
+    backend::SetUniform(text_program, sp::k4fv, "uni_color",
+                        glm::value_ptr(white));
 
     atlas_48.LoadFace(face, 48);
     atlas_24.LoadFace(face, 24);
@@ -205,23 +205,25 @@ bool TextDefinition::Init(float width, float height)
 
 void TextDefinition::DrawText(const std::string &label, float x, float y)
 {
-    ::sp::DrawText(label, &atlas_16, -1 + x * window_width, 1 - y * window_height, window_width, window_height);
+    ::sp::DrawText(label, &atlas_16, -1 + x * window_width,
+                   1 - y * window_height, window_width, window_height);
 }
 
 //==============================================================================
 
-namespace font {
-    static TextDefinition gTextDef;
+namespace font
+{
+static TextDefinition gTextDef;
 
-    bool Init(float window_width, float window_height)
-    {
-        return gTextDef.Init(window_width, window_height);
-    }
+bool Init(float window_width, float window_height)
+{
+    return gTextDef.Init(window_width, window_height);
+}
 
-    TextDefinition *const GetTextDef(const std::string &text_def_name)
-    {
-        return &gTextDef;
-    }
+TextDefinition *const GetTextDef(const std::string &text_def_name)
+{
+    return &gTextDef;
+}
 }
 
 } // namespace sp

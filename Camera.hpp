@@ -3,11 +3,11 @@
 
 #include "ModelView.hpp"
 
-namespace sp {
-
-class Camera {
+namespace sp
+{
+class Camera
+{
 public:
-
     Camera();
     void Init();
     void Init(const glm::mat3x3 &camera_mat);

@@ -20,7 +20,8 @@
 #include "Error.hpp"
 #include "Logger.hpp"
 
-namespace sp {
+namespace sp
+{
 
 //------------------------------------------------------------------------------
 
@@ -29,19 +30,19 @@ void Renderer::Init()
     SDL_Init(SDL_INIT_VIDEO);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
-    IMG_Init(IMG_INIT_JPG|IMG_INIT_PNG|IMG_INIT_TIF);
+    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF);
 
     screen_width = 1280;
     screen_height = 720;
 
-    window = SDL_CreateWindow(
-        "SP Engine Test", 100, 100,
-        screen_width, screen_height,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow("SP Engine Test", 100, 100, screen_width,
+                              screen_height,
+                              SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
     context = SDL_GL_CreateContext(window);
     if (context == nullptr) {
@@ -63,19 +64,23 @@ void Renderer::Init()
 
     // TODO: Change near/fear based on drawn entities.
     // EG: different projection matrix for guns.
-    projection = glm::perspective(60.0f, (float)screen_width / screen_height, 0.10f, 540.0f);
+    projection = glm::perspective(60.0f, (float)screen_width / screen_height,
+                                  0.10f, 540.0f);
 
     glGenBuffers(1, &global_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
-    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STREAM_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL,
+                 GL_STREAM_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glBindBufferRange(GL_UNIFORM_BUFFER, global_uniform_binding,
-                      global_ubo, 0, 2 * sizeof(glm::mat4));
+    glBindBufferRange(GL_UNIFORM_BUFFER, global_uniform_binding, global_ubo, 0,
+                      2 * sizeof(glm::mat4));
 
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection)); 
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),
+                    glm::value_ptr(projection));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
+                    glm::value_ptr(view));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
@@ -89,19 +94,14 @@ void Renderer::BeginFrame()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER,
-                    sizeof(glm::mat4),
-                    sizeof(glm::mat4),
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
                     glm::value_ptr(view));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 //------------------------------------------------------------------------------
 
-void Renderer::EndFrame()
-{
-    SDL_GL_SwapWindow(window);
-}
+void Renderer::EndFrame() { SDL_GL_SwapWindow(window); }
 
 //------------------------------------------------------------------------------
 
@@ -115,34 +115,32 @@ void Renderer::FreeResources()
 
 //------------------------------------------------------------------------------
 
-Renderer::~Renderer()
-{
-    FreeResources();
-}
+Renderer::~Renderer() { FreeResources(); }
 
 //------------------------------------------------------------------------------
 
-void Renderer::SetView(const glm::mat4 &view)
-{
-   this->view = view; 
-}
+void Renderer::SetView(const glm::mat4 &view) { this->view = view; }
 
 //------------------------------------------------------------------------------
 
 void Renderer::LoadGlobalUniforms(GLuint shader_index)
 {
-    GLint uni_block_index = glGetUniformBlockIndex(shader_index, "globalMatrices");
-    glUniformBlockBinding(shader_index, uni_block_index, global_uniform_binding);
+    GLint uni_block_index =
+        glGetUniformBlockIndex(shader_index, "globalMatrices");
+    glUniformBlockBinding(shader_index, uni_block_index,
+                          global_uniform_binding);
 }
 
 //------------------------------------------------------------------------------
 
 void Renderer::SetAngleOfView(const float angle)
 {
-	// TODO: Change znear and zfar to editable parameters
-    projection = glm::perspective(angle, (float)screen_width / screen_height, 0.10f, 540.0f);
+    // TODO: Change znear and zfar to editable parameters
+    projection = glm::perspective(angle, (float)screen_width / screen_height,
+                                  0.10f, 540.0f);
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection)); 
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),
+                    glm::value_ptr(projection));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 

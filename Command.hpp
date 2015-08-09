@@ -8,9 +8,11 @@
 #include <sstream>
 #include <iostream>
 
-namespace sp {
+namespace sp
+{
 
-class CommandArg {
+class CommandArg
+{
 public:
     CommandArg() {}
     CommandArg(const char *text);
@@ -25,18 +27,19 @@ public:
         buffer >> value;
         return value;
     }
+
 private:
     void TokenizeString(const char *text);
 
     std::vector<std::string> argv;
 };
 
-
 typedef std::function<void(const CommandArg &)> tCommandFunction;
 
-namespace CommandManager {
-    void AddCommand(std::string name, tCommandFunction command);
-    bool FindAndExecute(std::string name, const CommandArg &args);
+namespace CommandManager
+{
+void AddCommand(std::string name, tCommandFunction command);
+bool FindAndExecute(std::string name, const CommandArg &args);
 }
 
 } // namespace sp

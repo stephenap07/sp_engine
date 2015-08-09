@@ -1,6 +1,7 @@
 #include "ModelView.hpp"
 
-namespace sp {
+namespace sp
+{
 
 ModelView::ModelView(const glm::vec3 &o, const glm::vec3 &s)
 {
